@@ -1,0 +1,43 @@
+.ContactCard {
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.ContactCard:hover {
+  background-color: var(--bgColor);
+}
+
+.Contacts {
+  overflow-y: auto;
+  max-height: 100vh;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bgDarkerColor) transparent;
+}
+
+.Contacts::-webkit-scrollbar {
+  width: 2px;
+  height: 8px;
+  background-color: var(--bgColor);
+}
+
+.Contacts::-webkit-scrollbar-thumb {
+  background-color: var(--bgDarkerColor);
+}
+
+.chatbody {
+  background-color: var(--bgDarkerColor);
+  height: 100vh;
+  overflow-y: scroll;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bgDarkerColor) transparent;
+}
+
+.chatbody::-webkit-scrollbar {
+  width: 2px;
+  height: 8px;
+  background-color: var(--bgColor);
+}
+
+.chatbody::-webkit-scrollbar-thumb {
+  background-color: var(--bgDarkerColor);
+}

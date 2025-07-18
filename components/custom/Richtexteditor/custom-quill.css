@@ -1,0 +1,73 @@
+/* custom-quill.css */
+
+/* Customize the toolbar */
+.ql-toolbar {
+  background-color: var(--bgLightColor);
+  border: 1px solid var(--bgDarkColor);
+  border-radius: 4px;
+}
+
+/* Customize the editor */
+.ql-toolbar.ql-snow {
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+  font-family: "jost", sans-serif;
+  padding: 8px;
+  color: var(--primary);
+}
+
+.ql-snow .ql-picker-label {
+  cursor: pointer;
+  color: var(--primary);
+}
+
+.ql-toolbar .ql-formats button svg,
+.ql-toolbar .ql-formats button .ql-stroke,
+.ql-toolbar .ql-formats button .ql-fill,
+.ql-toolbar .ql-formats button .ql-even,
+.ql-toolbar .ql-formats button .ql-thin {
+  stroke: var(--primary);
+}
+
+/* Customize the editor */
+.ql-container {
+  border: 1px solid var(--bgDarkColor);
+  border-radius: 4px;
+  font-family: "jost", sans-serif;
+  font-size: 14px;
+  color: var(--primary);
+  min-height: 300px;
+  overflow: auto;
+  font-size: 15px;
+  max-width: 100%;
+}
+
+/* Customize the image resize handles */
+.ql-image-resize-module .resize-handle {
+  border: 1px solid #333;
+  background-color: #fff;
+}
+
+/* Customize the math preview */
+.ql-mathjax-preview {
+  background-color: #f0f0f0;
+  padding: 5px;
+  border-radius: 3px;
+}
+
+/* Additional custom styles */
+.custom-class {
+  color: #007bff;
+  font-weight: bold;
+}
+
+/* Style for delete button */
+.ql-toolbar .ql-deleteImage {
+  background-color: red;
+  color: white;
+}
+
+.quill-editor {
+  height: 300px;
+  width: 100%;
+}

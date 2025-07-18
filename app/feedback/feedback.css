@@ -1,0 +1,8 @@
+.feedbacklayout{
+    padding-top: 80px;
+    background: url("../../public/feature background.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
+}

@@ -1,0 +1,14 @@
+
+.backbutton {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  color: var(--primary);
+  font-size: 1.0rem;
+  font-weight: bold;
+  transition: color 0.3s;
+}
+
+.backbutton:hover {
+  color: var(--secondary);
+}

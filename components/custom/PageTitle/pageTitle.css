@@ -1,0 +1,38 @@
+/*--------------------------------------------------------------
+# Page Title
+--------------------------------------------------------------*/
+.pagetitle {
+  margin-bottom: 10px;
+}
+
+.pagetitle h1 {
+  font-size: 24px;
+  margin-bottom: 0;
+  font-weight: 600;
+  color: var(--primary) !important;
+}
+
+/* Breadcrumbs */
+.breadcrumb {
+  font-size: 14px;
+  color: var(--primary-300) !important;
+  font-weight: 600;
+}
+
+.breadcrumb a {
+  color: var(--primary) !important;
+  transition: 0.3s;
+}
+
+.breadcrumb a:hover {
+  color: var(--secondary) !important;
+}
+
+.breadcrumb .breadcrumb-item::before {
+  color: var(--primary) !important;
+}
+
+.breadcrumb .active {
+  color: var(--secondary) !important;
+  font-weight: 600;
+}

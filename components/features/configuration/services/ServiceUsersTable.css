@@ -1,0 +1,9 @@
+.table tbody tr td {
+  background: var(--bgLightColor);
+  border: 1px solid var(--bgDarkColor);
+}
+
+.table thead tr th {
+  background: var(--bgLightColor);
+  border: 1px solid var(--bgDarkColor);
+}

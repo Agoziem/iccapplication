@@ -1,0 +1,34 @@
+/* Top Selling */
+.dashboard .top-selling {
+  font-size: 14px;
+}
+
+.dashboard .top-selling .table thead th {
+  background: var(--bgLightColor)!important;
+  color: var(--primary);
+  border: 0;
+}
+
+.dashboard .top-selling .table tbody td {
+  background: var(--bgLightColor)!important;
+  color: var(--primary);
+  border: 0;
+}
+
+.dashboard .top-selling .table tbody th {
+  background: var(--bgLightColor)!important;
+  color: var(--primary);
+  border: 0;
+}
+
+.dashboard .top-selling .table tbody td {
+  vertical-align: middle;
+}
+
+.dashboard .top-selling img {
+  border-radius: 5px;
+  max-width: 50px;
+  min-height: 50px;
+  object-fit: cover;
+  object-position: top center;
+}

@@ -1,0 +1,14 @@
+.iframescrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--bgDarkerColor) transparent;
+}
+
+.iframescrollbar::-webkit-scrollbar {
+  width: 2px;
+  height: 8px;
+  background-color: var(--bgColor);
+}
+
+.iframescrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--bgDarkerColor);
+}

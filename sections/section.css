@@ -1,0 +1,199 @@
+/*--------------------------------------------------------------
+# Hero Section
+--------------------------------------------------------------*/
+
+.hero {
+  padding-top: 90px;
+  background-image: url("../public/hero background.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+}
+
+.hero .header-content h1 {
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+/* 2rem is the minimum font size.
+5vw is the preferred font size, which will decrease as the viewport width decreases.
+3.25rem is the maximum font size. */
+
+/*--------------------------------------------------------------
+# statistics
+--------------------------------------------------------------*/
+.statistics {
+  background-color: var(--primary);
+  color: white;
+  overflow: hidden;
+}
+
+/*--------------------------------------------------------------
+# about Section
+--------------------------------------------------------------*/
+
+#about p {
+  max-width: 650px;
+}
+
+#about .card {
+  min-height: 300px;
+  max-width: 320px;
+  min-width: 320px;
+  border-bottom: 6px solid var(--primary-600) !important;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease-in-out, scale 0.3s ease-in-out;
+}
+
+#about .card:hover {
+  scale: 1.05;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+}
+
+#about .card .card-icon {
+  background-color: #a9dfdf;
+  color: #004d4d;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  font-size: 25px;
+}
+
+#about .card-icon.mission {
+  background-color: var(--secondary-300);
+  color: var(--secondary);
+}
+
+#about .card-icon.staff {
+  background-color: var(--primary-600);
+  color: var(--bgLightColor);
+}
+
+/*--------------------------------------------------------------
+# services Section
+--------------------------------------------------------------*/
+
+.features {
+  background-image: url("../public/feature background.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+  z-index: 1;
+  color: white;
+}
+
+/*--------------------------------------------------------------
+# staff Section
+--------------------------------------------------------------*/
+
+.staff-section {
+  padding-top: 90px;
+  background-image: url("../public/feature background.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.staff-section p {
+  max-width: 550px;
+}
+
+.staff-section .card {
+  border-radius: 10px;
+  max-width: 350px;
+}
+/*--------------------------------------------------------------
+# blog section
+--------------------------------------------------------------*/
+.blog-section .card {
+  border-radius: 10px;
+}
+
+.blog-text p {
+  max-width: 550px;
+}
+
+/*--------------------------------------------------------------
+# footer section
+--------------------------------------------------------------*/
+
+.body .footer {
+  background-color: var(--primary);
+  color: var(--bgDarkColor);
+}
+
+.body .footer h5,
+.body .footer p {
+  color: var(--bgDarkColor);
+}
+
+.body .footer .footer-links a,
+.body .footer .footer-links h6 {
+  color: var(--bgDarkColor);
+  transition: 0.2s;
+}
+
+.body .footer .footer-links a:hover {
+  color: var(--primary-300);
+}
+
+.body .footer .social-links a {
+  color: var(--bgDarkColor);
+  font-size: 20px;
+  transition: 0.2s;
+}
+
+.body .footer .social-links a:hover {
+  color: var(--primary-300);
+}
+
+.body .footer .subscribe-input .form-control {
+  background-color: var(--primary-600);
+  border-color: var(--primary-500);
+  color: var(--bgDarkColor) !important;
+  width: 60%;
+  min-width: 250px;
+}
+
+.body .footer .subscribe-input .form-control::placeholder {
+  color: var(--primary-300);
+}
+
+.body .footer .subscribe-input button {
+  background-color: var(--primary-700);
+  border-color: var(--primary-700);
+  color: var(--bgDarkerColor) !important;
+  border-radius: 5px;
+}
+
+.body .footer .subscribe-input button:hover {
+  color: var(--bgLightColor) !important;
+}
+.body .subfooter {
+  background-color: var(--primary-700);
+  height: 100%;
+}
+
+.body .subfooter p {
+  color: var(--bgDarkerColor);
+}
+
+@media(max-width: 768px) {
+  .body .footer .subscribe-input .form-control {
+    width: 100%;
+    min-width: 200px;
+  }
+
+  .body .footer .subscribe-input button{
+    width: 100%;
+  }
+
+  .body .subfooter p {
+    font-size: 12px ;
+  }
+}

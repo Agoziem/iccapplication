@@ -1,0 +1,30 @@
+/* Recent Sales */
+.dashboard .recent-sales {
+  font-size: 14px;
+}
+
+.dashboard .recent-sales .table thead th {
+  background: var(--bgLightColor)!important;
+  color: var(--primary);
+  border: 0;
+}
+.dashboard .recent-sales .table tbody td {
+  background: var(--bgLightColor)!important;
+  color: var(--primary);
+  border: 0;
+}
+
+.dashboard .recent-sales .table tbody th {
+  background: var(--bgLightColor)!important;
+  color: var(--primary);
+  border: 0;
+}
+
+.dashboard .recent-sales .dataTable-top {
+  padding: 0 0 10px 0;
+}
+
+.dashboard .recent-sales .dataTable-bottom {
+  padding: 10px 0 0 0;
+}
+

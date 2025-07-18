@@ -1,0 +1,12 @@
+.accordion-content {
+    height: 0;
+    overflow: hidden;
+    transition: height 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+  }
+  
+  .accordion-content.open {
+    height: auto;
+    opacity: 1;
+    padding: 20px;
+  }

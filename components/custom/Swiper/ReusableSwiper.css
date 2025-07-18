@@ -1,0 +1,18 @@
+
+  .prevButton,.nextButton{
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    border: 1px solid #27011d7b;
+    font-size: 20px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  
+  
+  .prevButton:hover,.nextButton:hover{
+    background-color: var(--primary);
+    border: none;
+    color: white;
+  }
+  
