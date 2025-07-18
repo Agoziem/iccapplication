@@ -1,24 +1,24 @@
 import { videoSchema, videosResponseSchema } from "@/schemas/items";
+import type { Video, Videos } from "@/types/items";
 import { converttoformData } from "@/utils/formutils";
 import axios from "axios";
+import { z } from "zod";
 
 export const axiosInstance = axios.create({
   baseURL: `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}`,
 });
 
-const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID
+const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
 
 export const vidoesapiAPIendpoint = "/vidoesapi";
 
+type VideosResponse = z.infer<typeof videosResponseSchema>;
+
 /**
  * fetch all the Videos
- * @async
- * @param {string} url
  */
-export const fetchVideos = async (url) => {
-  const response = await axiosInstance.get(
-    url
-  );
+export const fetchVideos = async (url: string): Promise<VideosResponse | undefined> => {
+  const response = await axiosInstance.get(url);
   const validation = videosResponseSchema.safeParse(response.data);
   if (!validation.success) {
     console.log(validation.error.issues);
@@ -26,13 +26,10 @@ export const fetchVideos = async (url) => {
   return validation.data;
 };
 
-
 /**
- * @async
- * @param {string} url // example ${vidoesapiAPIendpoint}/video_by_token/${videotoken}/
- * @returns {Promise<Video>}
+ * Fetch a single video by URL
  */
-export const fetchVideo = async (url) => {
+export const fetchVideo = async (url: string): Promise<Video | undefined> => {
   const response = await axiosInstance.get(url);
   const validation = videoSchema.safeParse(response.data);
   if (!validation.success) {
@@ -41,13 +38,10 @@ export const fetchVideo = async (url) => {
   return validation.data;
 };
 
-
 /**
- * submits Responses to database and updates the Ui optimistically
- * @async
- * @returns {Promise<Video>}
+ * Create a new video
  */
-export const createVideo = async (data) => {
+export const createVideo = async (data: Omit<Video, "id" | "created_at" | "updated_at">): Promise<Video | undefined> => {
   const formData = converttoformData(data, [
     "category",
     "subcategory",
@@ -70,11 +64,9 @@ export const createVideo = async (data) => {
 };
 
 /**
- * submits Responses to database and updates the Ui optimistically
- * @async
- * @returns {Promise<Video>}
+ * Update an existing video
  */
-export const updateVideo = async (data) => {
+export const updateVideo = async (data: Partial<Video> & { id: number }): Promise<Video | undefined> => {
   const formData = converttoformData(data, [
     "category",
     "subcategory",
@@ -97,15 +89,10 @@ export const updateVideo = async (data) => {
 };
 
 /**
- * submits Responses to database and updates the Ui optimistically
- * @async
- * @param {number} id
-* @returns {Promise<number>}
+ * Delete a video
  */
-export const deleteVideo = async (id) => {
-  await axiosInstance.delete(
-    `${vidoesapiAPIendpoint}/delete_video/${id}/`
-  );
+export const deleteVideo = async (id: number): Promise<number> => {
+  await axiosInstance.delete(`${vidoesapiAPIendpoint}/delete_video/${id}/`);
   return id;
 };
 

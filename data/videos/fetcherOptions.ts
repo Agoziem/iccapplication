@@ -1,60 +1,60 @@
+import type { Video, Videos } from "@/types/items";
+
 /**
- * add Message Responses Configuration
- * @param {EmailResponse} newResponse
+ * Add Video Response Configuration for optimistic updates
  */
-export const addMessageResponseOptions = (newResponse) => {
+export const addVideoOptions = (newVideo: Video) => {
   return {
-    /** @param {EmailResponseArray} responses */
-    optimisticData: (responses) =>
-      [...responses, newResponse].sort(
+    optimisticData: (videos: Videos): Videos =>
+      [...videos, newVideo].sort(
         (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
       ),
 
     rollbackOnError: true,
-    /**
-     * @param {EmailResponseArray} responses
-     * @param {EmailResponse} addedResponse
-     */
-    populateCache: (addedResponse, responses) =>
-      [...responses, addedResponse].sort(
+    populateCache: (addedVideo: Video, videos: Videos): Videos =>
+      [...videos, addedVideo].sort(
         (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
       ),
     revalidate: false,
   };
 };
 
 /**
- * add Email Message Configuration
- * @param {EmailMessage} newSentEmail
+ * Update Video Configuration for optimistic updates
  */
-export const createEmailOptions = (newSentEmail) => {
+export const updateVideoOptions = (updatedVideo: Video) => {
   return {
-    /** @param {EmailMessageArray} sentemails */
-    optimisticData: (sentemails) => {
-      const updatedSentEmails = sentemails ? [...sentemails] : [];
-      return [newSentEmail, ...updatedSentEmails];
+    optimisticData: (videos: Videos): Videos => {
+      return videos.map((video) =>
+        video.id === updatedVideo.id ? { ...video, ...updatedVideo } : video
+      );
     },
 
     rollbackOnError: true,
-
-    /**
-     * @param {EmailMessageArray} responses
-     * @param {EmailMessage} addedResponse
-     */
-    populateCache: (addedResponse, responses) => {
-      const emailExists = responses.some(
-        (email) => email.id === addedResponse.id
+    populateCache: (updatedVideoResponse: Video, videos: Videos): Videos => {
+      return videos.map((video) =>
+        video.id === updatedVideoResponse.id ? updatedVideoResponse : video
       );
-      if (emailExists) {
-        return responses.map((email) =>
-          email.id === addedResponse.id ? addedResponse : email
-        );
-      }
-      return [addedResponse, ...responses];
+    },
+    revalidate: false,
+  };
+};
+
+/**
+ * Delete Video Configuration for optimistic updates
+ */
+export const deleteVideoOptions = (videoId: number) => {
+  return {
+    optimisticData: (videos: Videos): Videos => {
+      return videos.filter((video) => video.id !== videoId);
     },
 
+    rollbackOnError: true,
+    populateCache: (deletedVideoId: number, videos: Videos): Videos => {
+      return videos.filter((video) => video.id !== deletedVideoId);
+    },
     revalidate: false,
   };
 };

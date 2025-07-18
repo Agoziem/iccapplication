@@ -1,4 +1,18 @@
-import { useQuery, useMutation, useQueryClient } from "react-query";
+import { 
+  useQuery, 
+  useMutation, 
+  useQueryClient,
+  UseQueryResult,
+  UseMutationResult
+} from "react-query";
+import type {
+  WAContact,
+  WAContacts,
+  WAMessage,
+  WAMessages,
+  WATemplate,
+  WATemplateArray,
+} from "@/types/whatsapp";
 import {
   fetchWAContacts,
   fetchWAMessages,
@@ -9,7 +23,7 @@ import {
 } from "./fetcher"; // Adjust the path accordingly
 
 // Fetch WhatsApp Contacts
-export const useFetchWAContacts = () => {
+export const useFetchWAContacts = (): UseQueryResult<WAContacts | undefined, Error> => {
   return useQuery({
     queryKey: ["waContacts"],
     queryFn: fetchWAContacts,
@@ -18,7 +32,7 @@ export const useFetchWAContacts = () => {
 };
 
 // Fetch Messages for a Specific Contact
-export const useFetchWAMessages = (contact_id) => {
+export const useFetchWAMessages = (contact_id: number): UseQueryResult<WAMessages | undefined, Error> => {
   return useQuery({
     queryKey: ["waMessages", contact_id],
     queryFn: () => fetchWAMessages(contact_id),
@@ -27,7 +41,7 @@ export const useFetchWAMessages = (contact_id) => {
 };
 
 // Send a WhatsApp Message with Optimistic Updates
-export const useSendWAMessage = () => {
+export const useSendWAMessage = (): UseMutationResult<WAMessage | undefined, Error, Omit<WAMessage, "id" | "timestamp">> => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -41,12 +55,12 @@ export const useSendWAMessage = () => {
       await queryClient.cancelQueries(cacheKey);
 
       // Snapshot of the previous value in the cache
-      const previousMessages = queryClient.getQueryData(cacheKey);
+      const previousMessages = queryClient.getQueryData<WAMessages>(cacheKey);
 
       // Optimistically update the cache with the new message
-      queryClient.setQueryData(cacheKey, (oldMessages = []) => [
+      queryClient.setQueryData<WAMessages>(cacheKey, (oldMessages = []) => [
         ...oldMessages,
-        newMessage,
+        newMessage as WAMessage,
       ]);
 
       // Return the snapshot for rollback in case of an error
@@ -62,7 +76,7 @@ export const useSendWAMessage = () => {
 };
 
 // Fetch Media by ID
-export const useFetchMedia = (mediaId) => {
+export const useFetchMedia = (mediaId: string): UseQueryResult<string | null, Error> => {
   return useQuery({
     queryKey: ["media", mediaId],
     queryFn: () => getMedia(mediaId),
@@ -71,7 +85,7 @@ export const useFetchMedia = (mediaId) => {
 };
 
 // Fetch WhatsApp Templates
-export const useGetSentTemplates = () => {
+export const useGetSentTemplates = (): UseQueryResult<WATemplateArray | undefined, Error> => {
   return useQuery({
     queryKey: ["waTemplates"],
     queryFn: getSentTemplates,
@@ -80,7 +94,7 @@ export const useGetSentTemplates = () => {
 };
 
 // Create a Template Message
-export const useCreateTemplateMessage = () => {
+export const useCreateTemplateMessage = (): UseMutationResult<WATemplate | null, Error, Omit<WATemplate, "id" | "timestamp">> => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createTemplateMessage,

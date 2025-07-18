@@ -1,4 +1,5 @@
 import { UserSchema, UsersSchema } from "@/schemas/users";
+import type { User, Users } from "@/types/users";
 import axios from "axios";
 
 export const axiosInstance = axios.create({
@@ -10,11 +11,9 @@ const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
 export const authAPIendpoint = "/authapi";
 
 /**
- * fetch all the Videos
- * @async
- * @param {string} url
+ * Fetch all users
  */
-export const fetchUsers = async (url) => {
+export const fetchUsers = async (url: string): Promise<Users | undefined> => {
   const response = await axiosInstance.get(url);
   const validation = UsersSchema.safeParse(response.data);
   if (!validation.success) {
@@ -24,11 +23,9 @@ export const fetchUsers = async (url) => {
 };
 
 /**
- * fetch single user
- * @async
- * @param {string} url
+ * Fetch single user
  */
-export const fetchUser = async (url) => {
+export const fetchUser = async (url: string): Promise<User | undefined> => {
   const response = await axiosInstance.get(url);
   const validation = UserSchema.safeParse(response.data);
   if (!validation.success) {
@@ -38,13 +35,9 @@ export const fetchUser = async (url) => {
 };
 
 /**
- * submits Responses to database and updates the Ui optimistically
- * @async
- * @param {string} url
- * @param {User} data
- * @returns {Promise<User>}
+ * Update user data
  */
-export const updateUser = async (url, data) => {
+export const updateUser = async (url: string, data: Partial<User>): Promise<User | undefined> => {
   const response = await axiosInstance.put(url, data);
   const validation = UserSchema.safeParse(response.data);
   if (!validation.success) {

@@ -1,4 +1,16 @@
-import { useQuery, useMutation, useQueryClient } from "react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  UseQueryResult,
+  UseMutationResult,
+} from "react-query";
+import {
+  Category,
+  Categories,
+  SubCategory,
+  SubCategories,
+} from "@/types/categories";
 import {
   fetchCategories,
   fetchSubCategories,
@@ -13,26 +25,32 @@ import {
 // Custom Hooks
 
 /** Fetch all categories */
-export const useFetchCategories = (url) =>
+export const useFetchCategories = (
+  url: string
+): UseQueryResult<Categories, Error> =>
   useQuery(["categories", url], () => fetchCategories(url), {
     enabled: !!url,
   });
 
 /** Fetch all subcategories */
-export const useFetchSubCategories = (url, category_id) =>
+export const useFetchSubCategories = (
+  url: string,
+  category_id: number
+): UseQueryResult<SubCategories, Error> =>
   useQuery(["subcategories", category_id, url], () => fetchSubCategories(url), {
     enabled: !!category_id,
   });
 
 /** Create a new category */
-export const useCreateCategory = () => {
+export const useCreateCategory = (): UseMutationResult<
+  Category | undefined,
+  Error,
+  { createUrl: string; data: Partial<Category> }
+> => {
   const queryClient = useQueryClient();
   return useMutation(
-    /**
-     * @param {{ createUrl: string, data: object }} param
-     * @returns {Promise<object>}
-     */
-    ({ createUrl, data }) => createCategory(createUrl, data),
+    ({ createUrl, data }: { createUrl: string; data: Partial<Category> }) =>
+      createCategory(createUrl, data),
     {
       onSuccess: () => {
         queryClient.invalidateQueries(["categories"]); // Refresh the category list
@@ -42,57 +60,78 @@ export const useCreateCategory = () => {
 };
 
 /** Create a new subcategory */
-export const useCreateSubCategory = () => {
+export const useCreateSubCategory = (): UseMutationResult<
+  SubCategory | undefined,
+  Error,
+  Partial<SubCategory>
+> => {
   const queryClient = useQueryClient();
   return useMutation(
-    /** @param {SubCategory} data */
-    (data) => createSubCategory(`/subcategories/create/`, data),
+    (data: Partial<SubCategory>) =>
+      createSubCategory(`/subcategories/create/`, data),
     {
       onSuccess: (data) => {
-        queryClient.invalidateQueries(["subcategories", data.category.id]); // Refresh the subcategory list
+        if (data?.category && "id" in data.category) {
+          queryClient.invalidateQueries(["subcategories", data.category.id]); // Refresh the subcategory list
+        }
       },
     }
   );
 };
 
 /** Update a category */
-export const useUpdateCategory = () => {
+export const useUpdateCategory = (): UseMutationResult<
+  Category | undefined,
+  Error,
+  { updateUrl: string; data: Partial<Category> }
+> => {
   const queryClient = useQueryClient();
   return useMutation(
-    /**
-     * @param {{ updateUrl: string, data: object }} param
-     * @returns {Promise<object>}
-     */
-    ({ updateUrl, data }) => updateCategory(updateUrl, data),
+    ({ updateUrl, data }: { updateUrl: string; data: Partial<Category> }) =>
+      updateCategory(updateUrl, data),
     {
       onSuccess: (_, { data }) => {
         queryClient.invalidateQueries(["categories"]); // Refresh the category list
-        queryClient.invalidateQueries(["category", data.id]); // Refresh the updated category
+        if (data.id) {
+          queryClient.invalidateQueries(["category", data.id]); // Refresh the updated category
+        }
       },
     }
   );
 };
 
 /** Update a subcategory */
-export const useUpdateSubCategory = () => {
+export const useUpdateSubCategory = (): UseMutationResult<
+  SubCategory | undefined,
+  Error,
+  Partial<SubCategory>
+> => {
   const queryClient = useQueryClient();
   return useMutation(
-    /** @param {SubCategory} data */
-    (data) => updateSubCategory(`/subcategories/${data.id}/update/`, data),
+    (data: Partial<SubCategory>) => {
+      if (!data.id) throw new Error("SubCategory ID is required for update");
+      return updateSubCategory(`/subcategories/${data.id}/update/`, data);
+    },
     {
       onSuccess: (data) => {
-        queryClient.invalidateQueries(["subcategories", data.category.id]); // Refresh the subcategory list
+        if (data?.category && "id" in data.category) {
+          queryClient.invalidateQueries(["subcategories", data.category.id]); // Refresh the subcategory list
+        }
       },
     }
   );
 };
 
 /** Delete a category */
-export const useDeleteCategory = () => {
+export const useDeleteCategory = (): UseMutationResult<
+  number,
+  Error,
+  { deleteUrl: string; id: number }
+> => {
   const queryClient = useQueryClient();
   return useMutation(
-    /** @param {{ deleteUrl: string, id: number }} param */
-    ({ deleteUrl, id }) => deleteCategory(deleteUrl, id),
+    ({ deleteUrl, id }: { deleteUrl: string; id: number }) =>
+      deleteCategory(deleteUrl, id),
     {
       onSuccess: () => {
         queryClient.invalidateQueries(["categories"]); // Refresh the category list
@@ -102,13 +141,14 @@ export const useDeleteCategory = () => {
 };
 
 /** Delete a subcategory */
-export const useDeleteSubCategory = () => {
+export const useDeleteSubCategory = (): UseMutationResult<
+  number,
+  Error,
+  { id: number; category_id: number }
+> => {
   const queryClient = useQueryClient();
   return useMutation(
-    /**
-     * @param {{ id: number, category_id: number }} params
-     */
-    ({ id, category_id }) =>
+    ({ id, category_id }: { id: number; category_id: number }) =>
       deleteSubCategory(`/subcategories/${id}/delete/`, id),
     {
       onSuccess: (_, { category_id }) => {

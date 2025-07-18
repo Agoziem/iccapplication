@@ -1,6 +1,8 @@
 import { serviceSchema, servicesResponseSchema, UserPurchasedResponseSchema } from "@/schemas/items";
+import type { Service, Services, PaginatedServiceUser } from "@/types/items";
 import { converttoformData } from "@/utils/formutils";
 import axios from "axios";
+import { z } from "zod";
 
 export const axiosInstance = axios.create({
   baseURL: `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}`,
@@ -10,12 +12,12 @@ const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
 
 export const servicesAPIendpoint = "/servicesapi";
 
+type ServicesResponse = z.infer<typeof servicesResponseSchema>;
+
 /**
- * fetch all the Services
- * @async
- * @param {string} url
+ * Fetch all the Services
  */
-export const fetchServices = async (url) => {
+export const fetchServices = async (url: string): Promise<ServicesResponse | undefined> => {
   const response = await axiosInstance.get(url);
   const validation = servicesResponseSchema.safeParse(response.data);
   if (!validation.success) {
@@ -25,11 +27,9 @@ export const fetchServices = async (url) => {
 };
 
 /**
- * @async
- * @param {string} url // example ${servicesAPIendpoint}/service_by_token/${servicetoken}/
- * @returns {Promise<Service>}
+ * Fetch a single service by URL
  */
-export const fetchService = async (url) => {
+export const fetchService = async (url: string): Promise<Service | undefined> => {
   const response = await axiosInstance.get(url);
   const validation = serviceSchema.safeParse(response.data);
   if (!validation.success) {
@@ -39,11 +39,9 @@ export const fetchService = async (url) => {
 };
 
 /**
- * submits Responses to database and updates the Ui optimistically
- * @async
- * @returns {Promise<Service>}
+ * Create a new service
  */
-export const createService = async (data) => {
+export const createService = async (data: Omit<Service, "id" | "created_at" | "updated_at">): Promise<Service | undefined> => {
   const formData = converttoformData(data, [
     "category",
     "subcategory",
@@ -68,11 +66,9 @@ export const createService = async (data) => {
 };
 
 /**
- * submits Responses to database and updates the Ui optimistically
- * @async
- * @returns {Promise<Service>}
+ * Update an existing service
  */
-export const updateService = async (data) => {
+export const updateService = async (data: Partial<Service> & { id: number }): Promise<Service | undefined> => {
   const formData = converttoformData(data, [
     "category",
     "subcategory",
@@ -97,24 +93,20 @@ export const updateService = async (data) => {
 };
 
 /**
- * submits Responses to database and updates the Ui optimistically
- * @async
- * @param {number} id
- * @returns {Promise<number>}
+ * Delete a service
  */
-export const deleteService = async (id) => {
+export const deleteService = async (id: number): Promise<number> => {
   await axiosInstance.delete(`${servicesAPIendpoint}/delete_service/${id}/`);
   return id;
 };
 
 /**
  * Fetch users associated with a service by category
- * @async
- * @param {number} serviceId - ID of the service.
- * @param {string} [category="all"] - Category of users ("all", "progress", "completed").
- * @returns {Promise<Object>} - Validated user data.
  */
-export const fetchServiceUsers = async (serviceId, category = "all") => {
+export const fetchServiceUsers = async (
+  serviceId: number, 
+  category: "all" | "progress" | "completed" = "all"
+): Promise<PaginatedServiceUser> => {
   try {
     const categoryPath = {
       all: `${servicesAPIendpoint}/servicesusers/${serviceId}/`,
@@ -133,20 +125,19 @@ export const fetchServiceUsers = async (serviceId, category = "all") => {
 
     return validation.data;
   } catch (error) {
-    console.error("Fetch Error:", error.message);
-    throw new Error(`Failed to fetch ${category} users: ${error.message}`);
+    console.error("Fetch Error:", (error as Error).message);
+    throw new Error(`Failed to fetch ${category} users: ${(error as Error).message}`);
   }
 };
 
 /**
- * Update a user's service status.
- * @async
- * @param {number} userId - ID of the user.
- * @param {number} serviceId - ID of the service.
- * @param {string} action - Action to perform ("add-to-progress", "add-to-completed", "remove-from-progress", "remove-from-completed").
- * @returns {Promise<Object>} - Server response data.
+ * Update a user's service status
  */
-export const updateUserServiceStatus = async (userId, serviceId, action) => {
+export const updateUserServiceStatus = async (
+  userId: number, 
+  serviceId: number, 
+  action: "add-to-progress" | "add-to-completed" | "remove-from-progress" | "remove-from-completed"
+): Promise<any> => {
   try {
     const actions = {
       "add-to-progress": () =>
@@ -170,7 +161,7 @@ export const updateUserServiceStatus = async (userId, serviceId, action) => {
     const response = await actions[action]();
     return response.data;
   } catch (error) {
-    console.error(`Update Error (${action}):`, error.message);
-    throw new Error(`Failed to ${action.replace(/-/g, " ")}: ${error.message}`);
+    console.error(`Update Error (${action}):`, (error as Error).message);
+    throw new Error(`Failed to ${action.replace(/-/g, " ")}: ${(error as Error).message}`);
   }
 };

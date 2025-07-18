@@ -1,11 +1,11 @@
-import { useQuery, useMutation, useQueryClient } from "react-query";
+import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from "react-query";
+import type { User, Users } from "@/types/users";
 import { fetchUsers, fetchUser, updateUser } from "@/data/users/fetcher";
 
 /**
  * Hook to fetch all users.
- * @param {string} url - API endpoint to fetch all users.
  */
-export const useFetchUsers = (url) => {
+export const useFetchUsers = (url: string): UseQueryResult<Users | undefined, Error> => {
   return useQuery(["users", url], () => fetchUsers(url), {
     staleTime: 1000 * 60 * 5, // Cache data for 5 minutes
     retry: 3, // Retry failed requests up to 3 times
@@ -14,32 +14,33 @@ export const useFetchUsers = (url) => {
 
 /**
  * Hook to fetch a single user by ID.
- * @param {string} url - API endpoint to fetch the user.
  */
-export const useFetchUser = (url, user_id) => {
+export const useFetchUser = (url: string, user_id: number): UseQueryResult<User | undefined, Error> => {
   return useQuery(["user", user_id], () => fetchUser(url), {
-    enabled: !!user_id, // Only run query if the URL is provided
+    enabled: !!user_id, // Only run query if user_id is provided
     retry: 2, // Retry failed requests up to 2 times
   });
 };
 
+interface UpdateUserParams {
+  url: string;
+  data: Partial<User>;
+}
+
 /**
  * Hook to update a user.
  */
-export const useUpdateUser = () => {
+export const useUpdateUser = (): UseMutationResult<User | undefined, Error, UpdateUserParams> => {
   const queryClient = useQueryClient();
 
   return useMutation(
-    /**
-     * Mutation function to update a user.
-     * @param {{ url: string; data: User }} param
-     * @returns {Promise<User>}
-     */
-    ({ url, data }) => updateUser(url, data),
+    ({ url, data }: UpdateUserParams) => updateUser(url, data),
     {
       onSuccess: (_, variables) => {
         // Invalidate the specific user's query to refetch updated data
-        queryClient.invalidateQueries(["user", variables.data.id]);
+        if (variables.data.id) {
+          queryClient.invalidateQueries(["user", variables.data.id]);
+        }
 
         // Optionally, invalidate the users list to refetch data
         queryClient.invalidateQueries("users");

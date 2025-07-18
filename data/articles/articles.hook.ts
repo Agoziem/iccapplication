@@ -1,29 +1,38 @@
 "use client";
-import { useQuery, useMutation, useQueryClient } from "react-query";
-import * as articleAPI from "@/data/articles/fetcher"; // Assuming your API file is located here
+import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from "react-query";
+import { Article, ArticleComment, ArticleCategories, ArticlesResponse } from "@/types/articles";
+import * as articleAPI from "@/data/articles/fetcher";
+
+// Define comment response type
+type CommentResponse = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: ArticleComment[];
+};
 
 // Custom Hooks
 
 /** Fetch Articles */
-export const useFetchArticles = (url) =>
+export const useFetchArticles = (url: string): UseQueryResult<ArticlesResponse, Error> =>
   useQuery(["articles", url], () => articleAPI.fetchArticles(url), {
     enabled: !!url,
   });
 
 /** Fetch Article by Slug */
-export const useFetchArticleBySlug = (url, slug) =>
+export const useFetchArticleBySlug = (url: string, slug: string): UseQueryResult<Article, Error> =>
   useQuery(["article", slug], () => articleAPI.fetchArticlebySlug(url), {
     enabled: !!slug,
   });
 
 /** Fetch Article Categories */
-export const useFetchArticleCategories = (url) =>
+export const useFetchArticleCategories = (url: string): UseQueryResult<ArticleCategories, Error> =>
   useQuery(["categories", url], () => articleAPI.fetchArticlesCategories(url), {
     enabled: !!url,
   });
 
 /** Create Article */
-export const useCreateArticle = () => {
+export const useCreateArticle = (): UseMutationResult<Article | undefined, Error, Partial<Article>> => {
   const queryClient = useQueryClient();
   return useMutation(articleAPI.createArticle, {
     onSuccess: () => {
@@ -33,7 +42,7 @@ export const useCreateArticle = () => {
 };
 
 /** Update Article */
-export const useUpdateArticle = () => {
+export const useUpdateArticle = (): UseMutationResult<Article | undefined, Error, Partial<Article>> => {
   const queryClient = useQueryClient();
   return useMutation(articleAPI.updateArticle, {
     onSuccess: () => {
@@ -43,7 +52,7 @@ export const useUpdateArticle = () => {
 };
 
 /** Delete Article */
-export const useDeleteArticle = () => {
+export const useDeleteArticle = (): UseMutationResult<number, Error, number> => {
   const queryClient = useQueryClient();
   return useMutation(articleAPI.deleteArticle, {
     onSuccess: () => {
@@ -53,13 +62,13 @@ export const useDeleteArticle = () => {
 };
 
 /** Fetch Comments */
-export const useFetchComments = (url, article_id) =>
+export const useFetchComments = (url: string, article_id: number): UseQueryResult<CommentResponse, Error> =>
   useQuery(["comments", article_id, url], () => articleAPI.fetchComments(url), {
     enabled: !!article_id,
   });
 
 /** Create Comment */
-export const useCreateComment = () => {
+export const useCreateComment = (): UseMutationResult<ArticleComment | undefined, Error, ArticleComment> => {
   const queryClient = useQueryClient();
   return useMutation(articleAPI.createComment, {
     onSuccess: (_, variables) => {
@@ -69,7 +78,7 @@ export const useCreateComment = () => {
 };
 
 /** Update Comment */
-export const useUpdateComment = () => {
+export const useUpdateComment = (): UseMutationResult<ArticleComment | undefined, Error, ArticleComment> => {
   const queryClient = useQueryClient();
   return useMutation(articleAPI.updateComment, {
     onSuccess: (_, variables) => {
@@ -79,17 +88,17 @@ export const useUpdateComment = () => {
 };
 
 /** Delete Comment */
-export const useDeleteComment = () => {
+export const useDeleteComment = (): UseMutationResult<number, Error, number> => {
   const queryClient = useQueryClient();
   return useMutation(articleAPI.deleteComment, {
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries("comments"); // Refetch comments
     },
   });
 };
 
 /** Increment Views of an Article */
-export const useIncrementView = () => {
+export const useIncrementView = (): UseMutationResult<Article, Error, Article> => {
   const queryClient = useQueryClient();
   return useMutation(articleAPI.incrementView, {
     onSuccess: (_, variables) => {
@@ -99,7 +108,7 @@ export const useIncrementView = () => {
 };
 
 /** Add Like */
-export const useAddLike = () => {
+export const useAddLike = (): UseMutationResult<void, Error, { Article: Article; userid: number }> => {
   const queryClient = useQueryClient();
   return useMutation(articleAPI.addLike, {
     onSuccess: (_, variables) => {
@@ -109,7 +118,7 @@ export const useAddLike = () => {
 };
 
 /** Delete Like */
-export const useDeleteLike = () => {
+export const useDeleteLike = (): UseMutationResult<void, Error, { Article: Article; userid: number }> => {
   const queryClient = useQueryClient();
   return useMutation(articleAPI.deleteLike, {
     onSuccess: (_, variables) => {

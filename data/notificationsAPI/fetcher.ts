@@ -1,8 +1,7 @@
-import {
-  notificationArraySchema,
-  notificationSchema,
-} from "@/schemas/notifications";
-import axios from "axios";
+import type { NotificationMessage } from "@/types/notifications";
+import axios, { AxiosResponse } from "axios";
+
+type NotificationMessageArray = NotificationMessage[];
 
 export const axiosInstance = axios.create({
   baseURL: `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}`,
@@ -10,63 +9,58 @@ export const axiosInstance = axios.create({
 
 export const notificationAPIendpoint = "/notificationsapi";
 
-// fetch all the Notifications
-export const fetchNotifications = async () => {
-  const response = await axiosInstance.get(
-    `${notificationAPIendpoint}/notifications/`
-  );
-  const validation = notificationArraySchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
+// Fetch all the notifications
+export async function fetchNotifications(): Promise<NotificationMessageArray | undefined> {
+  try {
+    const response: AxiosResponse<NotificationMessageArray> = await axiosInstance.get(
+      `${notificationAPIendpoint}/notifications/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching notifications:", error);
+    throw error;
   }
-  return validation.data;
-};
+}
 
-/**
- * submits Responses to database and updates the Ui optimistically
- * @async
- * @param {NotificationMessage} data
- * @returns {Promise<NotificationMessage>}
- */
-export const createNotification = async (data) => {
-  const response = await axiosInstance.post(
-    `${notificationAPIendpoint}/notifications/create/`,
-    data
-  );
-  const validation = notificationSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
+// Create a new notification
+export async function createNotification(
+  data: Omit<NotificationMessage, "id" | "created_at">
+): Promise<NotificationMessage | undefined> {
+  try {
+    const response: AxiosResponse<NotificationMessage> = await axiosInstance.post(
+      `${notificationAPIendpoint}/notifications/create/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error creating notification:", error);
+    throw error;
   }
-  return validation.data;
-};
+}
 
-/**
- * submits Responses to database and updates the Ui optimistically
- * @async
- * @param {NotificationMessage} data
- * @returns {Promise<NotificationMessage>}
- */
-export const updateNotification = async (data) => {
-  const response = await axiosInstance.put(
-    `${notificationAPIendpoint}/notifications/${data.id}/update/`,
-    data
-  );
-  const validation = notificationSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
+// Update an existing notification
+export async function updateNotification(
+  data: NotificationMessage
+): Promise<NotificationMessage | undefined> {
+  try {
+    const response: AxiosResponse<NotificationMessage> = await axiosInstance.put(
+      `${notificationAPIendpoint}/notifications/${data.id}/update/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating notification:", error);
+    throw error;
   }
-  return validation.data;
-};
+}
 
-/**
- * submits Responses to database and updates the Ui optimistically
- * @async
- * @param {number} id
-* @returns {Promise<number>}
- */
-export const deleteNotification = async (id) => {
-  const response = await axiosInstance.delete(
-    `${notificationAPIendpoint}/notifications/${id}/delete/`
-  );
-  return id;
-};
+// Delete a notification by ID
+export async function deleteNotification(id: number): Promise<number> {
+  try {
+    await axiosInstance.delete(`${notificationAPIendpoint}/notifications/${id}/delete/`);
+    return id;
+  } catch (error) {
+    console.error("Error deleting notification:", error);
+    throw error;
+  }
+}

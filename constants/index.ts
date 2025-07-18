@@ -1,12 +1,20 @@
+import { Article, ArticleComment } from "@/types/articles";
+import { Service, Video } from "@/types/items";
+import {
+  Department,
+  Organization,
+  Staff,
+  Testimony,
+} from "@/types/organizations";
+import { User } from "@/types/users";
+import { WAMessage } from "@/types/whatsapp";
+import { ComponentType } from "react";
 import { MdOutlineQuestionAnswer } from "react-icons/md";
 import { PiGearBold, PiGraduationCapBold } from "react-icons/pi";
 import { RiCustomerService2Line } from "react-icons/ri";
 import { TbBooks } from "react-icons/tb";
 
-/**
- * @type {WAMessage}
- */
-export const WAMessageDefault = {
+export const WAMessageDefault: WAMessage = {
   id: null, // Default to null, since it's optional
   message_id: "", // Default to an empty string
   contact: null, // Default to null for optional positive number
@@ -24,12 +32,8 @@ export const WAMessageDefault = {
   status: "pending", // Default to "pending" for message status
 };
 
-/**
- * Default for Organization Data
- * @type {Organization }}
- */
-export const OrganizationDefault = {
-  id: null,
+export const OrganizationDefault: Organization = {
+  id: undefined,
   logo: null,
   Organizationlogoname: null,
   Organizationlogo: null,
@@ -53,12 +57,8 @@ export const OrganizationDefault = {
   last_updated_date: new Date(),
 };
 
-/**
- * Default for Testimonials
- * @type {Testimony}
- */
-export const testimonialDefault = {
-  id: null,
+export const testimonialDefault: Testimony = {
+  id: undefined,
   name: "",
   content: "",
   role: "",
@@ -70,12 +70,8 @@ export const testimonialDefault = {
   last_updated_date: new Date(),
 };
 
-/**
- * Default for Staff
- * @type {Staff}
- */
-export const staffdefault = {
-  id: null,
+export const staffdefault: Staff = {
+  id: undefined,
   first_name: "",
   last_name: "",
   other_names: "",
@@ -94,11 +90,7 @@ export const staffdefault = {
   last_updated_date: new Date(),
 };
 
-/**
- * Default for Department
- * @type {Department}
- */
-export const deptDefault = {
+export const deptDefault: Department = {
   id: 1,
   img: null,
   img_url: null,
@@ -109,7 +101,7 @@ export const deptDefault = {
     img_url: "",
   },
   organization: {
-    id: null,
+    id: undefined,
     name: "",
   },
   services: [],
@@ -119,65 +111,68 @@ export const deptDefault = {
   last_updated_date: new Date(),
 };
 
-/**
- * Default for Article
- * @type {Article}
- */
-export const ArticleDefault = {
-  id: null,
+export const ArticleDefault: Article = {
+  id: undefined,
   img: null,
   img_url: null,
-  img_name: "",
+  img_name: null,
   title: "",
   subtitle: "",
-  body: null,
-  // author_id: null,
-  author: {
-    id: null,
-    username: "",
-    img: "",
-  },
-  // tag_ids: [],
-  tags: [],
-  slug: "",
-  // category_id: null,
-  category: {
-    id: null,
-    category: "",
-    description: "",
-  },
+  body: "",
   readTime: 0,
+  author: {
+    id: undefined,
+    username: "",
+    img: null,
+  },
+  tags: [],
+  slug: null,
+  category: {
+    id: undefined,
+    category: "",
+    description: null,
+  },
+  date: new Date(),
+  updated_at: new Date(),
+  views: 0,
 };
 
-/**
- * Artcle Comment Default
- * @type {ArticleComment}
- */
-export const ArticleCommentDefault = {
-  id: null,
-  user: {},
-  blog: null,
+export const ArticleCommentDefault: ArticleComment = {
+  id: undefined,
+  user: {
+    id: undefined,
+    username: "",
+    img: null,
+  },
+  blog: 1, // Assuming blog is a number ID
   comment: "",
   date: new Date(),
-  updated_at: new Date()
+  updated_at: new Date(),
 };
 
-/**
- * Description placeholder
- *
- * @type {Video}
- */
-export const VideoDefault = {
-  id: null,
-  organization: {},
+export const VideoDefault: Video = {
+  id: undefined,
+  organization: null,
   thumbnail: null,
   video: null,
   video_url: null,
   video_name: null,
   img_url: null,
   img_name: null,
-  category: {},
-  subcategory: {},
+  category: {
+    id: undefined,
+    category: "",
+    description: null,
+  },
+  subcategory: {
+    id: undefined,
+    category: {
+      id: undefined,
+      category: "",
+      description: null,
+    },
+    subcategory: "",
+  },
   title: "",
   description: "",
   price: "",
@@ -188,20 +183,16 @@ export const VideoDefault = {
   userIDs_that_bought_this_video: [],
 };
 
-/**
- * Default of Service
- * @type {Service}
- */
-export const serviceDefault = {
-  id: null,
-  organization: {},
+export const serviceDefault: Service = {
+  id: undefined,
+  organization: null,
   preview: null,
   img_url: null,
   img_name: null,
-  category: {},
-  subcategory: {},
+  category: null,
+  subcategory: null,
   name: "",
-  description: "",
+  description: null,
   service_flow: null,
   price: "",
   number_of_times_bought: 0,
@@ -215,21 +206,20 @@ export const serviceDefault = {
 
 /**
  * Default for a Product
- * @type {Product}
  */
 export const defaultProduct = {
-  id: 3,
-  organization: {},
+  id: undefined,
+  organization: null,
   preview: null,
   img_url: null,
   img_name: null,
   product: null,
   product_url: null,
   product_name: null,
-  category: {},
-  subcategory: {},
-  name: "",
-  description: "",
+  category: null,
+  subcategory: null,
+  name: null,
+  description: "No description available",
   price: "",
   rating: 0,
   product_token: "",
@@ -242,20 +232,18 @@ export const defaultProduct = {
 
 /**
  * Default for Subscription
- * @type {Subscription}
  */
 export const subscriptionDefault = {
-  id: null,
+  id: undefined,
   email: "",
   date_added: new Date(),
 };
 
 /**
  * Default for Message
- * @type {Email}
  */
 export const messageDefault = {
-  id: null,
+  id: undefined,
   name: "",
   subject: "",
   message: "",
@@ -265,35 +253,34 @@ export const messageDefault = {
   read: false,
 };
 
-export const dept_icons = [
+export const dept_icons: Array<{ id: number; icon: ComponentType }> = [
   {
     id: 1,
-    icon: <MdOutlineQuestionAnswer />,
+    icon: MdOutlineQuestionAnswer,
   },
   {
     id: 2,
-    icon: <PiGraduationCapBold />,
+    icon: PiGraduationCapBold,
   },
   {
     id: 3,
-    icon: <TbBooks />,
+    icon: TbBooks,
   },
   {
     id: 4,
-    icon: <RiCustomerService2Line />,
+    icon: RiCustomerService2Line,
   },
   {
     id: 5,
-    icon: <PiGearBold />,
+    icon: PiGearBold,
   },
 ];
 
 /**
  * Default for Order
- * @type {Order}
  */
 export const orderDefault = {
-  id: null,
+  id: undefined,
   organization: null,
   customer: null,
   services: [],
@@ -309,9 +296,7 @@ export const orderDefault = {
 
 /**
  * Default for Order Report to Admin
- * @type {OrderReport}
  */
-
 export const orderReportDefault = {
   totalorders: null,
   totalcustomers: null,
@@ -320,20 +305,18 @@ export const orderReportDefault = {
 
 /**
  * Default User Data
- *
- * @type {User}
  */
-export const userDefault = {
-  id: null,
+export const userDefault: User = {
+  id: undefined,
   avatar: null,
   avatar_url: null,
   avatar_name: null,
-  is_superuser: true,
-  username: null,
-  first_name: null,
-  last_name: null,
-  email: null,
-  is_staff: true,
+  is_superuser: false,
+  username: "",
+  first_name: "",
+  last_name: "",
+  email: "",
+  is_staff: false,
   is_active: true,
   isOauth: false,
   Oauthprovider: null,
@@ -344,17 +327,15 @@ export const userDefault = {
   address: null,
   Sex: null,
   phone: null,
-  last_login: new Date(),
+  last_login: null,
   date_joined: new Date(),
 };
 
 /**
  * Default for Sub-Category
- *
- * @type {SubCategory}
  */
 export const SubCategorydefault = {
-  id: null,
+  id: undefined,
   category: null,
   subcategory: "",
 };

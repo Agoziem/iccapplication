@@ -1,4 +1,4 @@
-export const converttoformData = (data, jsonKeys = []) => {
+export const converttoformData = (data: Record<string, any>, jsonKeys: string[] = []): FormData => {
   const formData = new FormData();
   
   for (let key in data) {

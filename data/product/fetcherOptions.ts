@@ -1,60 +1,60 @@
+import type { Product, Products } from "@/types/items";
+
 /**
- * add Message Responses Configuration
- * @param {EmailResponse} newResponse
+ * Add Product Response Configuration for optimistic updates
  */
-export const addMessageResponseOptions = (newResponse) => {
+export const addProductOptions = (newProduct: Product) => {
   return {
-    /** @param {EmailResponseArray} responses */
-    optimisticData: (responses) =>
-      [...responses, newResponse].sort(
+    optimisticData: (products: Products): Products =>
+      [...products, newProduct].sort(
         (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
       ),
 
     rollbackOnError: true,
-    /**
-     * @param {EmailResponseArray} responses
-     * @param {EmailResponse} addedResponse
-     */
-    populateCache: (addedResponse, responses) =>
-      [...responses, addedResponse].sort(
+    populateCache: (addedProduct: Product, products: Products): Products =>
+      [...products, addedProduct].sort(
         (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
       ),
     revalidate: false,
   };
 };
 
 /**
- * add Email Message Configuration
- * @param {EmailMessage} newSentEmail
+ * Update Product Configuration for optimistic updates
  */
-export const createEmailOptions = (newSentEmail) => {
+export const updateProductOptions = (updatedProduct: Product) => {
   return {
-    /** @param {EmailMessageArray} sentemails */
-    optimisticData: (sentemails) => {
-      const updatedSentEmails = sentemails ? [...sentemails] : [];
-      return [newSentEmail, ...updatedSentEmails];
+    optimisticData: (products: Products): Products => {
+      return products.map((product) =>
+        product.id === updatedProduct.id ? { ...product, ...updatedProduct } : product
+      );
     },
 
     rollbackOnError: true,
-
-    /**
-     * @param {EmailMessageArray} responses
-     * @param {EmailMessage} addedResponse
-     */
-    populateCache: (addedResponse, responses) => {
-      const emailExists = responses.some(
-        (email) => email.id === addedResponse.id
+    populateCache: (updatedProductResponse: Product, products: Products): Products => {
+      return products.map((product) =>
+        product.id === updatedProductResponse.id ? updatedProductResponse : product
       );
-      if (emailExists) {
-        return responses.map((email) =>
-          email.id === addedResponse.id ? addedResponse : email
-        );
-      }
-      return [addedResponse, ...responses];
+    },
+    revalidate: false,
+  };
+};
+
+/**
+ * Delete Product Configuration for optimistic updates
+ */
+export const deleteProductOptions = (productId: number) => {
+  return {
+    optimisticData: (products: Products): Products => {
+      return products.filter((product) => product.id !== productId);
     },
 
+    rollbackOnError: true,
+    populateCache: (deletedProductId: number, products: Products): Products => {
+      return products.filter((product) => product.id !== deletedProductId);
+    },
     revalidate: false,
   };
 };

@@ -1,7 +1,14 @@
 "use client";
 
-import React from "react";
-import { useQuery, useMutation, QueryClient, QueryClientProvider, useQueryClient } from "react-query";
+import { 
+  useQuery, 
+  useMutation, 
+  QueryClient, 
+  useQueryClient,
+  UseQueryResult,
+  UseMutationResult
+} from "react-query";
+import type { NotificationMessage } from "@/types/notifications";
 import {
   fetchNotifications,
   createNotification,
@@ -9,16 +16,18 @@ import {
   deleteNotification,
 } from "@/data/notificationsAPI/fetcher";
 
+type NotificationMessageArray = NotificationMessage[];
+
 // Initialize the Query Client
 const queryClient = new QueryClient();
 
 // Custom Hook: Fetch Notifications
-export const useFetchNotifications = () => {
+export const useFetchNotifications = (): UseQueryResult<NotificationMessageArray | undefined, Error> => {
   return useQuery(["notifications"], fetchNotifications);
 };
 
 // Custom Hook: Create Notification
-export const useCreateNotification = () => {
+export const useCreateNotification = (): UseMutationResult<NotificationMessage | undefined, Error, Omit<NotificationMessage, "id" | "created_at">> => {
   const queryClient = useQueryClient();
   return useMutation(createNotification, {
     onSuccess: () => {
@@ -28,7 +37,7 @@ export const useCreateNotification = () => {
 };
 
 // Custom Hook: Update Notification
-export const useUpdateNotification = () => {
+export const useUpdateNotification = (): UseMutationResult<NotificationMessage | undefined, Error, NotificationMessage> => {
   const queryClient = useQueryClient();
   return useMutation(updateNotification, {
     onSuccess: (_, variables) => {
@@ -39,16 +48,11 @@ export const useUpdateNotification = () => {
 };
 
 // Custom Hook: Delete Notification
-export const useDeleteNotification = () => {
+export const useDeleteNotification = (): UseMutationResult<number, Error, number> => {
   const queryClient = useQueryClient();
   return useMutation(deleteNotification, {
     onSuccess: () => {
       queryClient.invalidateQueries(["notifications"]); // Refresh notifications list
     },
   });
-};
-
-// Optional Notifications Provider (for global query client and structure)
-export const NotificationsProvider = ({ children }) => {
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 };

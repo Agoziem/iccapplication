@@ -1,14 +1,15 @@
-import {
-  categorySchema,
-  categoryArraySchema,
-  subcategorySchema,
-} from "@/schemas/categories";
-import { z } from "zod";
-
-export type Category = z.infer<typeof categorySchema>;
+export interface Category {
+  id?: number | null;
+  category: string;
+  description?: string | null;
+}
 
 export type Categories = Category[];
 
-export type SubCategory = z.infer<typeof subcategorySchema>;
+export interface SubCategory {
+  id?: number;
+  category: Category;
+  subcategory: string;
+}
 
 export type SubCategories = SubCategory[];

@@ -1,27 +1,78 @@
 "use client";
-import React, { createContext, useState, useEffect, useContext } from "react";
-import axios from "axios";
+import React, { createContext, useState, useEffect, useContext, ReactNode } from "react";
+import axios, { AxiosResponse } from "axios";
+
+// Types for Chatroom
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  profile_picture?: string;
+}
+
+interface ChatroomData {
+  id: number;
+  name: string;
+  description?: string;
+  group_name: string;
+  organization: number;
+  owner: User;
+  admins: User[];
+  members: User[];
+  created_at: string;
+  updated_at: string;
+}
+
+interface CreateChatroomData {
+  name: string;
+  description?: string;
+  organization: number;
+}
+
+interface ChatroomContextType {
+  organizationID: string | null;
+  groupChats: ChatroomData[];
+  selectedChat: ChatroomData | null;
+  setSelectedChat: (chat: ChatroomData | null) => void;
+  fetchGroupChats: (user_id?: number | null) => Promise<void>;
+  createGroupChat: (user_id: number, data: CreateChatroomData) => Promise<void>;
+  editChatRoom: (chatroomId: number, user_id: number, data: Partial<CreateChatroomData>) => Promise<void>;
+  deleteChatRoom: (chatroomId: number, user_id: number) => Promise<void>;
+  addUsersToChatRoom: (chatroomId: number, admin_id: number, users: number[]) => Promise<void>;
+  addUserToChatRoom: (chatroomId: number, admin_id: number, user_id: number) => Promise<void>;
+  removeMembersFromChatRoom: (chatroomId: number, admin_id: number, users: number[]) => Promise<void>;
+  removeMemberFromChatRoom: (chatroomId: number, admin_id: number, user_id: number) => Promise<void>;
+  addAdminsToChatRoom: (chatroomId: number, owner_id: number, users: number[]) => Promise<void>;
+  addAdminToChatRoom: (chatroomId: number, owner_id: number, user_id: number) => Promise<void>;
+  removeAdminsFromChatRoom: (chatroomId: number, owner_id: number, users: number[]) => Promise<void>;
+  removeAdminFromChatRoom: (chatroomId: number, owner_id: number, user_id: number) => Promise<void>;
+  viewChatRoom: (chatroomId: number, user_id: number) => Promise<void>;
+}
 
 // Create the context
-const ChatroomContext = createContext(null);
+const ChatroomContext = createContext<ChatroomContextType | null>(null);
 
-const ChatroomContextProvider = ({ children }) => {
-  const [organizationID, setOrganizationID] = useState(
-    process.env.NEXT_PUBLIC_ORGANIZATION_ID
+interface ChatroomProviderProps {
+  children: ReactNode;
+}
+
+const ChatroomContextProvider: React.FC<ChatroomProviderProps> = ({ children }) => {
+  const [organizationID, setOrganizationID] = useState<string | null>(
+    process.env.NEXT_PUBLIC_ORGANIZATION_ID || null
   );
-  const [groupChats, setGroupChats] = useState([]);
-  const [selectedChat, setSelectedChat] = useState(null);
+  const [groupChats, setGroupChats] = useState<ChatroomData[]>([]);
+  const [selectedChat, setSelectedChat] = useState<ChatroomData | null>(null);
 
 
   // ------------------------------------------------------
   // Fetch group chats from the API
   // ------------------------------------------------------
-  const fetchGroupChats = async (user_id = null) => {
+  const fetchGroupChats = async (user_id: number | null = null): Promise<void> => {
     try {
       const url = user_id
         ? `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/chatroomapi/chatrooms/${organizationID}/${user_id}/list/`
         : `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/chatroomapi/chatrooms/${organizationID}/list/`;
-      const response = await axios.get(url);
+      const response: AxiosResponse<ChatroomData[]> = await axios.get(url);
       setGroupChats(response.data);
     } catch (error) {
       console.error("Failed to fetch group chats", error);
@@ -31,9 +82,9 @@ const ChatroomContextProvider = ({ children }) => {
   //------------------------------------------------------
   // Create a group chat (only the admin can create)
   //------------------------------------------------------ 
-  const createGroupChat = async (user_id, data) => {
+  const createGroupChat = async (user_id: number, data: CreateChatroomData): Promise<void> => {
     try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/chatroomapi/chatrooms/${user_id}/create/`, data);
+      const response: AxiosResponse<ChatroomData> = await axios.post(`${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/chatroomapi/chatrooms/${user_id}/create/`, data);
       setGroupChats([...groupChats, response.data]);
     } catch (error) {
       console.error("Failed to create group chat", error);
@@ -43,9 +94,9 @@ const ChatroomContextProvider = ({ children }) => {
   //------------------------------------------------------
   // Edit a group chat (only the admin can edit)
   //------------------------------------------------------
-  const editChatRoom = async (chatroomId, user_id, data) => {
+  const editChatRoom = async (chatroomId: number, user_id: number, data: Partial<CreateChatroomData>): Promise<void> => {
     try {
-      const response = await axios.put(
+      const response: AxiosResponse<ChatroomData> = await axios.put(
         `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/chatroomapi/chatrooms/${chatroomId}/${user_id}/edit/`,
         data
       );
@@ -62,7 +113,7 @@ const ChatroomContextProvider = ({ children }) => {
   // ------------------------------------------------------
   // Delete a group chat (only the admin can delete)
   // ------------------------------------------------------
-  const deleteChatRoom = async (chatroomId, user_id) => {
+  const deleteChatRoom = async (chatroomId: number, user_id: number): Promise<void> => {
     try {
       await axios.delete(`${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/chatroomapi/chatrooms/${chatroomId}/${user_id}/delete/`);
       setGroupChats(groupChats.filter((chat) => chat.id !== chatroomId));
@@ -75,7 +126,7 @@ const ChatroomContextProvider = ({ children }) => {
   // ------------------------------------------------------
   // Add users to a chat room (only the admin can add)
   // ------------------------------------------------------
-  const addUsersToChatRoom = async (chatroomId, admin_id, users) => {
+  const addUsersToChatRoom = async (chatroomId: number, admin_id: number, users: number[]): Promise<void> => {
     try {
       await axios.post(
         `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/chatroomapi/chatrooms/${chatroomId}/${admin_id}/add-users/`,
@@ -90,7 +141,7 @@ const ChatroomContextProvider = ({ children }) => {
   // ------------------------------------------------------
   // Add a user to a chat room (only the admin can add)
   // ------------------------------------------------------
-  const addUserToChatRoom = async (chatroomId, admin_id, user_id) => {
+  const addUserToChatRoom = async (chatroomId: number, admin_id: number, user_id: number): Promise<void> => {
     try {
       await axios.post(
         `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/chatroomapi/chatrooms/${chatroomId}/${admin_id}/add-user/`,
@@ -105,7 +156,7 @@ const ChatroomContextProvider = ({ children }) => {
   // ------------------------------------------------------
   // Remove members from a chat room (only the admin can remove)
   // ------------------------------------------------------
-  const removeMembersFromChatRoom = async (chatroomId, admin_id, users) => {
+  const removeMembersFromChatRoom = async (chatroomId: number, admin_id: number, users: number[]): Promise<void> => {
     try {
       await axios.delete(
         `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/chatroomapi/chatrooms/${chatroomId}/${admin_id}/remove-members/`,
@@ -120,7 +171,7 @@ const ChatroomContextProvider = ({ children }) => {
   // ------------------------------------------------------
   // Remove a member from a chat room (only the admin can remove)
   // ------------------------------------------------------
-  const removeMemberFromChatRoom = async (chatroomId, admin_id, user_id) => {
+  const removeMemberFromChatRoom = async (chatroomId: number, admin_id: number, user_id: number): Promise<void> => {
     try {
       await axios.delete(
         `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/chatroomapi/chatrooms/${chatroomId}/${admin_id}/remove-member/`,
@@ -135,7 +186,7 @@ const ChatroomContextProvider = ({ children }) => {
   // ------------------------------------------------------
   // Add admins to a chat room (only the owner can add)
   // ------------------------------------------------------
-  const addAdminsToChatRoom = async (chatroomId, owner_id, users) => {
+  const addAdminsToChatRoom = async (chatroomId: number, owner_id: number, users: number[]): Promise<void> => {
     try {
       await axios.post(
         `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/chatroomapi/chatrooms/${chatroomId}/${owner_id}/add-admins/`,
@@ -150,7 +201,7 @@ const ChatroomContextProvider = ({ children }) => {
   // ------------------------------------------------------
   // Add an admin to a chat room (only the owner can add)
   // ------------------------------------------------------
-  const addAdminToChatRoom = async (chatroomId, owner_id, user_id) => {
+  const addAdminToChatRoom = async (chatroomId: number, owner_id: number, user_id: number): Promise<void> => {
     try {
       await axios.post(
         `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/chatroomapi/chatrooms/${chatroomId}/${owner_id}/add-admin/`,
@@ -165,7 +216,7 @@ const ChatroomContextProvider = ({ children }) => {
   // ------------------------------------------------------
   // Remove admins from a chat room (only the owner can remove)
   // ------------------------------------------------------
-  const removeAdminsFromChatRoom = async (chatroomId, owner_id, users) => {
+  const removeAdminsFromChatRoom = async (chatroomId: number, owner_id: number, users: number[]): Promise<void> => {
     try {
       await axios.delete(
         `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/chatroomapi/chatrooms/${chatroomId}/${owner_id}/remove-admins/`,
@@ -180,7 +231,7 @@ const ChatroomContextProvider = ({ children }) => {
   // ------------------------------------------------------
   // Remove an admin from a chat room (only the owner can remove)
   // ------------------------------------------------------
-  const removeAdminFromChatRoom = async (chatroomId, owner_id, user_id) => {
+  const removeAdminFromChatRoom = async (chatroomId: number, owner_id: number, user_id: number): Promise<void> => {
     try {
       await axios.delete(
         `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/chatroomapi/chatrooms/${chatroomId}/${owner_id}/remove-admin/`,
@@ -195,9 +246,9 @@ const ChatroomContextProvider = ({ children }) => {
   // ------------------------------------------------------
   // View a chat room
   // ------------------------------------------------------
-  const viewChatRoom = async (chatroomId, user_id) => {
+  const viewChatRoom = async (chatroomId: number, user_id: number): Promise<void> => {
     try {
-      const response = await axios.get(
+      const response: AxiosResponse<ChatroomData> = await axios.get(
         `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/chatroomapi/chatrooms/${chatroomId}/${user_id}/view/`
       );
       setSelectedChat(response.data);
@@ -235,8 +286,12 @@ const ChatroomContextProvider = ({ children }) => {
   );
 };
 
-const useChatroomContext = () => {
-  return useContext(ChatroomContext);
+const useChatroomContext = (): ChatroomContextType => {
+  const context = useContext(ChatroomContext);
+  if (!context) {
+    throw new Error("useChatroomContext must be used within a ChatroomContextProvider");
+  }
+  return context;
 };
 
 export { ChatroomContextProvider, useChatroomContext };

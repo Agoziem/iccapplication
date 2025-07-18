@@ -1,11 +1,12 @@
-import {
-  WAContactArraySchema,
-  WAMessageArraySchema,
-  WAMessageSchema,
-  WATemplateArraySchema,
-  WATemplateSchema,
-} from "@/schemas/whatsapp";
-import axios from "axios";
+import type {
+  WAContact,
+  WAContacts,
+  WAMessage,
+  WAMessages,
+  WATemplate,
+  WATemplateArray,
+} from "@/types/whatsapp";
+import axios, { AxiosResponse } from "axios";
 
 export const axiosInstance = axios.create({
   baseURL: `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}`,
@@ -15,56 +16,47 @@ export const WhatsappAPIendpoint = "/whatsappAPI";
 export const WATemplatescachekey = "whatsapp_templates_data";
 
 // Fetch the Contacts and cache
-export const fetchWAContacts = async () => {
-  const response = await axiosInstance.get(`${WhatsappAPIendpoint}/contacts/`);
-  const validation = WAContactArraySchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
+export const fetchWAContacts = async (): Promise<WAContacts | undefined> => {
+  try {
+    const response: AxiosResponse<WAContacts> = await axiosInstance.get(`${WhatsappAPIendpoint}/contacts/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching WA contacts:", error);
+    throw error;
   }
-  return validation.data;
 };
 
-/**
- * function to fetchWAMessages for a specific contact
- * @async
- * @param {number} contact_id
- */
-export const fetchWAMessages = async (contact_id) => {
-  const response = await axiosInstance.get(
-    `${WhatsappAPIendpoint}/messages/${contact_id}/`
-  );
-  const validation = WAMessageArraySchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
+export const fetchWAMessages = async (contact_id: number): Promise<WAMessages | undefined> => {
+  try {
+    const response: AxiosResponse<WAMessages> = await axiosInstance.get(
+      `${WhatsappAPIendpoint}/messages/${contact_id}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching WA messages:", error);
+    throw error;
   }
-  return validation.data;
 };
 
-/**
- * function to fetchWAMessages for a specific contact
- * @async
- * @param {WAMessage} wamessage
- */
-export const sendWAMessage = async (wamessage) => {
-  const response = await axiosInstance.post(
-    `${WhatsappAPIendpoint}/${wamessage.contact}/send_message/`,
-    wamessage
-  );
-  const validation = WAMessageSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
+export const sendWAMessage = async (wamessage: Omit<WAMessage, "id" | "timestamp">): Promise<WAMessage | undefined> => {
+  try {
+    const response: AxiosResponse<WAMessage> = await axiosInstance.post(
+      `${WhatsappAPIendpoint}/${wamessage.contact}/send_message/`,
+      wamessage
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error sending WA message:", error);
+    throw error;
   }
-  return validation.data;
 };
 
-// ------------------------------------------------------
 // Fetch media by ID
-// ------------------------------------------------------
-export const getMedia = async (media_id) => {
+export const getMedia = async (media_id: string): Promise<string | null> => {
   console.log("Fetching media", media_id);
   try {
     // Fetch the media binary from Django backend
-    const response = await axios.get(
+    const response: AxiosResponse<ArrayBuffer> = await axios.get(
       `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/whatsappAPI/media/${media_id}/`,
       { responseType: "arraybuffer" } // Ensure binary data is handled correctly
     );
@@ -79,70 +71,67 @@ export const getMedia = async (media_id) => {
   }
 };
 
-export const getSentTemplates = async () => {
-  const response = await axiosInstance.get(`${WhatsappAPIendpoint}/templates/`);
-  const validation = WATemplateArraySchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
+export const getSentTemplates = async (): Promise<WATemplateArray | undefined> => {
+  try {
+    const response: AxiosResponse<WATemplateArray> = await axiosInstance.get(`${WhatsappAPIendpoint}/templates/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching WA templates:", error);
+    throw error;
   }
-  return validation.data;
 };
 
-/**
- * function to fetchWAMessages for a specific contact
- * @async
- * @param {WATemplate} Template
- */
-export const createTemplateMessage = async (Template) => {
-  const contacts = await fetchWAContacts();
+export const createTemplateMessage = async (Template: Omit<WATemplate, "id" | "timestamp">): Promise<WATemplate | null> => {
+  try {
+    const contacts = await fetchWAContacts();
 
-  if (!contacts?.length) return;
+    if (!contacts?.length) return null;
 
-  await Promise.all(
-    contacts.map((contact) =>
-      sendTemplateMessage(
-        contact.wa_id,
-        Template.template,
-        "en_US",
-        Template.text,
-        Template.link
+    await Promise.all(
+      contacts.map((contact: WAContact) =>
+        sendTemplateMessage(
+          contact.wa_id,
+          Template.template,
+          "en_US",
+          Template.text,
+          Template.link || ""
+        )
       )
-    )
-  );
+    );
 
-  const response = await axiosInstance.post(
-    `${WhatsappAPIendpoint}/templates/`,
-    Template
-  );
-  // Validate the response with Zod schema
-  const validation = WATemplateSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-    return null;
+    const response: AxiosResponse<WATemplate> = await axiosInstance.post(
+      `${WhatsappAPIendpoint}/templates/`,
+      Template
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error creating template message:", error);
+    throw error;
   }
-  return validation.data;
 };
 
-// -----------------------------------------
-// get all the WA contacts
-// -----------------------------------------
 const sendTemplateMessage = async (
-  to_phone_number,
-  template_name,
-  language_code = "en_US",
-  text = "",
-  medialink = ""
-) => {
-  const data = {
-    to_phone_number,
-    template_name,
-    language_code,
-    text,
-    medialink,
-  };
-  const response = await axiosInstance.post(
-    `${WhatsappAPIendpoint}/send-template-message/`,
-    data
-  );
-  return response.status;
+  to_phone_number: string,
+  template_name: string,
+  language_code: string = "en_US",
+  text: string = "",
+  medialink: string = ""
+): Promise<number> => {
+  try {
+    const data = {
+      to_phone_number,
+      template_name,
+      language_code,
+      text,
+      medialink,
+    };
+    const response: AxiosResponse<any> = await axiosInstance.post(
+      `${WhatsappAPIendpoint}/send-template-message/`,
+      data
+    );
+    return response.status;
+  } catch (error) {
+    console.error("Error sending template message:", error);
+    throw error;
+  }
 };

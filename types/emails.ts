@@ -1,25 +1,48 @@
-import {
-  emailMessageSchema,
-  emailResponseSchema,
-  emailSchema,
-  messageSchema,
-  MessageWebsocketSchema,
-} from "@/schemas/emails";
-import { z } from "zod";
+export type MessageStatus = "pending" | "sent" | "failed";
 
-  export type Email = z.infer<typeof emailSchema>;
+export interface Message {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}
 
-  export type EmailArrays = Email[];
+export interface Email {
+  id: number;
+  organization: number | null;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  created_at: string;
+  read: boolean;
+}
 
-  export type EmailResponse = z.infer<typeof emailResponseSchema>;
+export type EmailArrays = Email[];
 
-  export type EmailResponseArray = EmailResponse[];
+export interface EmailResponse {
+  message: number;
+  recipient_email: string;
+  response_subject: string;
+  response_message: string;
+  created_at?: string;
+}
 
-  export type EmailWebsocket = z.infer<typeof MessageWebsocketSchema>;
+export type EmailResponseArray = EmailResponse[];
 
-  export type EmailMessage = z.infer<typeof emailMessageSchema>;
+export interface EmailMessage {
+  id?: number;
+  subject: string;
+  body: string;
+  template?: string | null;
+  created_at?: string;
+  status: MessageStatus;
+}
 
-  export type EmailMessageArray = EmailMessage[];
+export type EmailMessageArray = EmailMessage[];
 
-  export type Message = z.infer<typeof messageSchema>;
+export interface EmailWebsocket {
+  operation: string;
+  message: Email;
+}
 

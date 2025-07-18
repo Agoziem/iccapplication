@@ -1,12 +1,14 @@
 import axios from "axios";
-import {
-  emailMessagesArraySchema,
-  emailMessageSchema,
-  emailResponseArraySchema,
-  emailResponseSchema,
-  emailsResponseSchema,
-} from "@/schemas/emails";
-import { subscriptionArraySchema, subscriptionSchema } from "@/schemas/organizations";
+import type {
+  Email,
+  EmailArrays,
+  EmailResponse,
+  EmailResponseArray,
+  EmailMessage,
+  EmailMessageArray,
+  Message,
+} from "@/types/emails";
+import type { Subscription, Subscriptions } from "@/types/organizations";
 import { sendMultipleEmails } from "@/utils/mail";
 
 export const axiosInstance = axios.create({
@@ -14,90 +16,72 @@ export const axiosInstance = axios.create({
 });
 
 export const emailAPIendpoint = "/emailsapi";
+const OrganizationID = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
 
-const OrganizationID = process.env.NEXT_PUBLIC_ORGANIZATION_ID
-
-// fetch all the emails
-export const fetchEmails = async () => {
+/**
+ * Fetch all emails
+ */
+export const fetchEmails = async (): Promise<any> => {
   const response = await axiosInstance.get(
     `${emailAPIendpoint}/emails/${OrganizationID}/`
   );
-  const validation = emailsResponseSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
-
 /**
- * @async
- * @param {number} emailid
- * @returns {Promise<number>}
+ * Delete an email
  */
-export const deleteEmail = async (emailid) => {
-  await axiosInstance.delete(`${emailAPIendpoint}/subscription/delete/${emailid}/`);
+export const deleteEmail = async (emailid: number): Promise<number> => {
+  await axiosInstance.delete(
+    `${emailAPIendpoint}/subscription/delete/${emailid}/`
+  );
   return emailid;
 };
 
 /**
- * fetches all Responses to a Message from the database
- * @async
- * @param {Email} data
- * @returns {Promise<EmailResponseArray>}
+ * Get responses to a message from the database
  */
-export const getResponses = async (data) => {
+export const getResponses = async (data: Email): Promise<any> => {
   const response = await axiosInstance.get(
     `${emailAPIendpoint}/emails/${data.id}/responses/`
   );
-  const validation = emailResponseArraySchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
 /**
- * submits Responses to database and updates the Ui optimistically
- * @async
- * @param {EmailResponse} data
- * @returns {Promise<EmailResponse>}
+ * Submit response to database
  */
-export const submitResponse = async (data) => {
+export const submitResponse = async (
+  data: Omit<EmailResponse, "id" | "created_at">
+): Promise<any> => {
   const response = await axiosInstance.post(
     `${emailAPIendpoint}/emails/createresponse/`,
     data
   );
-  const validation = emailResponseSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
-};
-
-export const getSentEmail = async () => {
-  const response = await axiosInstance.get(
-    `${emailAPIendpoint}/emails/getsentemails/`
-  );
-  const validation = emailMessagesArraySchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
 /**
- * create and send emails to the customers
- * @async
- * @param {EmailMessage} data
- * @returns {Promise<EmailMessage>}
+ * Get sent emails
  */
-export const createEmail = async (data) => {
+export const getSentEmail = async (): Promise<any> => {
+  const response = await axiosInstance.get(
+    `${emailAPIendpoint}/emails/getsentemails/`
+  );
+  return response.data;
+};
+
+/**
+ * Create and send emails to customers
+ */
+export const createEmail = async (
+  data: Omit<EmailMessage, "id" | "created_at">
+): Promise<any> => {
   const allsubscriptions = await getallemails();
   if (!allsubscriptions?.length) return;
-  
+
   await Promise.all(
-    allsubscriptions.map((subscription) =>
+    allsubscriptions.map((subscription: Subscription) =>
       sendMultipleEmails(subscription.email, data.body, data.subject)
     )
   );
@@ -106,36 +90,26 @@ export const createEmail = async (data) => {
     `${emailAPIendpoint}/emails/createsendemails/`,
     data
   );
-  const validation = emailMessageSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.error(validation.error.issues);
-    throw new Error("Email validation failed.");
-  }
-
-  return validation.data;
+  return response.data;
 };
 
-
-
-export const getallemails = async () => {
+/**
+ * Get all email subscriptions
+ */
+export const getallemails = async (): Promise<any> => {
   const response = await axiosInstance.get(
     `${emailAPIendpoint}/subscriptions/${OrganizationID}/`
   );
-  const validation = subscriptionArraySchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
-}
+  return response.data;
+};
 
 /**
- * @async
- * @param {Message} data
+ * Send a message
  */
-export const sendMessage = async (data) => {
+export const sendMessage = async (data: Message): Promise<any> => {
   const response = await axiosInstance.post(
     `${emailAPIendpoint}/add_email/${OrganizationID}/`,
     data
   );
   return response.data;
-}
+};

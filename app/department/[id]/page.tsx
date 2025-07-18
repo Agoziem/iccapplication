@@ -45,6 +45,11 @@ const Department: FC<DepartmentPageProps> = ({ params }) => {
     }
   }, [id, depts]);
 
+  const findDepartmentIcon = (deptId: number) => {
+    const icon = dept_icons.find((icon) => icon.id === deptId);
+    return icon ? <icon.icon /> : <span className="text-secondary">?</span>;
+  };
+
   return (
     <section className="px-5 pt-3">
       <BackButton />
@@ -147,7 +152,7 @@ const Department: FC<DepartmentPageProps> = ({ params }) => {
                 <div className="card-body">
                   <div className="d-flex flex-column justify-content-center align-items-center mb-3">
                     <span className="dept-icon h1 mb-3 text-secondary">
-                      {dept_icons.find((icon) => icon.id === dept.id)?.icon}
+                      {dept.id ? findDepartmentIcon(dept.id) : <span className="text-secondary">?</span>}
                     </span>
                     <h4 className="mb-0">{dept.name}</h4>
                   </div>

@@ -1,50 +1,149 @@
-import {
-  departmentResponseSchema,
-  departmentSchema,
-  departmentServiceResponseSchema,
-  departmentServiceSchema,
-  organizationSchema,
-  staffResponseSchema,
-  staffSchema,
-  subscriptionSchema,
-  subscriptionsResponseSchema,
-  testimonialSchema,
-  testimonialsResponseSchema,
-} from "@/schemas/organizations";
-import { z } from "zod";
+export interface Organization {
+  id?: number;
+  name: string;
+  description: string;
+  logo?: string | null;
+  Organizationlogoname?: string | null;
+  Organizationlogo?: string | null;
+  vision: string;
+  mission: string;
+  email: string;
+  phone: string;
+  address: string;
+  whatsapplink?: string | null;
+  facebooklink?: string | null;
+  instagramlink?: string | null;
+  twitterlink?: string | null;
+  tiktoklink?: string | null;
+  linkedinlink?: string | null;
+  youtubechannel?: string | null;
+  privacy_policy?: string | null;
+  terms_of_use?: string | null;
+  created_at: Date;
+  last_updated_date: Date;
+}
 
-  export type Organization = z.infer<typeof organizationSchema>;
+export type Organizations = Organization[];
 
-  export type Organizations = Organization[];
+export interface Staff {
+  id?: number;
+  organization?: number | null;
+  first_name: string;
+  last_name: string;
+  other_names?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  img?: string | null;
+  img_url?: string | null;
+  img_name?: string | null;
+  role?: string | null;
+  facebooklink?: string | null;
+  instagramlink?: string | null;
+  twitterlink?: string | null;
+  linkedinlink?: string | null;
+  created_at: Date;
+  last_updated_date: Date;
+}
 
-  export type Staff = z.infer<typeof staffSchema>;
+export interface Staffpaginated {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Staff[];
+}
 
-  export type Staffpaginated = z.infer<typeof staffResponseSchema>;
+export type Staffs = Staff[];
 
-  export type Staffs = Staff[];
+export interface Testimony {
+  id?: number;
+  organization?: number | null;
+  name: string;
+  content: string;
+  role?: string | null;
+  img?: string | null;
+  img_url?: string | null;
+  img_name?: string | null;
+  rating?: number | null;
+  created_at: Date;
+  last_updated_date: Date;
+}
 
-  export type Testimony = z.infer<typeof testimonialSchema>;
+export interface Testimonypaginated {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Testimony[];
+}
 
-  export type Testimonypaginated = z.infer<typeof testimonialsResponseSchema>;
+export type Testimonies = Testimony[];
 
-  export type Testimonies = Testimony[];
+export interface Subscription {
+  id?: number;
+  email: string;
+  date_added: Date;
+}
 
-  export type Subscription = z.infer<typeof subscriptionSchema>;
+export interface Subscriptionpaginated {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Subscription[];
+}
 
-  export type Subscriptionpaginated = z.infer<typeof subscriptionsResponseSchema>;
+export type Subscriptions = Subscription[];
 
-  export type Subscriptions = Subscription[];
+export interface Departmentservice {
+  id?: number;
+  name: string;
+}
 
-  export type Departmentservice = z.infer<typeof departmentServiceSchema>;
+export interface DepartmentserviceResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Departmentservice[];
+}
 
-  export type DepartmentserviceResponse = z.infer<typeof departmentServiceResponseSchema>;
+export type Departmentservices = Departmentservice[];
 
-  export type Departmentservices = Department[];
+export interface OrganizationMini {
+  id?: number | null;
+  name: string;
+}
 
-  export type Department = z.infer<typeof departmentSchema>;
+export interface StaffInCharge {
+  id?: number | null;
+  name: string;
+  img_url?: string | null;
+}
 
-  export type DepartmentResponse = z.infer<typeof departmentResponseSchema>;
+export interface ServiceMini {
+  id?: number;
+  name: string;
+}
 
-  export type Departments = Subscription[];
+export interface Department {
+  id?: number | null;
+  organization: OrganizationMini | null;
+  img?: string | null;
+  img_url?: string | null;
+  img_name?: string | null;
+  name: string;
+  description: string;
+  staff_in_charge?: StaffInCharge | null;
+  services?: ServiceMini[];
+  created_at: Date;
+  last_updated_date: Date;
+}
+
+export interface DepartmentResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Department[];
+}
+
+export type Departments = Department[];
 
 

@@ -1,60 +1,60 @@
+import type { Service, Services } from "@/types/items";
+
 /**
- * add Message Responses Configuration
- * @param {EmailResponse} newResponse
+ * Add Service Response Configuration for optimistic updates
  */
-export const addMessageResponseOptions = (newResponse) => {
+export const addServiceOptions = (newService: Service) => {
   return {
-    /** @param {EmailResponseArray} responses */
-    optimisticData: (responses) =>
-      [...responses, newResponse].sort(
+    optimisticData: (services: Services): Services =>
+      [...services, newService].sort(
         (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
       ),
 
     rollbackOnError: true,
-    /**
-     * @param {EmailResponseArray} responses
-     * @param {EmailResponse} addedResponse
-     */
-    populateCache: (addedResponse, responses) =>
-      [...responses, addedResponse].sort(
+    populateCache: (addedService: Service, services: Services): Services =>
+      [...services, addedService].sort(
         (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
       ),
     revalidate: false,
   };
 };
 
 /**
- * add Email Message Configuration
- * @param {EmailMessage} newSentEmail
+ * Update Service Configuration for optimistic updates
  */
-export const createEmailOptions = (newSentEmail) => {
+export const updateServiceOptions = (updatedService: Service) => {
   return {
-    /** @param {EmailMessageArray} sentemails */
-    optimisticData: (sentemails) => {
-      const updatedSentEmails = sentemails ? [...sentemails] : [];
-      return [newSentEmail, ...updatedSentEmails];
+    optimisticData: (services: Services): Services => {
+      return services.map((service) =>
+        service.id === updatedService.id ? { ...service, ...updatedService } : service
+      );
     },
 
     rollbackOnError: true,
-
-    /**
-     * @param {EmailMessageArray} responses
-     * @param {EmailMessage} addedResponse
-     */
-    populateCache: (addedResponse, responses) => {
-      const emailExists = responses.some(
-        (email) => email.id === addedResponse.id
+    populateCache: (updatedServiceResponse: Service, services: Services): Services => {
+      return services.map((service) =>
+        service.id === updatedServiceResponse.id ? updatedServiceResponse : service
       );
-      if (emailExists) {
-        return responses.map((email) =>
-          email.id === addedResponse.id ? addedResponse : email
-        );
-      }
-      return [addedResponse, ...responses];
+    },
+    revalidate: false,
+  };
+};
+
+/**
+ * Delete Service Configuration for optimistic updates
+ */
+export const deleteServiceOptions = (serviceId: number) => {
+  return {
+    optimisticData: (services: Services): Services => {
+      return services.filter((service) => service.id !== serviceId);
     },
 
+    rollbackOnError: true,
+    populateCache: (deletedServiceId: number, services: Services): Services => {
+      return services.filter((service) => service.id !== deletedServiceId);
+    },
     revalidate: false,
   };
 };

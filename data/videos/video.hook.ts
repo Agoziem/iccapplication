@@ -1,5 +1,8 @@
 "use client";
-import { useQuery, useMutation, useQueryClient } from "react-query";
+import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from "react-query";
+import type { Video, Videos } from "@/types/items";
+import { z } from "zod";
+import { videosResponseSchema } from "@/schemas/items";
 import {
   fetchVideos,
   fetchVideo,
@@ -8,8 +11,10 @@ import {
   deleteVideo,
 } from "@/data/videos/fetcher";
 
+type VideosResponse = z.infer<typeof videosResponseSchema>;
+
 // Hook to fetch all videos
-export const useFetchVideos = (url) => {
+export const useFetchVideos = (url: string): UseQueryResult<VideosResponse | undefined, Error> => {
   return useQuery(
     ["videos", url], // Dynamic cache key
     () => fetchVideos(url),
@@ -20,7 +25,7 @@ export const useFetchVideos = (url) => {
 };
 
 // Hook to fetch a single video
-export const useFetchVideo = (url) => {
+export const useFetchVideo = (url: string): UseQueryResult<Video | undefined, Error> => {
   return useQuery(
     ["video", url], // Dynamic cache key for a single video
     () => fetchVideo(url),
@@ -31,7 +36,7 @@ export const useFetchVideo = (url) => {
 };
 
 // Hook to fetch a single video by Token
-export const useFetchVideoByToken = (url, token) => {
+export const useFetchVideoByToken = (url: string, token: string): UseQueryResult<Video | undefined, Error> => {
   return useQuery(
     ["video", token, url], // Dynamic cache key for a single video
     () => fetchVideo(url),
@@ -42,7 +47,7 @@ export const useFetchVideoByToken = (url, token) => {
 };
 
 // Hook to create a new video
-export const useCreateVideo = () => {
+export const useCreateVideo = (): UseMutationResult<Video | undefined, Error, Omit<Video, "id" | "created_at" | "updated_at">> => {
   const queryClient = useQueryClient();
   return useMutation(createVideo, {
     onSuccess: () => {
@@ -52,7 +57,7 @@ export const useCreateVideo = () => {
 };
 
 // Hook to update a video
-export const useUpdateVideo = () => {
+export const useUpdateVideo = (): UseMutationResult<Video | undefined, Error, Partial<Video> & { id: number }> => {
   const queryClient = useQueryClient();
   return useMutation(updateVideo, {
     onSuccess: (_, variables) => {
@@ -63,7 +68,7 @@ export const useUpdateVideo = () => {
 };
 
 // Hook to delete a video
-export const useDeleteVideo = () => {
+export const useDeleteVideo = (): UseMutationResult<number, Error, number> => {
   const queryClient = useQueryClient();
   return useMutation(deleteVideo, {
     onSuccess: () => {

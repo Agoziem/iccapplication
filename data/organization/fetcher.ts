@@ -1,15 +1,15 @@
 import axios from "axios";
 import {
-  departmentResponseSchema,
-  departmentSchema,
-  organizationSchema,
-  staffResponseSchema,
-  staffSchema,
-  subscriptionSchema,
-  subscriptionsResponseSchema,
-  testimonialSchema,
-  testimonialsResponseSchema,
-} from "@/schemas/organizations";
+  Organization,
+  Department,
+  DepartmentResponse,
+  Staff,
+  Staffpaginated,
+  Testimony,
+  Testimonypaginated,
+  Subscription,
+  Subscriptionpaginated
+} from "@/types/organizations";
 import { converttoformData } from "@/utils/formutils";
 
 export const axiosInstance = axios.create({
@@ -23,46 +23,23 @@ export const MainAPIendpoint = "/api";
 // ------------------------------------------------------
 // Organization fetcher and mutation functions
 // ------------------------------------------------------
-export const fetchOrganization = async () => {
-  const response = await axiosInstance.get(
-    `${MainAPIendpoint}/organization/${Organizationid}/`
-  );
-  const validation = organizationSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+
+export const fetchOrganization = async (): Promise<Organization | undefined> => {
+  const response = await axiosInstance.get(`${MainAPIendpoint}/organization/${Organizationid}/`);
+  return response.data;
 };
 
-/**
- * @async
- * @param {Organization} data
- * @returns {Promise<Organization>}
- */
-export const createOrganization = async (data) => {
+export const createOrganization = async (data: Partial<Organization>): Promise<Organization | undefined> => {
   const formData = converttoformData(data);
-  const response = await axiosInstance.post(
-    `${MainAPIendpoint}/organization/add/`,
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }
-  );
-  const validation = organizationSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  const response = await axiosInstance.post(`${MainAPIendpoint}/organization/add/`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
 };
 
-/**
- * @async
- * @param {Organization} data
- * @returns {Promise<Organization>}
- */
-export const updateOrganization = async (data) => {
+export const updateOrganization = async (data: Partial<Organization>): Promise<Organization | undefined> => {
   try {
     const formData = converttoformData(data);
     const response = await axiosInstance.put(
@@ -74,50 +51,28 @@ export const updateOrganization = async (data) => {
         },
       }
     );
-    const validation = organizationSchema.safeParse(response.data);
-    if (!validation.success) {
-      console.log(validation.error.issues);
-    }
-    return validation.data;
+    return response.data;
   } catch (error) {
-    throw new Error(`${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+    throw new Error(errorMessage);
   }
 };
 
-/**
- * @async
- * @param {number} organizationid
- * @returns {Promise<number>}
- */
-export const deleteOrganization = async (organizationid) => {
-  await axiosInstance.delete(
-    `${MainAPIendpoint}/organization/delete/${organizationid}/`
-  );
+export const deleteOrganization = async (organizationid: number): Promise<number> => {
+  await axiosInstance.delete(`${MainAPIendpoint}/organization/delete/${organizationid}/`);
   return organizationid;
 };
 
 // ------------------------------------------------------
 // Staff fetcher and mutation functions
 // ------------------------------------------------------
-/**
- * @async
- * @param {string} url
- */
-export const fetchStaffs = async (url) => {
+
+export const fetchStaffs = async (url: string): Promise<Staffpaginated | undefined> => {
   const response = await axiosInstance.get(url);
-  const validation = staffResponseSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
-/**
- * @async
- * @param {Staff} data
- * @returns {Promise<Staff>}
- */
-export const createStaff = async (data) => {
+export const createStaff = async (data: Partial<Staff>): Promise<Staff | undefined> => {
   const formData = converttoformData(data);
   const response = await axiosInstance.post(
     `${MainAPIendpoint}/staff/add/${Organizationid}/`,
@@ -128,19 +83,10 @@ export const createStaff = async (data) => {
       },
     }
   );
-  const validation = staffSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
-/**
- * @async
- * @param {Staff} data
- * @returns {Promise<Staff>}
- */
-export const updateStaff = async (data) => {
+export const updateStaff = async (data: Partial<Staff>): Promise<Staff | undefined> => {
   const formData = converttoformData(data);
   const response = await axiosInstance.put(
     `${MainAPIendpoint}/staff/update/${data.id}/`,
@@ -151,19 +97,10 @@ export const updateStaff = async (data) => {
       },
     }
   );
-  const validation = staffSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
-/**
- * @async
- * @param {number} staffid
- * @returns {Promise<number>}
- */
-export const deleteStaff = async (staffid) => {
+export const deleteStaff = async (staffid: number): Promise<number> => {
   await axiosInstance.delete(`${MainAPIendpoint}/staff/delete/${staffid}/`);
   return staffid;
 };
@@ -171,29 +108,17 @@ export const deleteStaff = async (staffid) => {
 // ------------------------------------------------------
 // Testimonial fetcher and mutation functions
 // ------------------------------------------------------
-/**
- * @async
- * @param {string} url
- */
-export const fetchTestimonials = async (url) => {
+
+export const fetchTestimonials = async (url: string): Promise<Testimonypaginated | undefined> => {
   const response = await axiosInstance.get(url);
-  const validation = testimonialsResponseSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
-/**
- * @async
- * @param {Testimony} data
- * @returns {Promise<Testimony>}
- */
-export const createTestimonial = async (data) => {
+export const createTestimonial = async (data: Partial<Testimony>): Promise<Testimony | undefined> => {
   try {
     const formData = converttoformData(data);
     const response = await axiosInstance.post(
-      `${MainAPIendpoint}/testimonial/add/${Organizationid}/`,
+      `${MainAPIendpoint}/testimonials/add/${Organizationid}/`,
       formData,
       {
         headers: {
@@ -201,27 +126,19 @@ export const createTestimonial = async (data) => {
         },
       }
     );
-    const validation = testimonialSchema.safeParse(response.data);
-    if (!validation.success) {
-      console.log(validation.error.issues);
-    }
-    return validation.data;
+    return response.data;
   } catch (error) {
-    console.log(error.message);
-    throw new Error(`${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+    console.log(errorMessage);
+    throw new Error(errorMessage);
   }
 };
 
-/**
- * @async
- * @param {Testimony} data
- * @returns {Promise<Testimony>}
- */
-export const updateTestimonial = async (data) => {
+export const updateTestimonial = async (data: Partial<Testimony>): Promise<Testimony | undefined> => {
   try {
     const formData = converttoformData(data);
     const response = await axiosInstance.put(
-      `${MainAPIendpoint}/testimonial/update/${data.id}/`,
+      `${MainAPIendpoint}/testimonials/update/${data.id}/`,
       formData,
       {
         headers: {
@@ -229,172 +146,120 @@ export const updateTestimonial = async (data) => {
         },
       }
     );
-    const validation = testimonialSchema.safeParse(response.data);
-    if (!validation.success) {
-      console.log(validation.error.issues);
-    }
-    return validation.data;
+    return response.data;
   } catch (error) {
-    console.log(error.message);
-    throw new Error(`${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+    console.log(errorMessage);
+    throw new Error(errorMessage);
   }
 };
 
-/**
- * @async
- * @param {number} testimonialid
- * @returns {Promise<number>}
- */
-export const deleteTestimonial = async (testimonialid) => {
-  await axiosInstance.delete(
-    `${MainAPIendpoint}/testimonial/delete/${testimonialid}/`
-  );
+export const deleteTestimonial = async (testimonialid: number): Promise<number> => {
+  await axiosInstance.delete(`${MainAPIendpoint}/testimonials/delete/${testimonialid}/`);
   return testimonialid;
 };
 
 // ------------------------------------------------------
 // Department fetcher and mutation functions
 // ------------------------------------------------------
+
 /**
- * @async
- * @param {string} url
+ * Fetch departments with pagination
  */
-export const fetchDepartments = async (url) => {
+export const fetchDepartments = async (url: string) => {
   const response = await axiosInstance.get(url);
-  const validation = departmentResponseSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
 /**
- * @async
- * @param {string} url
+ * Fetch single department
  */
-export const fetchDepartment = async (url) => {
+export const fetchDepartment = async (url: string) => {
   const response = await axiosInstance.get(url);
-  const validation = departmentSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
 /**
- * @async
- * @returns {Promise<Department>}
+ * Create new department
  */
-export const createDepartment = async (data) => {
-  const deptformData = converttoformData(data,["organization","services","staff_in_charge"]);
+export const createDepartment = async (data: Partial<Department>) => {
+  const formData = converttoformData(data);
   const response = await axiosInstance.post(
     `${MainAPIendpoint}/department/add/${Organizationid}/`,
-    deptformData,
+    formData,
     {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     }
   );
-  const validation = departmentSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
 /**
- * @async
- * @returns {Promise<Department>}
+ * Update existing department
  */
-export const updateDepartment = async (data) => {
-  const deptformData = converttoformData(data,["organization","services","staff_in_charge"]);
+export const updateDepartment = async (data: Partial<Department>) => {
+  const formData = converttoformData(data);
   const response = await axiosInstance.put(
     `${MainAPIendpoint}/department/update/${data.id}/`,
-    deptformData,
+    formData,
     {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     }
   );
-  const validation = departmentSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
 /**
- * @async
- * @param {number} departmentid
- * @returns {Promise<number>}
+ * Delete department
  */
-export const deleteDepartment = async (departmentid) => {
-  await axiosInstance.delete(
-    `${MainAPIendpoint}/department/delete/${departmentid}/`
-  );
+export const deleteDepartment = async (departmentid: number) => {
+  await axiosInstance.delete(`${MainAPIendpoint}/department/delete/${departmentid}/`);
   return departmentid;
 };
 
 // ------------------------------------------------------
 // Subscription fetcher and mutation functions
 // ------------------------------------------------------
+
 /**
- * @async
- * @param {string} url
+ * Fetch subscriptions with pagination
  */
-export const fetchSubscriptions = async (url) => {
+export const fetchSubscriptions = async (url: string) => {
   const response = await axiosInstance.get(url);
-  const validation = subscriptionsResponseSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
 /**
- * @async
- * @param {Subscription} data
- * @returns {Promise<Subscription>}
+ * Create new subscription
  */
-export const createSubscription = async (data) => {
+export const createSubscription = async (data: Partial<Subscription>) => {
   const response = await axiosInstance.post(
     `${MainAPIendpoint}/subscription/add/${Organizationid}/`,
     data
   );
-  const validation = subscriptionSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
 /**
- * @async
- * @param {Subscription} data
- * @returns {Promise<Subscription>}
+ * Update existing subscription
  */
-export const updateSubscription = async (data) => {
+export const updateSubscription = async (data: Partial<Subscription>) => {
   const response = await axiosInstance.put(
     `${MainAPIendpoint}/subscription/update/${data.id}/`,
     data
   );
-  const validation = subscriptionSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
 /**
- * @async
- * @param {number} subscriptionid
- * @returns {Promise<number>}
+ * Delete subscription
  */
-export const deleteSubscription = async (subscriptionid) => {
-  await axiosInstance.delete(
-    `${MainAPIendpoint}/subscription/delete/${subscriptionid}/`
-  );
+export const deleteSubscription = async (subscriptionid: number) => {
+  await axiosInstance.delete(`${MainAPIendpoint}/subscription/delete/${subscriptionid}/`);
   return subscriptionid;
 };
+
