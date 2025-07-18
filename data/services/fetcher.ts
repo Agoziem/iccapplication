@@ -1,8 +1,6 @@
-import { serviceSchema, servicesResponseSchema, UserPurchasedResponseSchema } from "@/schemas/items";
 import type { Service, Services, PaginatedServiceUser } from "@/types/items";
 import { converttoformData } from "@/utils/formutils";
 import axios from "axios";
-import { z } from "zod";
 
 export const axiosInstance = axios.create({
   baseURL: `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}`,
@@ -12,18 +10,20 @@ const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
 
 export const servicesAPIendpoint = "/servicesapi";
 
-type ServicesResponse = z.infer<typeof servicesResponseSchema>;
+// Response interface for paginated services
+interface ServicesResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Services;
+}
 
 /**
  * Fetch all the Services
  */
 export const fetchServices = async (url: string): Promise<ServicesResponse | undefined> => {
   const response = await axiosInstance.get(url);
-  const validation = servicesResponseSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
 /**
@@ -31,11 +31,7 @@ export const fetchServices = async (url: string): Promise<ServicesResponse | und
  */
 export const fetchService = async (url: string): Promise<Service | undefined> => {
   const response = await axiosInstance.get(url);
-  const validation = serviceSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
 /**
@@ -58,11 +54,7 @@ export const createService = async (data: Omit<Service, "id" | "created_at" | "u
       },
     }
   );
-  const validation = serviceSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
 /**
@@ -85,11 +77,7 @@ export const updateService = async (data: Partial<Service> & { id: number }): Pr
       },
     }
   );
-  const validation = serviceSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
 /**
@@ -116,14 +104,7 @@ export const fetchServiceUsers = async (
 
     const url = categoryPath[category];
     const response = await axiosInstance.get(url);
-
-    const validation = UserPurchasedResponseSchema.safeParse(response.data);
-    if (!validation.success) {
-      console.error("Validation Error:", validation.error.issues);
-      throw new Error("Invalid response format");
-    }
-
-    return validation.data;
+    return response.data;
   } catch (error) {
     console.error("Fetch Error:", (error as Error).message);
     throw new Error(`Failed to fetch ${category} users: ${(error as Error).message}`);

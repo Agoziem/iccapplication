@@ -31,13 +31,8 @@ import {
   sendMessage,
 } from "@/data/Emails/fetcher";
 
-// Initialize the Query Client
-const queryClient = new QueryClient();
-
 type EmailsResponse = z.infer<typeof emailsResponseSchema>;
 
-// Create a Context for shared states (optional for hooks)
-const EmailContext = createContext<null>(null);
 
 // Custom Hook: Fetch Emails
 export const useFetchEmails = (): UseQueryResult<EmailsResponse | undefined, Error> => {

@@ -1,8 +1,6 @@
-import { productSchema, productsResponseSchema } from "@/schemas/items";
 import type { Product, Products } from "@/types/items";
 import { converttoformData } from "@/utils/formutils";
 import axios from "axios";
-import { z } from "zod";
 
 export const axiosInstance = axios.create({
   baseURL: `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}`,
@@ -12,18 +10,20 @@ const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
 
 export const productsAPIendpoint = "/productsapi";
 
-type ProductsResponse = z.infer<typeof productsResponseSchema>;
+// Response interface for paginated products
+interface ProductsResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Products;
+}
 
 /**
  * Fetch all the Products
  */
 export const fetchProducts = async (url: string): Promise<ProductsResponse | undefined> => {
   const response = await axiosInstance.get(url);
-  const validation = productsResponseSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
 /**
@@ -31,11 +31,7 @@ export const fetchProducts = async (url: string): Promise<ProductsResponse | und
  */
 export const fetchProduct = async (url: string): Promise<Product | undefined> => {
   const response = await axiosInstance.get(url);
-  const validation = productSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
 /**
@@ -52,11 +48,7 @@ export const createProduct = async (data: Omit<Product, "id" | "created_at" | "u
       },
     }
   );
-  const validation = productSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
 /**
@@ -73,11 +65,7 @@ export const updateProduct = async (data: Partial<Product> & { id: number }): Pr
       },
     }
   );
-  const validation = productSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
 /**

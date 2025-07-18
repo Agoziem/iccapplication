@@ -1,4 +1,3 @@
-import { orderSchema, ordersReportSchema, ordersSchema } from "@/schemas/payments";
 import type { Order, Orders, OrderReport } from "@/types/payments";
 import axios from "axios";
 
@@ -15,11 +14,7 @@ export const paymentsAPIendpoint = "/paymentsapi";
  */
 export const fetchPayments = async (url: string): Promise<Orders | undefined> => {
   const response = await axiosInstance.get(url);
-  const validation = ordersSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
 /**
@@ -27,11 +22,7 @@ export const fetchPayments = async (url: string): Promise<Orders | undefined> =>
  */
 export const fetchPayment = async (url: string): Promise<Order | undefined> => {
   const response = await axiosInstance.get(url);
-  const validation = orderSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
 /**
@@ -39,11 +30,7 @@ export const fetchPayment = async (url: string): Promise<Order | undefined> => {
  */
 export const verifyPayment = async (url: string, data: { reference: string; customer_id: number }): Promise<Order | undefined> => {
   const response = await axiosInstance.post(url, data);
-  const validation = orderSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
 /**
@@ -51,11 +38,7 @@ export const verifyPayment = async (url: string, data: { reference: string; cust
  */
 export const fetchPaymentsbyUser = async (url: string): Promise<Orders | undefined> => {
   const response = await axiosInstance.get(url);
-  const validation = ordersSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
 /**
@@ -66,11 +49,7 @@ export const addPayment = async (data: Omit<Order, "id" | "created_at" | "update
     `${paymentsAPIendpoint}/addpayment/${Organizationid}/`,
     data
   );
-  const validation = orderSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
 /**
@@ -81,11 +60,7 @@ export const updatePayment = async (data: Partial<Order> & { id: number }): Prom
     `${paymentsAPIendpoint}/updatepayment/${data.id}/`,
     data
   );
-  const validation = orderSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
 /**
@@ -101,9 +76,5 @@ export const deletePayment = async (paymentid: number): Promise<number> => {
  */
 export const getOrderReport = async (): Promise<OrderReport | undefined> => {
   const response = await axiosInstance.get(`${paymentsAPIendpoint}/getorderreport/${Organizationid}/`);
-  const validation = ordersReportSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };

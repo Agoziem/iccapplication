@@ -1,4 +1,3 @@
-import { UserSchema, UsersSchema } from "@/schemas/users";
 import type { User, Users } from "@/types/users";
 import axios from "axios";
 
@@ -15,11 +14,7 @@ export const authAPIendpoint = "/authapi";
  */
 export const fetchUsers = async (url: string): Promise<Users | undefined> => {
   const response = await axiosInstance.get(url);
-  const validation = UsersSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
 /**
@@ -27,11 +22,7 @@ export const fetchUsers = async (url: string): Promise<Users | undefined> => {
  */
 export const fetchUser = async (url: string): Promise<User | undefined> => {
   const response = await axiosInstance.get(url);
-  const validation = UserSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
 
 /**
@@ -39,9 +30,5 @@ export const fetchUser = async (url: string): Promise<User | undefined> => {
  */
 export const updateUser = async (url: string, data: Partial<User>): Promise<User | undefined> => {
   const response = await axiosInstance.put(url, data);
-  const validation = UserSchema.safeParse(response.data);
-  if (!validation.success) {
-    console.log(validation.error.issues);
-  }
-  return validation.data;
+  return response.data;
 };
