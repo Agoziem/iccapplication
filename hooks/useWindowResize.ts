@@ -1,14 +1,32 @@
 "use client";
 import { useState, useEffect } from 'react';
 
-const useWindowResize = () => {
-  const [windowSize, setWindowSize] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight,
+interface WindowSize {
+  width: number;
+  height: number;
+}
+
+const useWindowResize = (): WindowSize => {
+  const [windowSize, setWindowSize] = useState<WindowSize>(() => {
+    // Initialize with current window size if available
+    if (typeof window !== 'undefined') {
+      return {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      };
+    }
+    // Fallback for SSR
+    return {
+      width: 0,
+      height: 0,
+    };
   });
 
   useEffect(() => {
-    const handleResize = () => {
+    // Early return if window is not available (SSR)
+    if (typeof window === 'undefined') return;
+
+    const handleResize = (): void => {
       setWindowSize({
         width: window.innerWidth,
         height: window.innerHeight,

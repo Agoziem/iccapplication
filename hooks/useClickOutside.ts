@@ -1,15 +1,23 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, RefObject } from "react";
 
-const useClickOutside = (ref, refbutton, callback) => {
+interface UseClickOutsideProps {
+  ref: RefObject<HTMLElement>;
+  refbutton?: RefObject<HTMLElement> | null;
+  callback: () => void;
+}
+
+const useClickOutside = ({ ref, refbutton, callback }: UseClickOutsideProps): void => {
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (ref.current && !ref.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent): void => {
+      const target = event.target as Node;
+      
+      if (ref.current && !ref.current.contains(target)) {
         if (
           !refbutton ||
           (refbutton &&
             refbutton.current &&
-            !refbutton.current.contains(event.target))
+            !refbutton.current.contains(target))
         ) {
           callback();
         }

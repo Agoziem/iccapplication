@@ -8,18 +8,18 @@ import { ChatroomContextProvider } from "@/data/chatroomAPI/ChatroomContext";
 import { ChatroomSocketProvider } from "@/data/chatroomAPI/ChatroomSocket";
 import { WhatsappAPIProvider } from "@/data/whatsappAPI/WhatsappContext";
 
-const ContextProviders = ({ children }) => (
+const ContextProviders = ({ children }: { children: React.ReactNode }) => (
   <OrganizationProvider>
     <AdminContextProvider>
-        <CartProvider>
-          <Subcategoriesprovider>
-            <ChatroomContextProvider>
-              <ChatroomSocketProvider>
-                <WhatsappAPIProvider>{children}</WhatsappAPIProvider>
-              </ChatroomSocketProvider>
-            </ChatroomContextProvider>
-          </Subcategoriesprovider>
-        </CartProvider>
+      <CartProvider>
+        <Subcategoriesprovider>
+          <ChatroomContextProvider>
+            <ChatroomSocketProvider>
+              <WhatsappAPIProvider>{children}</WhatsappAPIProvider>
+            </ChatroomSocketProvider>
+          </ChatroomContextProvider>
+        </Subcategoriesprovider>
+      </CartProvider>
     </AdminContextProvider>
   </OrganizationProvider>
 );

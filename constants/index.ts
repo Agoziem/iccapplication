@@ -1,5 +1,5 @@
 import { Article, ArticleComment } from "@/types/articles";
-import { Service, Video } from "@/types/items";
+import { Product, Service, Video } from "@/types/items";
 import {
   Department,
   Organization,
@@ -15,21 +15,21 @@ import { RiCustomerService2Line } from "react-icons/ri";
 import { TbBooks } from "react-icons/tb";
 
 export const WAMessageDefault: WAMessage = {
-  id: null, // Default to null, since it's optional
-  message_id: "", // Default to an empty string
-  contact: null, // Default to null for optional positive number
-  message_type: "text", // Default to "text"
-  body: "", // Default to an empty string for the text message body
-  media_id: "", // Default to an empty string for the media message ID
-  mime_type: "", // Default to an empty string for MIME type
-  filename: "", // Default to an empty string for filename
-  animated: false, // Default to false for stickers
-  caption: "", // Default to an empty string for media caption
-  timestamp: new Date().toISOString(), // Default to the current timestamp
-  message_mode: "received", // Default to "received"
-  seen: false, // Default to false for seen status
-  link: "https://www.example.com", // Default to an empty string for media link
-  status: "pending", // Default to "pending" for message status
+  id: null,
+  message_id: "", 
+  contact: null,
+  message_type: "text",
+  body: "", 
+  media_id: "", 
+  mime_type: "",
+  filename: "",
+  animated: false,
+  caption: "",
+  timestamp: new Date().toISOString(),
+  message_mode: "received",
+  seen: false,
+  link: "https://www.example.com",
+  status: "pending",
 };
 
 export const OrganizationDefault: Organization = {
@@ -207,7 +207,7 @@ export const serviceDefault: Service = {
 /**
  * Default for a Product
  */
-export const defaultProduct = {
+export const defaultProduct: Product = {
   id: undefined,
   organization: null,
   preview: null,
