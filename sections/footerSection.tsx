@@ -28,7 +28,7 @@ const subscriptionSchema = z.object({
 type SubscriptionFormData = z.infer<typeof subscriptionSchema>;
 
 interface AlertState {
-  type: "success" | "danger" | "";
+  type: "success" | "danger" | "info";
   message: string;
   show: boolean;
 }
@@ -54,7 +54,7 @@ const SocialLink: React.FC<SocialLinkProps> = ({
 const FooterSection: React.FC = () => {
   const { data: organizationData } = useFetchOrganization();
   const [alert, setAlert] = useState<AlertState>({
-    type: "",
+    type: "success",
     message: "",
     show: false,
   });
@@ -78,7 +78,7 @@ const FooterSection: React.FC = () => {
   ) => {
     setAlert({ type, message, show: true });
     setTimeout(() => {
-      setAlert({ type: "", message: "", show: false });
+      setAlert({ type: "success", message: "", show: false });
     }, duration);
   };
 
