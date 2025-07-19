@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import React, { useContext, useState } from "react";
+import React, { useState } from "react";
 import {
   FaFacebook,
   FaInstagram,
@@ -12,96 +12,128 @@ import { IoLogoWhatsapp } from "react-icons/io5";
 import Alert from "@/components/custom/Alert/Alert";
 import "./section.css";
 import { useFetchOrganization } from "@/data/organization/organization.hook";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import axios from "axios";
 
-const FooterSection = () => {
-  const { data: OrganizationData } = useFetchOrganization();   
-  const [formData, setFormData] = useState({
-    email: "",
-  });
-  const [submitting, setIsSubmitting] = useState(false);
-  const [alert, setAlert] = useState({
+// Zod schema for newsletter subscription
+const subscriptionSchema = z.object({
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .email("Please enter a valid email address"),
+});
+
+type SubscriptionFormData = z.infer<typeof subscriptionSchema>;
+
+interface AlertState {
+  type: "success" | "danger" | "";
+  message: string;
+  show: boolean;
+}
+
+interface SocialLinkProps {
+  href: string;
+  icon: React.ReactNode;
+  className?: string;
+}
+
+const SocialLink: React.FC<SocialLinkProps> = ({
+  href,
+  icon,
+  className = "mx-2",
+}) => (
+  <Link href={href || "#"} target="_blank">
+    <span className={className} style={{ cursor: "pointer" }}>
+      {icon}
+    </span>
+  </Link>
+);
+
+const FooterSection: React.FC = () => {
+  const { data: organizationData } = useFetchOrganization();
+  const [alert, setAlert] = useState<AlertState>({
     type: "",
     message: "",
     show: false,
   });
-  const [formErrors, setFormErrors] = useState(null);
 
-  const validate = () => {
-    const errors = {};
-    if (!formData.email) {
-      errors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = "Email address is invalid";
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<SubscriptionFormData>({
+    resolver: zodResolver(subscriptionSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
+
+  const showAlert = (
+    type: "success" | "danger",
+    message: string,
+    duration = 5000
+  ) => {
+    setAlert({ type, message, show: true });
+    setTimeout(() => {
+      setAlert({ type: "", message: "", show: false });
+    }, duration);
+  };
+
+  const onSubmit = async (data: SubscriptionFormData) => {
+    if (!organizationData?.id) {
+      showAlert("danger", "Organization not loaded");
+      return;
     }
-    return errors;
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-    setFormErrors({
-      ...formErrors,
-      [name]: "",
-    });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const errors = validate();
-    setFormErrors(errors);
-    if (Object.keys(errors).length === 0) {
-      try {
-        setIsSubmitting(true);
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/api/subscription/add/${OrganizationData.id}/`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(formData),
-          }
-        );
-        if (response.ok) {
-          setIsSubmitting(false);
-          setFormData({
-            email: "",
-          });
-          setAlert({
-            type: "success",
-            message: "You have successfully subscribed to our newsletter",
-            show: true,
-          });
-          setTimeout(() => {
-            setAlert({
-              type: "",
-              message: "",
-              show: false,
-            });
-          }, 5000);
-        } else {
-          throw new Error("Something went wrong. Please try again later");
-        }
-      } catch (error) {
-        setIsSubmitting(false);
-        setAlert({
-          type: "danger",
-          message: error.message,
-          show: true,
-        });
-        setTimeout(() => {
-          setAlert({
-            type: "",
-            message: "",
-            show: false,
-          });
-        }, 3000);
-      }
+    try {
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/api/subscription/add/${organizationData?.id}/`,
+        data
+      );
+      reset();
+      showAlert(
+        "success",
+        "You have successfully subscribed to our newsletter"
+      );
+    } catch (error) {
+      showAlert(
+        "danger",
+        error instanceof Error ? error.message : "An unexpected error occurred",
+        3000
+      );
     }
   };
+
+  const socialLinks = [
+    {
+      href: organizationData?.facebooklink,
+      icon: <FaFacebook />,
+      className: "me-2",
+    },
+    { href: organizationData?.whatsapplink, icon: <IoLogoWhatsapp /> },
+    { href: organizationData?.instagramlink, icon: <FaInstagram /> },
+    { href: organizationData?.twitterlink, icon: <FaXTwitter /> },
+    { href: organizationData?.linkedinlink, icon: <FaLinkedinIn /> },
+    { href: organizationData?.tiktoklink, icon: <FaTiktok /> },
+  ];
+
+  const quickLinks = [
+    { href: "/", label: "Home" },
+    { href: "/#about", label: "About" },
+    { href: "/#services", label: "Services" },
+    { href: "/#staffs", label: "Departments" },
+    { href: "/#contact", label: "Contact" },
+  ];
+
+  const featureLinks = [
+    { href: "/articles", label: "Articles" },
+    { href: "/dashboard/cbt", label: "CBT practice" },
+    { href: "/dashboard/chat", label: "Chatroom" },
+    { href: "/dashboard/services", label: "Jamb" },
+    { href: "/dashboard/services", label: "Post Utme" },
+  ];
 
   return (
     <section className="footer">
@@ -114,72 +146,14 @@ const FooterSection = () => {
                 connect with us on our social media platforms
               </p>
               <div className="social-links">
-                <Link
-                  href={OrganizationData?.facebooklink || "#"}
-                  target="_blank"
-                >
-                  <FaFacebook
-                    className="me-2"
-                    style={{
-                      cursor: "pointer",
-                    }}
+                {socialLinks.map((link, index) => (
+                  <SocialLink
+                    key={index}
+                    href={link.href || "#"}
+                    icon={link.icon}
+                    className={link.className}
                   />
-                </Link>
-                <Link
-                  href={OrganizationData?.whatsapplink || "#"}
-                  target="_blank"
-                >
-                  <IoLogoWhatsapp
-                    className="mx-2"
-                    style={{
-                      cursor: "pointer",
-                    }}
-                  />
-                </Link>
-                <Link
-                  href={OrganizationData?.instagramlink || "#"}
-                  target="_blank"
-                >
-                  <FaInstagram
-                    className="mx-2"
-                    style={{
-                      cursor: "pointer",
-                    }}
-                  />
-                </Link>
-                <Link
-                  href={OrganizationData?.twitterlink || "#"}
-                  target="_blank"
-                >
-                  <FaXTwitter
-                    className="mx-2"
-                    style={{
-                      cursor: "pointer",
-                    }}
-                  />
-                </Link>
-                <Link
-                  href={OrganizationData?.linkedinlink || "#"}
-                  target="_blank"
-                >
-                  <FaLinkedinIn
-                    className="mx-2"
-                    style={{
-                      cursor: "pointer",
-                    }}
-                  />
-                </Link>
-                <Link
-                  href={OrganizationData?.tiktoklink || "#"}
-                  target="_blank"
-                >
-                  <FaTiktok
-                    className="mx-2"
-                    style={{
-                      cursor: "pointer",
-                    }}
-                  />
-                </Link>
+                ))}
               </div>
               <div className="mt-3">
                 <p className="small">
@@ -191,94 +165,56 @@ const FooterSection = () => {
                     <Alert type={alert.type}>{alert.message}</Alert>
                   </div>
                 )}
-                {formErrors?.email && (
-                  <div className="text-danger mb-2">{formErrors.email}</div>
+                {errors.email && (
+                  <div className="text-danger mb-2">{errors.email.message}</div>
                 )}
-                <div className="subscribe-input d-md-flex">
-                  <input
-                    type="email"
-                    className={`form-control ${
-                      formErrors?.email ? "is-invalid" : ""
-                    }`}
-                    name="email"
-                    placeholder="Enter your email"
-                    onChange={handleChange}
-                    value={formData.email}
-                    required
-                  />
-
-                  <button
-                    className="btn btn-primary ms-0 ms-md-3 mt-3 mt-md-0"
-                    onClick={handleSubmit}
-                    disabled={submitting}
-                  >
-                    {submitting ? "Subscribing..." : "Subscribe"}
-                  </button>
-                </div>
+                <form onSubmit={handleSubmit(onSubmit)}>
+                  <div className="subscribe-input d-md-flex">
+                    <input
+                      type="email"
+                      className={`form-control ${
+                        errors.email ? "is-invalid" : ""
+                      }`}
+                      placeholder="Enter your email"
+                      {...register("email")}
+                    />
+                    <button
+                      type="submit"
+                      className="btn btn-primary ms-0 ms-md-3 mt-3 mt-md-0"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? "Subscribing..." : "Subscribe"}
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           </div>
-          <div className="col-6 col-md-3 d-flex justify-content-center ">
+          <div className="col-6 col-md-3 d-flex justify-content-center">
             <div className="footer-links">
               <h6>Quick Links</h6>
-              <ul className=" list-unstyled ">
-                <li>
-                  <Link className="small" href="/">
-                    Home
-                  </Link>
-                </li>
-                <li>
-                  <Link className="small" href="/#about">
-                    About
-                  </Link>
-                </li>
-                <li>
-                  <Link className="small" href="/#services">
-                    Services
-                  </Link>
-                </li>
-                <li>
-                  <Link className="small" href="/#staffs">
-                    Departments
-                  </Link>
-                </li>
-                <li>
-                  <Link className="small" href="/#contact">
-                    Contact
-                  </Link>
-                </li>
+              <ul className="list-unstyled">
+                {quickLinks.map((link, index) => (
+                  <li key={index}>
+                    <Link className="small" href={link.href}>
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
-          <div className="col-6 col-md-3 d-flex justify-content-center ">
+          <div className="col-6 col-md-3 d-flex justify-content-center">
             <div className="footer-links">
               <h6>features</h6>
               <ul className="list-unstyled">
-                <li>
-                  <Link className="small" href="/articles">
-                    Articles
-                  </Link>
-                </li>
-                <li>
-                  <Link className="small" href="/dashboard/cbt">
-                    CBT practice
-                  </Link>
-                </li>
-                <li>
-                  <Link className="small" href="/dashboard/chat">
-                    Chatroom
-                  </Link>
-                </li>
-                <li>
-                  <Link className="small" href="/dashboard/services">
-                    Jamb
-                  </Link>
-                </li>
-                <li>
-                  <Link className="small" href="/dashboard/services">
-                    Post Utme
-                  </Link>
-                </li>
+                {featureLinks.map((link, index) => (
+                  <li key={index}>
+                    <Link className="small" href={link.href}>
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
@@ -286,7 +222,7 @@ const FooterSection = () => {
       </div>
       {/* subfooter */}
       <div className="subfooter py-3 d-flex justify-content-center align-items-center">
-        <p className="text-center  small mb-0">
+        <p className="text-center small mb-0">
           &copy; 2024{" "}
           <span className="text-secondary">Innovations CyberCafe.</span> All
           Rights Reserved

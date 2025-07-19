@@ -8,10 +8,10 @@ import { useFetchTestimonials } from "@/data/organization/organization.hook";
 
 const CustomSwiper = () => {
   const OrganizationID = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
-   // for fetching testimonials
+  // for fetching testimonials
   const { data: testimonials } = useFetchTestimonials(
     `${MainAPIendpoint}/testimonial/${OrganizationID}/`
-  )
+  );
   return (
     <>
       <hr className="text-primary pt-3 mx-5" />
@@ -25,9 +25,13 @@ const CustomSwiper = () => {
           {testimonials &&
             testimonials.results?.length > 0 &&
             testimonials.results?.map((testimonial) => (
-              <div key={testimonial.id} className="card p-4" style={{
-                minHeight: "210px",
-              }} >
+              <div
+                key={testimonial.id}
+                className="card p-4"
+                style={{
+                  minHeight: "210px",
+                }}
+              >
                 <div className="card-body">
                   <div>
                     <BiSolidQuoteAltRight
@@ -37,7 +41,7 @@ const CustomSwiper = () => {
                   </div>
                   <p className="card-text">{testimonial.content}</p>
                   <div className="d-flex align-items-center">
-                    {testimonial.img ? (
+                    {testimonial.img_url ? (
                       <img
                         src={testimonial.img_url}
                         alt="testimonial"

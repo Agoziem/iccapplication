@@ -6,18 +6,19 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import AnimationContainer from "@/components/animation/animation-container";
 
-const HeaderSection = () => {
+const HeaderSection: React.FC = () => {
   const { data: session } = useSession();
+  
   return (
     <div>
       <MainHeader />
       <section className="hero">
         <div className="container">
-          <div className="row align-items-center ">
+          <div className="row align-items-center">
             <div className="col-md-6">
               <div className="header-content text-center text-md-start px-2 px-md-4 pt-md-5">
                 <AnimationContainer slideDirection="down" delay={0}>
-                  <h1>Your Online Solution to admission related Issues </h1>
+                  <h1>Your Online Solution to admission related Issues</h1>
                 </AnimationContainer>
                 <AnimationContainer slideDirection="down" delay={0.2}>
                   <p>
@@ -33,7 +34,7 @@ const HeaderSection = () => {
                       borderRadius: "25px",
                       boxShadow: "rgba(0, 0, 0, 0.2) 0px 4px 8px",
                     }}
-                    href={"/dashboard"}
+                    href="/dashboard"
                   >
                     {session ? "Go to Dashboard" : "Get Started now"}
                   </Link>
@@ -45,7 +46,7 @@ const HeaderSection = () => {
               <AnimationContainer slideDirection="right" zoom="in" className="header-image my-4 my-md-0">
                 <img
                   className="img-fluid"
-                  src={"/hero image.png"}
+                  src="/hero image.png"
                   width={573.42}
                   height={444}
                   alt="hero image"

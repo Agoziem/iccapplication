@@ -14,6 +14,11 @@ const StaffSection = () => {
     `${MainAPIendpoint}/department/${OrganizationID}/`
   );
 
+  const findDepartmentIcon = (deptId: number) => {
+    const icon = dept_icons.find((icon) => icon.id === deptId);
+    return icon ? <icon.icon /> : <PiGearBold />;
+  };
+
   return (
     <>
       <section
@@ -31,13 +36,17 @@ const StaffSection = () => {
         <div className="row px-4 px-md-5">
           {depts && depts?.results?.length > 0 ? (
             depts?.results?.map((dept, index) => (
-              <AnimationContainer slideDirection="down" delay={0.1 * index} key={dept.id} className="col-md-6 col-lg-4 mb-4">
+              <AnimationContainer
+                slideDirection="down"
+                delay={0.1 * index}
+                key={dept.id}
+                className="col-md-6 col-lg-4 mb-4"
+              >
                 <div className="card py-3 mx-auto">
                   <div className="card-body">
                     <div className="d-flex flex-column justify-content-center align-items-center mb-3">
                       <span className="dept-icon h1 mb-3 text-secondary">
-                        {dept_icons.find((icon) => icon.id === index + 1)
-                          ?.icon || <PiGearBold />}
+                        {dept.id ? findDepartmentIcon(dept.id) : <PiGearBold />}
                       </span>
                       <h4 className="mb-0">{dept.name}</h4>
                     </div>
