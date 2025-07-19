@@ -1,12 +1,21 @@
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useState, ChangeEvent, FormEvent } from "react";
 import { AiOutlineSend } from "react-icons/ai";
-import ExtendableTextarea from "./ExtendableTextarea"; // Reuse the extendable textarea component
+import ExtendableTextarea from "./ExtendableTextarea";
 import { FaRegTrashCan } from "react-icons/fa6";
 import { FaRegFileVideo } from "react-icons/fa";
 import { getFileIcon } from "@/utils/selectFileIcon";
 
-const AttachmentInput = ({
+interface AttachmentInputProps {
+  video?: string | null;
+  image?: string | null;
+  file?: string | null;
+  type?: string;
+  fileName?: string;
+  resetinput: () => void;
+}
+
+const AttachmentInput: React.FC<AttachmentInputProps> = ({
   video,
   image,
   file,
@@ -14,12 +23,23 @@ const AttachmentInput = ({
   fileName,
   resetinput,
 }) => {
-  const [captionBody, setCaptionBody] = useState(""); // Manage input with useState
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [captionBody, setCaptionBody] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  // handle input Change
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: ChangeEvent<HTMLTextAreaElement>): void => {
     setCaptionBody(e.target.value);
+  };
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    // Add your submission logic here
+    console.log("Caption:", captionBody);
+    // Reset form after submission
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setCaptionBody("");
+    }, 1000);
   };
 
   return (
@@ -84,7 +104,7 @@ const AttachmentInput = ({
 
       {/* The Caption Optional */}
       <div>
-        <form>
+        <form onSubmit={handleSubmit}>
           <div
             className="d-flex rounded p-2 align-items-center"
             style={{
@@ -97,6 +117,7 @@ const AttachmentInput = ({
               onChange={handleInputChange}
               placeholder="Add a Caption (Optional)"
               className="chatinput form-control"
+              disabled={isSubmitting}
               style={{
                 color: "white",
                 backgroundColor: "var(--bgDarkerColor)",

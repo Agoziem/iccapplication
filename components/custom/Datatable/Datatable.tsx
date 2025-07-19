@@ -1,13 +1,21 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, ReactNode } from "react";
 import DatatablePagination from "./DatatablePagination";
 import DatatableinputFilter from "./DatatableInputFilter";
 import Datatableselect from "./DatatableSelect";
 import useJsonToExcel from "@/hooks/useJsonToExcel";
-import { SiMicrosoftexcel } from "react-icons/si";
+import { BsFileEarmarkExcel } from "react-icons/bs";
 import "./Datatable.css"
 
-const Datatable = ({ items, setItems, children, label, filteritemlabel }) => {
+interface DatatableProps {
+  items: any[];
+  setItems: (items: any[]) => void;
+  children: ReactNode;
+  label: string;
+  filteritemlabel: string;
+}
+
+const Datatable: React.FC<DatatableProps> = ({ items, setItems, children, label, filteritemlabel }) => {
   const [filterInput, setfilterInput] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -27,11 +35,13 @@ const Datatable = ({ items, setItems, children, label, filteritemlabel }) => {
 
   // Clone the children and pass the currentItems and setItems as props
   const tableItems = React.Children.map(children, (child) => {
-    return React.cloneElement(child, {
-      ...child.props,
-      currentItems: currentItems,
-      setItems: setItems,
-    });
+    if (React.isValidElement(child)) {
+      return React.cloneElement(child, {
+        currentItems: currentItems,
+        setItems: setItems,
+      } as any);
+    }
+    return child;
   });
 
   // implement saving to Excel for both the results & Student side
@@ -68,7 +78,7 @@ const Datatable = ({ items, setItems, children, label, filteritemlabel }) => {
                 className="btn btn-success w-100"
                 onClick={handleSaveToExcel}
               >
-                <SiMicrosoftexcel className="me-2 mb-1" />
+                <BsFileEarmarkExcel className="me-2 mb-1" />
                 Save to Excel
               </button>
             </div>

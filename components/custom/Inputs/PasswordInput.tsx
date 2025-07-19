@@ -1,7 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, ChangeEvent } from "react";
 
-const PasswordInput = ({ name, value, onChange, placeholder, formErrors }) => {
-  const [showPassword, setShowPassword] = useState(false);
+interface PasswordInputProps {
+  name: string;
+  value: string;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  placeholder?: string;
+  formErrors?: Record<string, string>;
+}
+
+const PasswordInput = ({ 
+  name, 
+  value, 
+  onChange, 
+  placeholder, 
+  formErrors 
+}: PasswordInputProps) => {
+  const [showPassword, setShowPassword] = useState<boolean>(false);
 
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);

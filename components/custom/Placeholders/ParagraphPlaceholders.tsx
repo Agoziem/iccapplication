@@ -1,6 +1,6 @@
 import React from "react";
 
-const ParagraphPlaceholders = () => {
+const ParagraphPlaceholders: React.FC = () => {
   return (
     <p className="card-text placeholder-glow">
       <span className="placeholder col-7"></span>

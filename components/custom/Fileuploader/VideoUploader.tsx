@@ -1,20 +1,33 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, ChangeEvent } from "react";
 import { FaTimes } from "react-icons/fa";
 import { LuUpload } from "react-icons/lu";
 import { MdOutlineVideoLibrary } from "react-icons/md";
 import Alert from "../Alert/Alert";
 
-const VideoUploader = ({
+interface VideoUploaderProps {
+  videokey: string;
+  videourlkey: string;
+  videoname: string;
+  formData: Record<string, any>;
+  setFormData: (data: Record<string, any>) => void;
+}
+
+interface AlertState {
+  show: boolean;
+  message: string;
+}
+
+const VideoUploader: React.FC<VideoUploaderProps> = ({
   videokey,
   videourlkey,
   videoname,
   formData,
   setFormData,
 }) => {
-  const fileInput = useRef(null);
-  const [fileName, setFileName] = useState("No Selected file");
-  const [video, setVideo] = useState(null);
-  const [erroralert, setErrorAlert] = useState({
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [fileName, setFileName] = useState<string>("No Selected file");
+  const [video, setVideo] = useState<string | null>(null);
+  const [erroralert, setErrorAlert] = useState<AlertState>({
     show: false,
     message: "",
   });
@@ -26,8 +39,8 @@ const VideoUploader = ({
     }
   }, [formData[videourlkey], formData[videoname]]);
 
-  const handleFileChange = ({ target: { files } }) => {
-    const file = files[0];
+  const handleFileChange = ({ target: { files } }: ChangeEvent<HTMLInputElement>): void => {
+    const file = files?.[0];
     if (file) {
       if (!file.type.startsWith("video/")) {
         setErrorAlert({
@@ -58,7 +71,7 @@ const VideoUploader = ({
     }
   };
 
-  const handleRemoveFile = () => {
+  const handleRemoveFile = (): void => {
     setFileName("No Selected file");
     setVideo(null);
     setFormData({
@@ -68,7 +81,7 @@ const VideoUploader = ({
       [videoname]: null,
     });
     if (fileInput.current) {
-      fileInput.current.value = null; // Reset file input value
+      fileInput.current.value = "";
     }
   };
 
@@ -124,7 +137,7 @@ const VideoUploader = ({
             className="btn btn-sm btn-accent-primary shadow-none rounded"
             onClick={(e) => {
               e.preventDefault();
-              fileInput.current.click();
+              fileInput.current?.click();
             }}
           >
             <LuUpload className="h5 me-2" />

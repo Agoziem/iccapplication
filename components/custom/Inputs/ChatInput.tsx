@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, ChangeEvent, FormEvent } from "react";
 import { AiOutlineSend } from "react-icons/ai";
 import { ImAttachment } from "react-icons/im";
 import { WAMessageDefault } from "@/constants";
@@ -8,76 +8,72 @@ import ExtendableTextarea from "./ExtendableTextarea";
 import { useWhatsappAPIContext } from "@/data/whatsappAPI/WhatsappContext";
 import { useSendWAMessage } from "@/data/whatsappAPI/whatsapp.hook";
 
-/**
- * @param {{contact: WAContact}} props
- * @returns {JSX.Element}
- */
-const ChatInput = ({ contact }) => {
-  const [hasAttachment, setHasAttachment] = useState(false);
-  const [messageBody, setMessageBody] = useState(""); // Manage input with useState
-  const [fileName, setFileName] = useState("No Selected file");
-  const [video, setVideo] = useState(null);
-  const [image, setImage] = useState(null);
-  const [file, setFile] = useState(null);
-  const [fileType, setFileType] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+interface ChatInputProps {
+  contact: {
+    id: string;
+    [key: string]: any;
+  };
+}
+
+const ChatInput: React.FC<ChatInputProps> = ({ contact }) => {
+  const [hasAttachment, setHasAttachment] = useState<boolean>(false);
+  const [messageBody, setMessageBody] = useState<string>("");
+  const [fileName, setFileName] = useState<string>("No Selected file");
+  const [video, setVideo] = useState<string | null>(null);
+  const [image, setImage] = useState<string | null>(null);
+  const [file, setFile] = useState<string | null>(null);
+  const [fileType, setFileType] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const { fileInputRef, imageInputRef, videoInputRef } =
     useWhatsappAPIContext();
 
-  // Handle input change
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: ChangeEvent<HTMLTextAreaElement>): void => {
     setMessageBody(e.target.value);
   };
 
-  // Handle message submission
-  const { mutateAsync:sendWAMessage } = useSendWAMessage();
-  const handleSubmission = async (e) => {
+  const { mutateAsync: sendWAMessage } = useSendWAMessage();
+  const handleSubmission = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     if (!messageBody.trim()) {
       return;
     }
 
-    /** @type {WAMessage} */
     const messagetosubmit = {
       ...WAMessageDefault,
       body: messageBody,
-      contact: contact.id,
-      message_mode: "sent",
+      contact: parseInt(contact.id),
+      message_mode: "sent" as const,
     };
 
     setIsSubmitting(true);
     try {
-      setMessageBody(""); // Clear the input field after submitting
+      setMessageBody("");
       setIsSubmitting(false);
       await sendWAMessage(messagetosubmit);
-    } catch (error) {
+    } catch (error: any) {
       console.log(error.message);
     }
   };
 
-  // Handle file select
-  const handleFileChange = ({ target: { files } }) => {
-    const file = files[0];
+  const handleFileChange = ({ target: { files } }: ChangeEvent<HTMLInputElement>): void => {
+    const file = files?.[0];
     if (file) {
       if (file.size > 64 * 1024 * 1024) {
         console.log("file size exceeded");
-        // add an error modal later
         return;
       }
-      // remove the error modal by timeout
       setFileName(file.name);
       setFileType(file.type);
-      // Corrected file type checks
       if (file.type.startsWith("image/")) {
-        setImage(URL.createObjectURL(file)); // If it's an image
+        setImage(URL.createObjectURL(file));
         setVideo(null);
         setFile(null);
       } else if (file.type.startsWith("video/")) {
-        setVideo(URL.createObjectURL(file)); // If it's a video
+        setVideo(URL.createObjectURL(file));
         setImage(null);
         setFile(null);
       } else {
-        setFile(URL.createObjectURL(file)); // If it's another file type
+        setFile(URL.createObjectURL(file));
         setImage(null);
         setVideo(null);
       }
@@ -85,16 +81,15 @@ const ChatInput = ({ contact }) => {
     }
   };
 
-  // Handle file unselect
-  const handleRemoveFile = () => {
+  const handleRemoveFile = (): void => {
     setFileName("No Selected file");
     setFileType(null);
     setImage(null);
     setVideo(null);
     setFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = null;
-    if (imageInputRef.current) imageInputRef.current.value = null;
-    if (videoInputRef.current) videoInputRef.current.value = null;
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (imageInputRef.current) imageInputRef.current.value = "";
+    if (videoInputRef.current) videoInputRef.current.value = "";
     setHasAttachment(false);
   };
   return (
@@ -191,7 +186,7 @@ const ChatInput = ({ contact }) => {
             video={video}
             image={image}
             file={file}
-            type={fileType}
+            type={fileType || undefined}
             resetinput={handleRemoveFile}
           />
         ))}

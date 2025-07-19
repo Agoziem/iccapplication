@@ -1,6 +1,13 @@
 import React from 'react'
 
-const ProfileimagePlaceholders = ({
+interface ProfileImagePlaceholdersProps {
+  firstname?: string;
+  width?: number;
+  height?: number;
+  fontSize?: string;
+}
+
+const ProfileimagePlaceholders: React.FC<ProfileImagePlaceholdersProps> = ({
   firstname,
   width = 68,
   height = 68,

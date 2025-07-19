@@ -1,36 +1,47 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, ChangeEvent } from "react";
 import { FaTimes } from "react-icons/fa";
 import { FaRegFileImage } from "react-icons/fa6";
 import { IoIosImages } from "react-icons/io";
 import { LuUpload } from "react-icons/lu";
 import Alert from "../Alert/Alert";
 
-/**
- * @param {{ imagekey: string; imageurlkey: string; imagename: string; formData: any; setFormData: any; }} param0
- */
+interface AlertState {
+  show: boolean;
+  message: string;
+}
+
+interface ImageUploaderProps {
+  imagekey: string;
+  imageurlkey: string;
+  imagename: string;
+  formData: Record<string, any>;
+  setFormData: (data: Record<string, any>) => void;
+}
+
 const ImageUploader = ({
   imagekey,
   imageurlkey,
   imagename,
   formData,
   setFormData,
-}) => {
-  const fileInput = useRef(null);
-  const [fileName, setFileName] = useState("No Selected file");
-  const [image, setImage] = useState(null);
-  const [erroralert, setErrorAlert] = useState({
+}: ImageUploaderProps) => {
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [fileName, setFileName] = useState<string>("No Selected file");
+  const [image, setImage] = useState<string | null>(null);
+  const [erroralert, setErrorAlert] = useState<AlertState>({
     show: false,
     message: "",
   });
 
-  // update the state from the External data on Page load , and when the data changes
   useEffect(() => {
     if (formData?.[imagekey]) setFileName(formData[imagename]);
     if (formData?.[imageurlkey]) setImage(formData[imageurlkey]);
-  }, [formData,imagekey,imagename,imageurlkey]);
+  }, [formData, imagekey, imagename, imageurlkey]);
 
-  const handleFileChange = ({ target: { files } }) => {
-    const file = files[0];
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    const file = files?.[0];
+    
     if (file) {
       if (!file.type.startsWith("image/")) {
         setErrorAlert({
@@ -64,7 +75,7 @@ const ImageUploader = ({
       [imageurlkey]: null
     });
     if (fileInput.current) {
-      fileInput.current.value = null; // Reset file input value
+      fileInput.current.value = ""; // Reset file input value
     }
   };
 
@@ -122,7 +133,7 @@ const ImageUploader = ({
             className="btn btn-sm btn-accent-primary shadow-none mt-1"
             onClick={(e) => {
               e.preventDefault();
-              fileInput.current.click();
+              fileInput.current?.click();
             }}
           >
             <LuUpload className="h5 me-2" />

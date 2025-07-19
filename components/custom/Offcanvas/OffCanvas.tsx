@@ -1,18 +1,16 @@
 "use client";
 import { useCart } from "@/data/carts/Cartcontext";
-import React, { useContext, useRef } from "react";
+import React, { useRef } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Alert from "../Alert/Alert";
 import { PulseLoader } from "react-spinners";
 
 const OffCanvas = () => {
-  const { cart, removeFromCart, resertCart, checkout, isPending, error } =
-    useCart();
+  const { cart, removeFromCart, resetCart, checkout, isPending, error } = useCart();
   const { data: session } = useSession();
-  const offCanvasbuttonRef = useRef(null); // Ref for the off-canvas
+  const offCanvasbuttonRef = useRef<HTMLButtonElement>(null);
 
-  // Function to close the off-canvas using native Bootstrap event
   const closeOffCanvas = () => {
     const offCanvasButton = offCanvasbuttonRef.current;
     if (offCanvasButton) {
@@ -21,8 +19,62 @@ const OffCanvas = () => {
   };
 
   const handleCheckout = async () => {
-    await checkout(); // Perform the checkout logic
-    closeOffCanvas(); // Close the off-canvas after successful checkout
+    await checkout();
+    closeOffCanvas();
+  };
+
+  const handleClearCart = () => {
+    resetCart();
+  };
+
+  const handleRemoveItem = (itemId: string | number, cartType: "service" | "product" | "video") => {
+    removeFromCart(String(itemId), cartType);
+  };
+
+  const calculateTotal = () => {
+    return cart.reduce((acc, item) => {
+      let price = "0";
+      switch (item.cartType) {
+        case "service":
+          price = item.service.price;
+          break;
+        case "product":
+          price = item.product.price;
+          break;
+        case "video":
+          price = item.video.price;
+          break;
+      }
+      return acc + parseFloat(price);
+    }, 0);
+  };
+
+  const getItemDetails = (item: any) => {
+    switch (item.cartType) {
+      case "service":
+        return {
+          id: item.service.id,
+          name: item.service.name,
+          price: item.service.price,
+          category: item.service.category,
+        };
+      case "product":
+        return {
+          id: item.product.id,
+          name: item.product.name,
+          price: item.product.price,
+          category: item.product.category,
+        };
+      case "video":
+        return {
+          id: item.video.id,
+          name: item.video.title,
+          price: item.video.price,
+          category: item.video.category,
+        };
+      default:
+        return { id: 0, name: "", price: "0", category: { category: "" } };
+    }
   };
 
   return (
@@ -33,7 +85,6 @@ const OffCanvas = () => {
       aria-labelledby="offcanvasTopLabel"
       style={{ backgroundColor: "var(--bgLightColor)" }}
     >
-      {/* Off-Canvas Header */}
       <div className="offcanvas-header">
         <h5 className="offcanvas-title" id="offcanvasTopLabel">
           Shopping Cart
@@ -47,64 +98,63 @@ const OffCanvas = () => {
         ></button>
       </div>
 
-      {/* Off-Canvas Body */}
       <div className="offcanvas-body py-2">
         {cart && cart.length > 0 ? (
           <div className="d-flex flex-column justify-content-between h-100">
             <ul className="list-group">
-              {cart.map((item) => (
-                <li
-                  key={`${item.cartType}-${item.id}`}
-                  className="list-group-item"
-                  style={{
-                    backgroundColor: "var(--bgLightColor)",
-                    borderColor: "var(--bgDarkColor)",
-                  }}
-                >
-                  <div className="d-flex justify-content-between">
-                    <div className="flex-fill">{item.name || item.title}</div>
-                    <div className="fw-bold">&#8358;{item.price}</div>
-                  </div>
-                  <div className="d-flex justify-content-between mt-2">
-                    <div className="fw-bold small text-secondary">
-                      {item.category.category !== "application" ? (
-                        <i className="bi bi-person-fill-gear me-2 h5"></i>
-                      ) : (
-                        <i className="bi bi-google-play me-2"></i>
-                      )}
-                      {item.category.category}{" "}
-                      <span className="ms-2 badge bg-primary-light text-primary">
-                        {item.cartType}
-                      </span>
+              {cart.map((item) => {
+                const itemDetails = getItemDetails(item);
+                return (
+                  <li
+                    key={`${item.cartType}-${itemDetails.id}`}
+                    className="list-group-item"
+                    style={{
+                      backgroundColor: "var(--bgLightColor)",
+                      borderColor: "var(--bgDarkColor)",
+                    }}
+                  >
+                    <div className="d-flex justify-content-between">
+                      <div className="flex-fill">{itemDetails.name}</div>
+                      <div className="fw-bold">&#8358;{itemDetails.price}</div>
                     </div>
-                    <div
-                      className="badge bg-secondary-light text-secondary ms-2"
-                      style={{ cursor: "pointer" }}
-                      onClick={() => removeFromCart(item.id, item.cartType)}
-                    >
-                      Remove
+                    <div className="d-flex justify-content-between mt-2">
+                      <div className="fw-bold small text-secondary">
+                        {itemDetails.category?.category !== "application" ? (
+                          <i className="bi bi-person-fill-gear me-2 h5"></i>
+                        ) : (
+                          <i className="bi bi-google-play me-2"></i>
+                        )}
+                        {itemDetails.category?.category}{" "}
+                        <span className="ms-2 badge bg-primary-light text-primary">
+                          {item.cartType}
+                        </span>
+                      </div>
+                      <div
+                        className="badge bg-secondary-light text-secondary ms-2"
+                        style={{ cursor: "pointer" }}
+                        onClick={() => handleRemoveItem(itemDetails.id, item.cartType)}
+                      >
+                        Remove
+                      </div>
                     </div>
-                  </div>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
             <div className="d-flex flex-column justify-content-between pb-4 ps-3">
               <h4 className="mb-3">
                 Total:{" "}
                 <span className="fw-bold">
-                  &#8358;
-                  {cart.reduce((acc, item) => acc + parseFloat(item.price), 0)}
+                  &#8358;{calculateTotal()}
                 </span>
               </h4>
 
-              {/* Alert */}
               <div>{error && <Alert type="danger">{error}</Alert>}</div>
 
-              {/* Cart Buttons */}
               <div className="d-flex flex-md-row flex-column flex-md-fill">
                 <button
                   className="btn btn-outline-danger me-0 me-md-3 mb-3 mb-md-0"
-                  onClick={() => resertCart()}
+                  onClick={handleClearCart}
                   data-bs-dismiss="offcanvas"
                   aria-label="Close"
                 >
@@ -113,7 +163,7 @@ const OffCanvas = () => {
                 {session ? (
                   <button
                     className="btn btn-primary"
-                    onClick={handleCheckout} // Use the handler to checkout and close
+                    onClick={handleCheckout}
                     disabled={isPending}
                   >
                     {isPending ? (

@@ -1,6 +1,11 @@
+import React from "react";
 import "./iframe.css"
 
-const GoogleForm = ({ src }) => {
+interface GoogleFormProps {
+  src: string;
+}
+
+const GoogleForm: React.FC<GoogleFormProps> = ({ src }) => {
   return (
     <div className="d-flex justify-content-center align-items-center">
       <iframe

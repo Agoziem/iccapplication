@@ -1,6 +1,10 @@
 import React from "react";
 
-const Loading = ({ item }) => {
+interface LoadingProps {
+  item?: string;
+}
+
+const Loading = ({ item = "content" }: LoadingProps) => {
   return (
     <div className="text-center">
       <div className="d-flex justify-content-center align-items-center">
@@ -8,7 +12,7 @@ const Loading = ({ item }) => {
           <span className="visually-hidden">Loading...</span>
         </div>
       </div>
-      <div className="ms-3 text-primary">Loading {item} ...</div>
+      <div className="ms-3 text-primary">Loading {item}...</div>
     </div>
   );
 };

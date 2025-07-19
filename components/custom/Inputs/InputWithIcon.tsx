@@ -1,4 +1,14 @@
-import React, { useState } from "react";
+import React, { ChangeEvent } from "react";
+
+interface InputWithIconProps {
+  type: string;
+  name: string;
+  value: string;
+  placeholder?: string;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  icon: string;
+  required?: boolean;
+}
 
 const InputWithIcon = ({
   type,
@@ -8,7 +18,7 @@ const InputWithIcon = ({
   onChange,
   icon,
   required = false,
-}) => {
+}: InputWithIconProps) => {
   return (
     <div className="input-group my-3">
       <span className="input-group-text">

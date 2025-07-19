@@ -1,9 +1,15 @@
-import React from 'react';
+import React, { MouseEvent } from 'react';
 
-const ToolbarButton = ({ onClick, isActive, Icon }) => {
+interface ToolbarButtonProps {
+  onClick: () => void;
+  isActive?: boolean;
+  Icon: React.ComponentType<any>;
+}
+
+const ToolbarButton: React.FC<ToolbarButtonProps> = ({ onClick, isActive, Icon }) => {
   return (
     <div
-      onClick={(e) => {
+      onClick={(e: MouseEvent) => {
         e.preventDefault();
         onClick();
       }}

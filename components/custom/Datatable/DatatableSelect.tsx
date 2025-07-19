@@ -1,10 +1,14 @@
 "use client";
-import React from 'react'
+import React, { ChangeEvent } from 'react'
 
-const Datatableselect = ({itemsPerPage,setItemsPerPage}) => {
+interface DatatableSelectProps {
+  itemsPerPage: number;
+  setItemsPerPage: (value: number) => void;
+}
 
-    // Handle change in number of items per page
-    const handleItemsPerPageChange = (e) => {
+const Datatableselect: React.FC<DatatableSelectProps> = ({itemsPerPage,setItemsPerPage}) => {
+
+    const handleItemsPerPageChange = (e: ChangeEvent<HTMLSelectElement>): void => {
         setItemsPerPage(parseInt(e.target.value));
     };
 

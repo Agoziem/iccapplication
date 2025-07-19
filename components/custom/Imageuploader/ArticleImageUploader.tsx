@@ -1,28 +1,34 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, ChangeEvent } from "react";
 import { FaTimes } from "react-icons/fa";
 import { FaRegFileImage } from "react-icons/fa6";
 import { LuUpload } from "react-icons/lu";
 import { MdOutlineArticle } from "react-icons/md";
 import Alert from "../Alert/Alert";
 
-/**
- * @typedef {Object} Value
- * @property {File|string|null} img - The image file uploaded by the user (if any).
- * @property {string|null} img_url - The image URL (if it exists).
- * @property {string|null} img_name - The image file name (if it exists).
- */
+interface ImageValue {
+  img: File | string | null;
+  img_url: string | null;
+  img_name: string | null;
+}
 
-/**
- * @param {{
- *   value: Value;
- *   onChange: (value: Value) => void;
- * }} props
- */
-const ArticleImageUploader = ({ value, onChange }) => {
-  const fileInput = useRef(null);
-  const [fileName, setFileName] = useState("No Selected file");
-  const [image, setImage] = useState(null);
-  const [errorAlert, setErrorAlert] = useState({ show: false, message: "" });
+interface AlertState {
+  show: boolean;
+  message: string;
+}
+
+interface ArticleImageUploaderProps {
+  value: ImageValue;
+  onChange: (value: ImageValue) => void;
+}
+
+const ArticleImageUploader = ({ value, onChange }: ArticleImageUploaderProps) => {
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [fileName, setFileName] = useState<string>("No Selected file");
+  const [image, setImage] = useState<string | null>(null);
+  const [errorAlert, setErrorAlert] = useState<AlertState>({ 
+    show: false, 
+    message: "" 
+  });
 
   useEffect(() => {
     if (value) {
@@ -34,13 +40,19 @@ const ArticleImageUploader = ({ value, onChange }) => {
     }
     // Clear the input field when value changes (e.g., on reset)
     if (fileInput.current) {
-      fileInput.current.value = null;
+      fileInput.current.value = "";
     }
   }, [value]);
   
+  const showError = (message: string) => {
+    setErrorAlert({ show: true, message });
+    setTimeout(() => setErrorAlert({ show: false, message: "" }), 3000);
+  };
 
-  const handleFileChange = ({ target: { files } }) => {
-    const file = files[0];
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    const file = files?.[0];
+    
     if (file) {
       if (!file.type.startsWith("image/")) {
         showError("Only image files are allowed");
@@ -57,14 +69,7 @@ const ArticleImageUploader = ({ value, onChange }) => {
     setFileName("No Selected file");
     setImage(null);
     onChange({ img: null, img_url: "", img_name: "" });
-    if (fileInput.current) fileInput.current.value = null;
-  };
-
-  //
-
-  const showError = (message) => {
-    setErrorAlert({ show: true, message });
-    setTimeout(() => setErrorAlert({ show: false, message: "" }), 3000);
+    if (fileInput.current) fileInput.current.value = "";
   };
 
   return (
@@ -116,7 +121,7 @@ const ArticleImageUploader = ({ value, onChange }) => {
             className="btn btn-sm btn-accent-primary shadow-none"
             onClick={(e) => {
               e.preventDefault();
-              fileInput.current.click();
+              fileInput.current?.click();
             }}
           >
             <LuUpload className="h5 me-2" />

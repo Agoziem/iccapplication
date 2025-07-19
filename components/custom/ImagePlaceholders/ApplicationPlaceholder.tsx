@@ -1,6 +1,12 @@
 import React from "react";
 
-const ApplicationPlaceholder = ({width=68,height=68,fontSize="1.5rem"}) => {
+interface ApplicationPlaceholderProps {
+  width?: number;
+  height?: number;
+  fontSize?: string;
+}
+
+const ApplicationPlaceholder: React.FC<ApplicationPlaceholderProps> = ({width=68,height=68,fontSize="1.5rem"}) => {
   return (
     <div
       className="d-flex justify-content-center align-items-center"

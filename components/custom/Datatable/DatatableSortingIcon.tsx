@@ -1,19 +1,26 @@
 import React, { useState } from 'react';
-import { TiArrowSortedUp, TiArrowSortedDown } from "react-icons/ti";
 
-const Datatablesortingicon = ({ itemstosort, setItems, headername }) => {
-    const [sortOrder, setSortOrder] = useState(null);
+interface DatatableSortingIconProps {
+  itemstosort: any[];
+  setItems: (items: any[]) => void;
+  headername: string;
+}
 
-    const toggleSortOrder = () => {
+type SortOrder = 'asc' | 'desc' | null;
+
+const Datatablesortingicon: React.FC<DatatableSortingIconProps> = ({ itemstosort, setItems, headername }) => {
+    const [sortOrder, setSortOrder] = useState<SortOrder>(null);
+
+    const toggleSortOrder = (): void => {
         if (sortOrder === 'asc') {
             setSortOrder('desc');
         } else {
             setSortOrder('asc');
         }
-        sortItems(sortOrder, headername); // Pass headername here
+        sortItems(sortOrder, headername);
     };
 
-    const sortItems = (order, headername) => {
+    const sortItems = (order: SortOrder, headername: string): void => {
         console.log(headername)
         const sortedItems = [...itemstosort].sort((a, b) => {
             if (order === 'asc') {

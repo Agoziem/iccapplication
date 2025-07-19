@@ -2,21 +2,21 @@
 import React, { useState, useEffect } from 'react';
 import './backToTop.css';
 
-function BackToTop() {
-  const [scroll, setScroll] = useState(0);
+const BackToTop: React.FC = () => {
+  const [scroll, setScroll] = useState<number>(0);
 
   useEffect(() => {
-    window.addEventListener('scroll', () => {
+    const handleScroll = (): void => {
       setScroll(window.scrollY);
-    });
-    return () => {
-      window.removeEventListener('scroll', () => {
-        setScroll(window.scrollY);
-      });
     };
-  }, [scroll]);
 
-  const backToTop = () => {
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  const backToTop = (): void => {
     window.scrollTo(0, 0);
   };
 

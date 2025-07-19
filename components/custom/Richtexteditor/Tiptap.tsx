@@ -7,10 +7,13 @@ import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import "./Tiptap.css";
 
-/**
- * @param {{ item: string; setItem: (value:string) => void; setHasStartedEditing?: (value: any) => void; }} param0
- */
-const Tiptap = ({ item, setItem, setHasStartedEditing = (value) => {} }) => {
+interface TiptapProps {
+  item: string;
+  setItem: (value: string) => void;
+  setHasStartedEditing?: (value: boolean) => void;
+}
+
+const Tiptap: React.FC<TiptapProps> = ({ item, setItem, setHasStartedEditing }) => {
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -35,7 +38,7 @@ const Tiptap = ({ item, setItem, setHasStartedEditing = (value) => {} }) => {
       },
     },
     onUpdate: ({ editor }) => {
-      setHasStartedEditing && setHasStartedEditing(true);
+      setHasStartedEditing?.(true);
       setItem(editor.getHTML());
     },
   });
@@ -50,7 +53,7 @@ const Tiptap = ({ item, setItem, setHasStartedEditing = (value) => {} }) => {
         editor.commands.setContent(newContent);
       }
     }
-  }, [item, editor]); // Ensure keylabel is included in dependencies
+  }, [item, editor]);
 
   return (
     <div className="w-100">

@@ -1,6 +1,12 @@
 import React from 'react'
 
-const VideosPlaceholder = ({width=68,height=68,fontSize="1.5rem"}) => {
+interface VideosPlaceholderProps {
+  width?: number;
+  height?: number;
+  fontSize?: string;
+}
+
+const VideosPlaceholder: React.FC<VideosPlaceholderProps> = ({width=68,height=68,fontSize="1.5rem"}) => {
   return (
     <div
       className="d-flex justify-content-center align-items-center"

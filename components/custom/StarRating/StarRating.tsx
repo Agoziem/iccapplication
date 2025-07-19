@@ -1,13 +1,17 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ReactElement } from 'react';
 import { FaStar, FaStarHalfAlt, FaRegStar } from 'react-icons/fa';
 import styles from './StarRating.module.css';
 
-const StarRating = ({ rating }) => {
-  const [stars, setStars] = useState([]);
+interface StarRatingProps {
+  rating: number;
+}
+
+const StarRating = ({ rating }: StarRatingProps) => {
+  const [stars, setStars] = useState<ReactElement[]>([]);
 
   useEffect(() => {
-    const starArray = [];
+    const starArray: ReactElement[] = [];
     let tempRating = rating;
 
     for (let i = 0; i < 5; i++) {

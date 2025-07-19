@@ -1,16 +1,28 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { ReactNode } from "react";
+
+type SlideDirection = "left" | "right" | "up" | "down" | "none";
+type ZoomType = "in" | "out" | "none";
+
+interface AnimationContainerProps {
+  children: ReactNode;
+  className?: string;
+  reverse?: boolean;
+  delay?: number;
+  slideDirection?: SlideDirection;
+  zoom?: ZoomType;
+}
 
 const AnimationContainer = ({
   children,
   className = "",
   reverse = false,
   delay = 0,
-  slideDirection = "none", // "left", "right", "up", "down", or "none"
-  zoom = "none", // "in", "out", or "none"
-}) => {
-  // Determine the initial x and y based on slideDirection
+  slideDirection = "none",
+  zoom = "none",
+}: AnimationContainerProps) => {
   const initialPosition = {
     x: slideDirection === "left" ? -50 : slideDirection === "right" ? 50 : 0,
     y: slideDirection === "up" ? -50 : slideDirection === "down" ? 50 : 0,

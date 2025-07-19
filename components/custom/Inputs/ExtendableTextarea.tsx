@@ -1,34 +1,35 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, ChangeEvent, CSSProperties } from "react";
 
-/**
- * Extendable Textarea component that adjusts its height based on the content
- * 
- * @param {Object} props
- * @param {string} props.value - The value of the textarea.
- * @param {(event: React.ChangeEvent<HTMLTextAreaElement>) => void} props.onChange - Change handler for the textarea.
- * @param {string} props.placeholder - Placeholder text for the textarea.
- * @param {string} props.className - Additional classNames for the textarea.
- * @param {React.CSSProperties} props.style - Inline styles for the textarea.
- * @param {boolean} [props.disabled] - Whether the textarea is disabled.
- * 
- * @returns {JSX.Element}
- */
-const ExtendableTextarea = ({ value, onChange, placeholder, className, style, disabled }) => {
-  const [height, setHeight] = useState(0);
-  const textareaRef = useRef(null);
+interface ExtendableTextareaProps {
+  value: string;
+  onChange: (event: ChangeEvent<HTMLTextAreaElement>) => void;
+  placeholder?: string;
+  className?: string;
+  style?: CSSProperties;
+  disabled?: boolean;
+}
 
-  // Adjust the height of the textarea based on its scrollHeight
-  const handleTextGrow = () => {
+const ExtendableTextarea: React.FC<ExtendableTextareaProps> = ({ 
+  value, 
+  onChange, 
+  placeholder, 
+  className, 
+  style, 
+  disabled 
+}) => {
+  const [height, setHeight] = useState<number>(0);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleTextGrow = (): void => {
     const textarea = textareaRef.current;
     if (textarea) {
-      textarea.style.height = "0px"; // Reset height
-      const scrollHeight = textarea.scrollHeight; // Get the actual height
-      textarea.style.height = `${scrollHeight}px`; // Set the dynamic height
+      textarea.style.height = "0px";
+      const scrollHeight = textarea.scrollHeight;
+      textarea.style.height = `${scrollHeight}px`;
       setHeight(scrollHeight);
     }
   };
 
-  // When value changes, adjust the textarea height
   useEffect(() => {
     if (textareaRef.current) {
       handleTextGrow();

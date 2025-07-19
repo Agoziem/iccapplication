@@ -2,7 +2,7 @@ import { useCart } from "@/data/carts/Cartcontext";
 import React from "react";
 import "./cartbutton.css"
 
-const Cartbutton = () => {
+const Cartbutton: React.FC = () => {
   const { cart } = useCart();
   return (
     <div

@@ -1,180 +1,150 @@
 "use client";
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import Alert from "@/components/custom/Alert/Alert";
 import { useCreateEmail, useSendMessage } from "@/data/Emails/emails.hook";
+import { Organization } from "@/types/items";
 
-const ContactForm = ({ OrganizationData }) => {
+interface ContactFormProps {
+  OrganizationData?: Organization;
+}
+
+const contactSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Email address is invalid"),
+  subject: z.string().min(1, "Subject is required"),
+  message: z.string().min(1, "Your message is required"),
+});
+
+type ContactFormData = z.infer<typeof contactSchema>;
+
+interface AlertState {
+  type: string;
+  message: string;
+  show: boolean;
+}
+
+const ContactForm: React.FC<ContactFormProps> = ({ OrganizationData }) => {
   const { data: session } = useSession();
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    subject: "",
-    message: "",
-  });
-  const [formErrors, setFormErrors] = useState({
-    name: "",
-    email: "",
-    subject: "",
-    message: "",
-  });
-  const [submitting, setIsSubmitting] = useState(false);
-  const [alert, setAlert] = useState({
+  const [alert, setAlert] = useState<AlertState>({
     type: "",
     message: "",
     show: false,
   });
   const { mutate } = useSendMessage();
 
-  const validate = () => {
-    const errors = {};
-    if (!formData.name) errors.name = "Name is required";
-    if (!formData.subject) errors.subject = "Subject is required";
-    if (!formData.email) {
-      errors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = "Email address is invalid";
-    }
-    if (!formData.message) errors.message = "Your message is required";
-    return errors;
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-    setFormErrors({
-      ...formErrors,
-      [name]: "",
-    });
-  };
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setValue,
+    reset,
+  } = useForm<ContactFormData>({
+    resolver: zodResolver(contactSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      subject: "",
+      message: "",
+    },
+  });
 
   useEffect(() => {
     if (session) {
-      setFormData({
-        ...formData,
-        name: session.user.name || session.user.username,
-        email: session.user.email,
-      });
+      setValue("name", session.user.name || session.user.username || "");
+      setValue("email", session.user.email || "");
     }
-  }, [session]);
+  }, [session, setValue]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const errors = validate();
-    setFormErrors(errors);
-    if (Object.keys(errors).length === 0) {
-      setIsSubmitting(true);
-      mutate(
-        {
-          name: formData.name,
-          email: formData.email,
-          subject: formData.subject,
-          message: formData.message,
-        },
-        {
-          onSuccess: () => {
-            setFormData({
-              name: "",
-              email: "",
-              message: "",
-              subject: "",
-            });
-            setAlert({
-              type: "success",
-              message: "Message sent successfully",
-              show: true,
-            });
-            setTimeout(() => {
-              setAlert({ type: "", message: "", show: false });
-            }, 3000);
-          },
-          onError: (error) => {
-            setAlert({
-              type: "danger",
-              message: "An error occurred. Please try again.",
-              show: true,
-            });
-            setTimeout(() => {
-              setAlert({ type: "", message: "", show: false });
-            }, 3000);
-          },
-        }
-      );
-      setIsSubmitting(false);
-    }
+  const onSubmit = async (data: ContactFormData): Promise<void> => {
+    mutate(data, {
+      onSuccess: () => {
+        reset();
+        setAlert({
+          type: "success",
+          message: "Message sent successfully",
+          show: true,
+        });
+        setTimeout(() => {
+          setAlert({ type: "", message: "", show: false });
+        }, 3000);
+      },
+      onError: (error) => {
+        setAlert({
+          type: "danger",
+          message: "An error occurred. Please try again.",
+          show: true,
+        });
+        setTimeout(() => {
+          setAlert({ type: "", message: "", show: false });
+        }, 3000);
+      },
+    });
   };
 
   return (
-    <form noValidate onSubmit={handleSubmit}>
+    <form noValidate onSubmit={handleSubmit(onSubmit)}>
       <div className="form-group my-4">
         <input
           type="text"
-          className={`form-control ${formErrors.name ? "is-invalid" : ""}`}
-          name="name"
+          className={`form-control ${errors.name ? "is-invalid" : ""}`}
           placeholder="Name"
-          value={formData.name}
-          onChange={handleChange}
+          {...register("name")}
           required
         />
-        {formErrors.name && (
-          <div className="invalid-feedback">{formErrors.name}</div>
+        {errors.name && (
+          <div className="invalid-feedback">{errors.name.message}</div>
         )}
       </div>
       <div className="form-group my-4">
         <input
           type="email"
-          className={`form-control ${formErrors.email ? "is-invalid" : ""}`}
-          name="email"
+          className={`form-control ${errors.email ? "is-invalid" : ""}`}
           placeholder="Email"
-          value={formData.email}
-          onChange={handleChange}
+          {...register("email")}
           required
         />
-        {formErrors.email && (
-          <div className="invalid-feedback">{formErrors.email}</div>
+        {errors.email && (
+          <div className="invalid-feedback">{errors.email.message}</div>
         )}
       </div>
       <div className="form-group my-4">
         <input
           type="text"
-          className={`form-control ${formErrors.subject ? "is-invalid" : ""}`}
-          name="subject"
+          className={`form-control ${errors.subject ? "is-invalid" : ""}`}
           placeholder="Subject"
-          value={formData.subject}
-          onChange={handleChange}
+          {...register("subject")}
           required
         />
-        {formErrors.subject && (
-          <div className="invalid-feedback">{formErrors.subject}</div>
+        {errors.subject && (
+          <div className="invalid-feedback">{errors.subject.message}</div>
         )}
       </div>
       <div className="form-group my-4">
         <textarea
-          className={`form-control ${formErrors.message ? "is-invalid" : ""}`}
-          name="message"
+          className={`form-control ${errors.message ? "is-invalid" : ""}`}
           placeholder="Message"
-          value={formData.message}
-          onChange={handleChange}
+          {...register("message")}
           required
         ></textarea>
-        {formErrors.message && (
-          <div className="invalid-feedback">{formErrors.message}</div>
+        {errors.message && (
+          <div className="invalid-feedback">{errors.message.message}</div>
         )}
       </div>
       {alert.show && (
-        <Alert type={alert.type} className="mb-2">
+        <Alert type={alert.type as any} className="mb-2">
           {alert.message}
         </Alert>
       )}
       <button
         type="submit"
         className="btn btn-primary w-100 rounded"
-        disabled={submitting}
+        disabled={isSubmitting}
       >
-        {submitting ? "Sending message..." : "Send Message"}
+        {isSubmitting ? "Sending message..." : "Send Message"}
       </button>
     </form>
   );

@@ -1,6 +1,16 @@
-import React from "react";
+import React, { ChangeEvent } from "react";
 
-const SearchInput = ({ searchQuery, setSearchQuery, itemlabel = "" }) => {
+interface SearchInputProps {
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  itemlabel?: string;
+}
+
+const SearchInput = ({ searchQuery, setSearchQuery, itemlabel = "" }: SearchInputProps) => {
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
   return (
     <div
       className="d-flex align-items-center rounded-pill overflow-hidden"
@@ -12,13 +22,13 @@ const SearchInput = ({ searchQuery, setSearchQuery, itemlabel = "" }) => {
         minWidth: "290px",
       }}
     >
-      <i className="bi bi-search text-primary ms-3 "></i>
+      <i className="bi bi-search text-primary ms-3"></i>
       <input
         type="text"
         className="form-control border-0"
         placeholder={`Search for ${itemlabel}`}
         value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
+        onChange={handleSearchChange}
         style={{
           color: "white",
         }}

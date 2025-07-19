@@ -1,6 +1,12 @@
 import React from 'react'
 
-const ProductPlaceholder = ({width=68,height=68,fontSize="1.5rem"}) => {
+interface ProductPlaceholderProps {
+  width?: number;
+  height?: number;
+  fontSize?: string;
+}
+
+const ProductPlaceholder: React.FC<ProductPlaceholderProps> = ({width=68,height=68,fontSize="1.5rem"}) => {
   return (
     <div
       className="d-flex justify-content-center align-items-center"

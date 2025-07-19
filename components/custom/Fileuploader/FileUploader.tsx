@@ -1,10 +1,21 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, ChangeEvent } from "react";
 import { FaTimes } from "react-icons/fa";
 import { LuUpload } from "react-icons/lu";
 import Alert from "../Alert/Alert";
-import {getFileIcon} from "@/utils/selectFileIcon"
+import { getFileIcon } from "@/utils/selectFileIcon";
 
+interface AlertState {
+  show: boolean;
+  message: string;
+}
 
+interface FileUploaderProps {
+  filekey: string;
+  fileurlkey: string;
+  filename: string;
+  formData: Record<string, any>;
+  setFormData: (data: Record<string, any>) => void;
+}
 
 const FileUploader = ({
   filekey,
@@ -12,11 +23,11 @@ const FileUploader = ({
   filename,
   formData,
   setFormData,
-}) => {
-  const fileInput = useRef(null);
-  const [fileName, setFileName] = useState(null);
-  const [fileType, setFileType] = useState(null);
-  const [erroralert, setErrorAlert] = useState({
+}: FileUploaderProps) => {
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [fileType, setFileType] = useState<string | null>(null);
+  const [erroralert, setErrorAlert] = useState<AlertState>({
     show: false,
     message: "",
   });
@@ -29,19 +40,21 @@ const FileUploader = ({
     "image/png",
     "application/vnd.ms-excel",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  ];
+  ] as const;
 
   useEffect(() => {
     if (formData[fileurlkey]) {
       setFileName(formData[filename]);
-      setFileType(formData[filekey].type);
+      setFileType(formData[filekey]?.type);
     }
-  }, [formData[fileurlkey]]);
+  }, [formData, fileurlkey, filename, filekey]);
 
-  const handleFileChange = ({ target: { files } }) => {
-    const file = files[0];
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    const file = files?.[0];
+    
     if (file) {
-      if (!allowedFileTypes.includes(file.type)) {
+      if (!allowedFileTypes.includes(file.type as any)) {
         setErrorAlert({
           show: true,
           message: "Only PDF, Word, Excel, and Image files are allowed",
@@ -63,8 +76,6 @@ const FileUploader = ({
     }
   };
 
-  
-
   const handleRemoveFile = () => {
     setFileName(null);
     setFileType(null);
@@ -73,8 +84,13 @@ const FileUploader = ({
       [filekey]: null,
     });
     if (fileInput.current) {
-      fileInput.current.value = null; // Reset file input value
+      fileInput.current.value = "";
     }
+  };
+
+  const handleUploadClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    fileInput.current?.click();
   };
 
   return (
@@ -89,7 +105,7 @@ const FileUploader = ({
         />
 
         {/* where to click and select a file */}
-        {erroralert.show && <Alert type={"danger"}>{erroralert.message}</Alert>}
+        {erroralert.show && <Alert type="danger">{erroralert.message}</Alert>}
         {!fileName ? (
           <div className="">
             <div
@@ -102,10 +118,7 @@ const FileUploader = ({
             </div>
             <button
               className="btn btn-accent-secondary shadow-none mt-2 w-100 rounded py-3 text-center"
-              onClick={(e) => {
-                e.preventDefault();
-                fileInput.current.click();
-              }}
+              onClick={handleUploadClick}
             >
               <LuUpload className="h5 me-2" />
               Upload your Product file

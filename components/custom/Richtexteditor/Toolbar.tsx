@@ -2,7 +2,7 @@ import React, { useCallback } from "react";
 import { FaCode } from "react-icons/fa";
 import { LuHeading2, LuListOrdered } from "react-icons/lu";
 import { BsList } from "react-icons/bs";
-import ToolbarButton from "./ToolbarButton"; // Adjust the import path as needed
+import ToolbarButton from "./ToolbarButton";
 import { FaRegImage } from "react-icons/fa6";
 import { BiSolidQuoteAltLeft } from "react-icons/bi";
 import { IoArrowRedo, IoArrowUndoSharp, IoLink } from "react-icons/io5";
@@ -14,10 +14,14 @@ import {
   MdOutlineStrikethroughS,
 } from "react-icons/md";
 
-const Toolbar = ({ editor, content }) => {
+interface ToolbarProps {
+  editor: any;
+  content: string;
+}
 
-  // add image
-  const addImage = useCallback(() => {
+const Toolbar: React.FC<ToolbarProps> = ({ editor, content }) => {
+
+  const addImage = useCallback((): void => {
     const url = window.prompt("URL");
 
     if (url) {
@@ -25,7 +29,7 @@ const Toolbar = ({ editor, content }) => {
     }
   }, [editor]);
 
-  const setLink = useCallback(() => {
+  const setLink = useCallback((): void => {
     const previousUrl = editor.getAttributes("link").href;
     const url = window.prompt("URL", previousUrl);
 

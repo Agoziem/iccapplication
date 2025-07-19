@@ -1,10 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import "react-quill/dist/quill.snow.css";
-import "./custom-quill.css"; // Your custom CSS for Quill
+import "./custom-quill.css";
 
-const ReactQuillEditor = ({ item, setItem, keylabel, setHasStartedEditing = "" }) => {
-  const [Editor, setEditor] = useState(null);
-  const quillRef = useRef(null);
+interface ReactQuillEditorProps {
+  item: Record<string, any>;
+  setItem: (item: Record<string, any>) => void;
+  keylabel: string;
+  setHasStartedEditing?: (value: boolean) => void;
+}
+
+const ReactQuillEditor: React.FC<ReactQuillEditorProps> = ({ item, setItem, keylabel, setHasStartedEditing }) => {
+  const [Editor, setEditor] = useState<any>(null);
+  const quillRef = useRef<any>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -21,7 +28,7 @@ const ReactQuillEditor = ({ item, setItem, keylabel, setHasStartedEditing = "" }
       const quill = quillRef.current.getEditor();
       const toolbar = quill.getModule("toolbar");
 
-      const handleAddImage = () => {
+      const handleAddImage = (): void => {
         const url = window.prompt("Enter the image URL:");
         if (url) {
           const quill = quillRef.current.getEditor();
@@ -30,7 +37,7 @@ const ReactQuillEditor = ({ item, setItem, keylabel, setHasStartedEditing = "" }
         }
       };
 
-      const handleDeleteImage = async () => {
+      const handleDeleteImage = async (): Promise<void> => {
         const quill = quillRef.current.getEditor();
         const range = quill.getSelection();
         if (range) {
@@ -137,7 +144,7 @@ const ReactQuillEditor = ({ item, setItem, keylabel, setHasStartedEditing = "" }
           modules={modules}
           formats={formats}
           value={item[keylabel]}
-          onChange={(content) => {
+          onChange={(content: string) => {
             setItem({ ...item, [keylabel]: content });
           }}
         />

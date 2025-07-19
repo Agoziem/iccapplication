@@ -1,37 +1,34 @@
-import React from "react";
+import React, { ReactNode } from "react";
 
+type AlertType = "info" | "success" | "warning" | "danger";
 
-/**
- * @param {{ type: string; children: React.ReactNode; className?: string }} param0
- */
-const Alert = ({ type, children, className="" }) => {
-  let icon = "";
-  let alertType = "";
+interface AlertProps {
+  type: AlertType;
+  children: ReactNode;
+  className?: string;
+}
 
-  if (type === "info") {
-    icon = "info-fill";
-    alertType = "alert-primary";
-  } else if (type === "success") {
-    icon = "check-circle-fill";
-    alertType = "alert-success";
-  } else if (type === "warning") {
-    icon = "exclamation-triangle-fill";
-    alertType = "alert-warning";
-  } else if (type === "danger") {
-    icon = "exclamation-triangle-fill";
-    alertType = "alert-danger";
-  }
+const Alert = ({ type, children, className = "" }: AlertProps) => {
+  const getAlertConfig = (alertType: AlertType) => {
+    const configs = {
+      info: { icon: "info-fill", alertClass: "alert-primary" },
+      success: { icon: "check-circle-fill", alertClass: "alert-success" },
+      warning: { icon: "exclamation-triangle-fill", alertClass: "alert-warning" },
+      danger: { icon: "exclamation-triangle-fill", alertClass: "alert-danger" },
+    };
+    return configs[alertType];
+  };
+
+  const config = getAlertConfig(type);
 
   return (
-    <>
-      <div
-        className={`alert ${alertType} d-flex align-items-center ${className}`}
-        role="alert"
-      >
-        <i className={`bi bi-${icon} me-3`} style={{ fontSize: "24px" }}></i>
-        <div>{children}</div>
-      </div>
-    </>
+    <div
+      className={`alert ${config.alertClass} d-flex align-items-center ${className}`}
+      role="alert"
+    >
+      <i className={`bi bi-${config.icon} me-3`} style={{ fontSize: "24px" }}></i>
+      <div>{children}</div>
+    </div>
   );
 };
 

@@ -1,6 +1,12 @@
 import React from "react";
 
-const ServicesPlaceholder = ({width=68,height=68,fontSize="1.5rem"}) => {
+interface ServicesPlaceholderProps {
+  width?: number;
+  height?: number;
+  fontSize?: string;
+}
+
+const ServicesPlaceholder: React.FC<ServicesPlaceholderProps> = ({width=68,height=68,fontSize="1.5rem"}) => {
   return (
     <div
       className="d-flex justify-content-center align-items-center"
