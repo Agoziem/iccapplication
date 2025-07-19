@@ -1,20 +1,20 @@
 "use client";
 
+import React, { useState } from "react";
 import Link from "next/link";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import Modal from "@/components/custom/Modal/modal";
 import { signOut, useSession } from "next-auth/react";
 
-function NavAvatar() {
+const NavAvatar: React.FC = () => {
   const { data: session } = useSession();
   const { currentRoot } = useCurrentUser();
-  const [showModal, setShowModal] = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [loggingOut, setLoggingOut] = useState<boolean>(false);
   const router = useRouter();
 
-  const logoutDashboard = () => {
+  const logoutDashboard = (): void => {
     setLoggingOut(true);
     setShowModal(false);
     setLoggingOut(false);
@@ -184,6 +184,6 @@ function NavAvatar() {
       </Modal>
     </>
   );
-}
+};
 
 export default NavAvatar;

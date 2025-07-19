@@ -1,8 +1,15 @@
 import ArticlePlaceholder from "@/components/features/configuration/articles/ArticlePlaceholder";
 import Link from "next/link";
 import React from "react";
+import { Article, ArticlesResponse } from "@/types/articles";
 
-function NewsPostItem({ item, index, items }) {
+interface NewsPostItemProps {
+  item: Article;
+  index: number;
+  items: ArticlesResponse;
+}
+
+const NewsPostItem: React.FC<NewsPostItemProps> = ({ item, index, items }) => {
   return (
     <div className="post-item ">
       <div className="d-flex">
@@ -30,9 +37,9 @@ function NewsPostItem({ item, index, items }) {
         </div>
       </div>
 
-      {index < items.length - 1 && <hr style={{ width: "100%" }} />}
+      {index < (items.results?.length || 0) - 1 && <hr style={{ width: "100%" }} />}
     </div>
   );
-}
+};
 
 export default NewsPostItem;

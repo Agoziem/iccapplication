@@ -1,17 +1,28 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import CardFilter from "../Card/CardFilter";
 import RecentSalesTable from "./RecentSalesTable";
 import "./recentSales.css";
 import { useFetchPayments, useFetchPaymentsByUser } from "@/data/payments/orders.hook";
+import { Session } from "next-auth";
 
-function RecentSales({ session }) {
-  const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
-  const [filter, setFilter] = useState("Today");
-  const handleFilterChange = (filter) => {
+interface RecentSalesProps {
+  session: Session | null;
+}
+
+const RecentSales: React.FC<RecentSalesProps> = ({ session }) => {
+  const organizationId = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
+  const [filter, setFilter] = useState<string>("Today");
+  
+  const handleFilterChange = (filter: string): void => {
     setFilter(filter);
   };
-  const { data: orders, isLoading:loadingOrders } = useFetchPayments(Organizationid);
-  const { data: userOrders, isLoading:loadingUserOrders} = useFetchPaymentsByUser(session?.user?.id);
+  
+  const { data: orders, isLoading: loadingOrders } = useFetchPayments(
+    organizationId ? parseInt(organizationId) : 0
+  );
+  const { data: userOrders, isLoading: loadingUserOrders } = useFetchPaymentsByUser(
+    session?.user?.id ? parseInt(session.user.id) : 0
+  );
 
   return (
     <div className="card recent-sales overflow-auto p-3">
@@ -31,6 +42,6 @@ function RecentSales({ session }) {
       </div>
     </div>
   );
-}
+};
 
 export default RecentSales;

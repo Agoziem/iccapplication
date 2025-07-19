@@ -1,6 +1,10 @@
 import React from 'react'
 
-const EmailResponse = ({message}) => {
+interface EmailResponseProps {
+  message: string;
+}
+
+const EmailResponse: React.FC<EmailResponseProps> = ({message}) => {
   return (
     <p>{message}</p>
   )

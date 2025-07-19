@@ -2,22 +2,33 @@
 import React, { useState } from "react";
 import "./card.css";
 import CardFilter from "./CardFilter";
-const HorizontalCard = ({ cardspan, iconcolor, cardtitle, icon, cardbody, loading }) => {
-  // const [filter, setFilter] = useState("Today");
-  // const handleFilterChange = (filter) => {
-  //   setFilter(filter);
-  // };
 
+interface HorizontalCardProps {
+  cardspan?: string;
+  iconcolor?: string;
+  cardtitle: string;
+  icon: string;
+  cardbody?: string | number;
+  loading?: boolean;
+}
+
+const HorizontalCard: React.FC<HorizontalCardProps> = ({ 
+  cardspan, 
+  iconcolor, 
+  cardtitle, 
+  icon, 
+  cardbody, 
+  loading 
+}) => {
   return (
     <div
       className={`card info-card
-        ${iconcolor}
+        ${iconcolor || ''}
       `}
     >
       <div className="card-body">
         <div className="">
           <h6 className="pt-2">{cardtitle}</h6>
-          {/* <CardFilter filterChange={handleFilterChange} /> */}
           <hr />
         </div>
 

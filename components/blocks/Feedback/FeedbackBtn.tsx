@@ -1,22 +1,29 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import "./Feedback.css";
 
-const FeedbackButton = ({ setShowModal }) => {
-  const [scroll, setScroll] = useState(0);
+interface FeedbackButtonProps {
+  setShowModal: (show: boolean) => void;
+}
+
+const FeedbackButton: React.FC<FeedbackButtonProps> = ({ setShowModal }) => {
+  const [scroll, setScroll] = useState<number>(0);
+
+  const handleScroll = useCallback(() => {
+    setScroll(window.scrollY);
+  }, []);
 
   useEffect(() => {
-    window.addEventListener('scroll', () => {
-      setScroll(window.scrollY);
-    });
+    window.addEventListener('scroll', handleScroll);
     return () => {
-      window.removeEventListener('scroll', () => {
-        setScroll(window.scrollY);
-      });
+      window.removeEventListener('scroll', handleScroll);
     };
-  }, [scroll]);
+  }, [handleScroll]);
 
   return (
-    <div className={`feedback-button ${scroll > 100 ? 'active' : undefined}`} onClick={() => setShowModal(true)} >
+    <div 
+      className={`feedback-button ${scroll > 100 ? 'active' : ''}`} 
+      onClick={() => setShowModal(true)}
+    >
       <span className="feedback-button-text text-nowrap">Send Feedback</span>
     </div>
   );

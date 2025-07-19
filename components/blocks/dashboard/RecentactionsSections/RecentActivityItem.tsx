@@ -1,6 +1,18 @@
 import React from 'react';
 
-function RecentActivityItem({ item }) {
+interface ActivityItem {
+  _id: string;
+  time: string;
+  color: string;
+  content: string;
+  highlight: string;
+}
+
+interface RecentActivityItemProps {
+  item: ActivityItem;
+}
+
+const RecentActivityItem: React.FC<RecentActivityItemProps> = ({ item }) => {
   return (
     <div className="activity-item d-flex">
       <div className="activite-label">{item.time}</div>
@@ -23,6 +35,6 @@ function RecentActivityItem({ item }) {
       )}
     </div>
   );
-}
+};
 
 export default RecentActivityItem;

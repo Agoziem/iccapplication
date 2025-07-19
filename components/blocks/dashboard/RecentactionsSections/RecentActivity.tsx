@@ -3,24 +3,41 @@ import CardFilter from "../Card/CardFilter";
 import "./recentActivity.css";
 import RecentActivityItem from "./RecentActivityItem";
 
-function RecentActivity() {
-  const [items, setItems] = useState([]);
-  const [filter, setFilter] = useState("Today");
-  const handleFilterChange = (filter) => {
+interface ActivityItem {
+  _id: string;
+  time: string;
+  color: string;
+  content: string;
+  highlight: string;
+}
+
+const RecentActivity: React.FC = () => {
+  const [items, setItems] = useState<ActivityItem[]>([]);
+  const [filter, setFilter] = useState<string>("Today");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleFilterChange = (filter: string): void => {
     setFilter(filter);
   };
 
-  // you need intall the json server to run the backend api
-  // npm i json-server -g
-  // once installed globally, run the following code in terminal
-  // json-server --watch --port 4000 ./api/info.json
-  const fetchData = () => {
-    fetch("http://localhost:4000/recentactiviy")
-      .then((res) => res.json())
-      .then((data) => {
-        setItems(data);
-      })
-      .catch((e) => console.log(e.message));
+  const fetchData = async (): Promise<void> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch("http://localhost:4000/recentactiviy");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setItems(data);
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "Unknown error occurred";
+      console.log(errorMessage);
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -39,15 +56,31 @@ function RecentActivity() {
         </h5>
 
         <div className="activity">
-          {items &&
-            items.length > 0 &&
+          {loading ? (
+            <div className="text-center">
+              <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+              <p className="mt-2">Loading activities...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center">
+              <p className="text-muted">Unable to load recent activities</p>
+              <small className="text-danger">{error}</small>
+            </div>
+          ) : items && items.length > 0 ? (
             items.map((item) => (
               <RecentActivityItem key={item._id} item={item} />
-            ))}
+            ))
+          ) : (
+            <div className="text-center">
+              <p className="text-muted">No recent activities</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default RecentActivity;

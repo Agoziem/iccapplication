@@ -1,9 +1,12 @@
+import { Service, ServiceUser } from "@/types/items";
 import React from "react";
 
-/**
- * @param {{user:ServiceUser,service:Service}} param0
- */
-const ServiceStarted = ({ service, user }) => {
+interface ServiceStartedProps {
+  service: Service;
+  user: ServiceUser;
+}
+
+const ServiceStarted: React.FC<ServiceStartedProps> = ({ service, user }) => {
   return (
     <div>
       <div>
@@ -23,7 +26,7 @@ const ServiceStarted = ({ service, user }) => {
           view Services
         </a>
       </div>
-      
+
       <div>Kudos, ICC Service Team</div>
     </div>
   );

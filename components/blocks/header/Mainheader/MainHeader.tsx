@@ -13,14 +13,13 @@ import { MdOutlineShoppingCart } from "react-icons/md";
 import { useCart } from "@/data/carts/Cartcontext";
 import Cartbutton from "@/components/custom/Cartbutton/cart-button";
 
-const MainHeader = () => {
+const MainHeader: React.FC = () => {
   const { cart } = useCart();
-  const [isOpen, setIsOpen] = useState(false);
-  const [activeLink, setActiveLink] = useState("/");
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [activeLink, setActiveLink] = useState<string>("/");
   const { data: session } = useSession();
-  // const [toggleDropdown, setToggleDropdown] = useState(false);
 
-  const handleActive = (link) => {
+  const handleActive = (link: string): void => {
     setActiveLink(link);
   };
 

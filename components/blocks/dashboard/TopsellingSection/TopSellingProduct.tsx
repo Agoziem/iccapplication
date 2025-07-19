@@ -2,11 +2,13 @@ import { useCart } from "@/data/carts/Cartcontext";
 import React from "react";
 import { useSession } from "next-auth/react";
 import { RiShoppingBasketFill } from "react-icons/ri";
+import { Product } from "@/types/items";
 
-/**
- * @param {{ item: Product; }} param0
- */
-function TopSellingProduct({ item }) {
+interface TopSellingProductProps {
+  item: Product;
+}
+
+const TopSellingProduct: React.FC<TopSellingProductProps> = ({ item }) => {
   const { cart, addToCart, removeFromCart } = useCart();
   const { data: session } = useSession();
   return (
@@ -29,24 +31,25 @@ function TopSellingProduct({ item }) {
         )}
       </th>
       <td className="text-primary fw-bold">{item.name}</td>
-      <td>{item.category.category}</td>
+      <td>{item.category?.category}</td>
       <td>&#8358;{parseFloat(item.price)}</td>
       <td>
-        {item.userIDs_that_bought_this_product.includes(
-          parseInt(session?.user?.id)
+        {item.userIDs_that_bought_this_product?.includes(
+          parseInt(session?.user?.id || "0")
         ) ? (
           <span className="badge bg-primary-light text-primary p-2">
             Purchased
             <i className="bi bi-check-circle ms-2"></i>
           </span>
         ) : cart.find(
-            (product) =>
-                product.id === item.id && product.cartType === "product"
+            (cartItem) =>
+              cartItem.cartType === "product" && 
+              cartItem.product.id === item.id
           ) ? (
           <span
             className="badge bg-secondary-light text-secondary p-2"
             style={{ cursor: "pointer" }}
-            onClick={() => removeFromCart(item.id, "product")}
+            onClick={() => removeFromCart(item.id?.toString() || "0", "product")}
           >
             remove Product {"  "}
             <i className="bi bi-cart-dash"></i>
@@ -55,7 +58,7 @@ function TopSellingProduct({ item }) {
           <span
             className="badge bg-success-light text-success p-2"
             style={{ cursor: "pointer" }}
-            onClick={() => addToCart(item, "product")}
+            onClick={() => addToCart({ cartType: "product", product: item }, "product")}
           >
             Add Product {"  "}
             <i className="bi bi-cart-plus"></i>
@@ -64,6 +67,6 @@ function TopSellingProduct({ item }) {
       </td>
     </tr>
   );
-}
+};
 
 export default TopSellingProduct;

@@ -1,17 +1,22 @@
 import React from "react";
+import { Session } from "next-auth";
+import { Order, PaymentStatus } from "@/types/payments";
 
-function RecentSalesTable({ loading, items, session }) {
-  const handleStatus = (status) => {
+interface RecentSalesTableProps {
+  loading: boolean;
+  items: Order[] | undefined;
+  session: Session | null;
+}
+
+const RecentSalesTable: React.FC<RecentSalesTableProps> = ({ loading, items, session }) => {
+  const handleStatus = (status: PaymentStatus): string => {
     switch (status) {
       case "Completed":
         return "success";
-        break;
       case "Pending":
         return "secondary";
-        break;
       case "Failed":
         return "danger";
-        break;
       default:
         return "secondary";
     }
@@ -47,7 +52,7 @@ function RecentSalesTable({ loading, items, session }) {
               <th scope="row">
                 <a href="#">{item.id}</a>
               </th>
-              {session?.user?.is_staff ? <td>{item.customer.name}</td> : null}
+              {session?.user?.is_staff ? <td>{item.customer?.name}</td> : null}
               <td>{item.reference}</td>
               <td className="fw-bold">
                 &#8358;
@@ -74,6 +79,6 @@ function RecentSalesTable({ loading, items, session }) {
       </tbody>
     </table>
   );
-}
+};
 
 export default RecentSalesTable;

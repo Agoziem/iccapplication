@@ -8,25 +8,37 @@ import { RefContext } from "./sideBarTogglerContext";
 import Modal from "../../custom/Modal/modal";
 import { signOut, useSession } from "next-auth/react";
 
-function SideBar({ navList }) {
+interface NavItem {
+  _id: string;
+  name: string;
+  icon: string;
+  link: string;
+  subNav?: NavItem[];
+  content?: NavItem[];
+}
+
+interface SideBarProps {
+  navList: NavItem[];
+}
+
+const SideBar: React.FC<SideBarProps> = ({ navList }) => {
   const { data: session } = useSession();
   const paths = usePathname();
   const router = useRouter();
-  const sidebarref = useRef();
+  const sidebarref = useRef<HTMLElement>(null);
   const sidebartoggleref = useContext(RefContext);
-  const [showModal, setShowModal] = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [loggingOut, setLoggingOut] = useState<boolean>(false);
 
-  const logoutDashboard = () => {
+  const logoutDashboard = (): void => {
     setLoggingOut(true);
     setShowModal(false);
     setLoggingOut(false);
     signOut();
   };
 
-  // handle Sidebar close
-  const handleSidebarClose = () => {
-    const windowWidth = typeof window !== "undefined" && window.innerWidth;
+  const handleSidebarClose = (): void => {
+    const windowWidth = typeof window !== "undefined" ? window.innerWidth : 0;
     const lgBreakpoint = 992;
 
     if (
@@ -38,7 +50,11 @@ function SideBar({ navList }) {
     }
   };
 
-  useClickOutside(sidebarref, sidebartoggleref, handleSidebarClose);
+  // useClickOutside({ 
+  //   ref: sidebarref, 
+  //   refbutton: sidebartoggleref, 
+  //   callback: handleSidebarClose 
+  // });
 
   return (
     <>
@@ -230,6 +246,6 @@ function SideBar({ navList }) {
       </Modal>
     </>
   );
-}
+};
 
 export default SideBar;

@@ -1,6 +1,10 @@
 import React from "react";
 
-const VerificationEmail = ({confirmLink}) => {
+interface VerificationEmailProps {
+  confirmLink: string;
+}
+
+const VerificationEmail: React.FC<VerificationEmailProps> = ({ confirmLink }) => {
   return (
     <p>
       Click <a href={confirmLink}>here</a> to verify your email.

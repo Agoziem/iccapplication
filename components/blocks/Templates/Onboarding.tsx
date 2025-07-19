@@ -1,5 +1,5 @@
 "use client";
-import React, { useContext } from "react";
+import React from "react";
 import {
   FaFacebook,
   FaInstagram,
@@ -8,14 +8,16 @@ import {
 } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import { IoLogoWhatsapp } from "react-icons/io5";
-import { OrganizationContext } from "@/data/organization/Organizationalcontextdata";
+import { useFetchOrganization } from "@/data/organization/organization.hook";
 import Link from "next/link";
+import { User } from "@/types/users";
 
-/**
- * @param {{user:User}} param0
- */
-const Onboarding = ({ user }) => {
-  const { OrganizationData } = useContext(OrganizationContext);
+interface OnboardingProps {
+  user: User; // Assuming User is a type that includes username and first_name
+}
+
+const Onboarding: React.FC<OnboardingProps> = ({ user }) => {
+  const { data: OrganizationData } = useFetchOrganization();
   return (
     <div>
       <div>

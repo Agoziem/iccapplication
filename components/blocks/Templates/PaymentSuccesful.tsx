@@ -1,5 +1,15 @@
-/** * @param {{order:Order}} param0 */
-const PaymentSuccesful = ({ order }) => {
+import { Order } from "@/types/payments";
+import React from "react";
+
+
+interface PaymentSuccessfulProps {
+  order: Order;
+}
+
+const PaymentSuccesful: React.FC<PaymentSuccessfulProps> = ({ order }) => {
+  if (!order || !order.customer ) {
+    return <p>No order details available.</p>;
+  }
   return (
     <div>
       <div>
@@ -23,7 +33,7 @@ const PaymentSuccesful = ({ order }) => {
       </div>
 
       {/* The Services available in the Order */}
-      {order?.services.length > 0 && (
+      {order?.services && order.services.length > 0 && (
         <div>
           <p>Services</p>
           <ul>
@@ -37,7 +47,7 @@ const PaymentSuccesful = ({ order }) => {
       )}
 
       {/* The Products available in the Order */}
-      {order?.products.length > 0 && (
+      {order?.products && order.products.length > 0 && (
         <div>
           <p>Products</p>
           <ul>
@@ -51,7 +61,7 @@ const PaymentSuccesful = ({ order }) => {
       )}
 
       {/* The Videos available in the Order */}
-      {order?.videos.length > 0 && (
+      {order.videos && order?.videos.length > 0 && (
         <div>
           <p>Videos</p>
           <ul>

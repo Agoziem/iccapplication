@@ -1,9 +1,12 @@
+import { Service, ServiceUser } from "@/types/items";
 import React from "react";
 
-/**
- * @param {{user:ServiceUser,service:Service}} param0
- */
-const ServiceCompleted = ({ service, user }) => {
+interface ServiceCompletedProps {
+  service: Service;
+  user: ServiceUser;
+}
+
+const ServiceCompleted: React.FC<ServiceCompletedProps> = ({ service, user }) => {
   return (
     <div>
       <div>

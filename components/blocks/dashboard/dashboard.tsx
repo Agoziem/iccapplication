@@ -1,8 +1,7 @@
 "use client";
+import React from "react";
 import HorizontalCard from "./Card/horizontalcard";
-// import RecentActivity from "./RecentactionsSections/RecentActivity";
 import RecentSales from "./RecentsalesSection/RecentSales";
-// import Reports from "./ReportchartsSection/Reports";
 import News from "./Newsection/News";
 import TopSelling from "./TopsellingSection/TopSelling";
 import { useSession } from "next-auth/react";
@@ -19,49 +18,46 @@ import {
 } from "@/data/payments/orders.hook";
 import { vidoesapiAPIendpoint } from "@/data/videos/fetcher";
 
-const DashboardBody = () => {
+const DashboardBody: React.FC = () => {
   const { data: session } = useSession();
-  const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
-  const { data: orders, isLoading: loadingOrders } =
-    useFetchPayments(Organizationid);
+  const organizationId = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
+  const { data: orders, isLoading: loadingOrders } = useFetchPayments(
+    Number(organizationId)
+  );
   const { data: userOrders, isLoading: loadingUserOrders } =
-    useFetchPaymentsByUser(session?.user?.id);
+    useFetchPaymentsByUser(Number(session?.user?.id));
 
-  const page = 1;
-  const pageSize = 6;
+  const page: number = 1;
+  const pageSize: number = 6;
 
-  // fetchOrderReport
   const {
     data: orderReport,
     isLoading: loadingOrderReport,
-    error: orderReporterror,
+    error: orderReportError,
   } = useGetOrderReport();
 
-  // fetchServices
   const {
     data: services,
     isLoading: loadingServices,
-    error: serviceserror,
+    error: servicesError,
   } = useFetchServices(
-    `${servicesAPIendpoint}/services/${Organizationid}/?category=All&page=${page}&page_size=${pageSize}`
+    `${servicesAPIendpoint}/services/${organizationId}/?category=All&page=${page}&page_size=${pageSize}`
   );
 
-  // fetchProducts
   const {
     data: products,
     isLoading: loadingProducts,
-    error: producterror,
+    error: productError,
   } = useFetchProducts(
-    `${productsAPIendpoint}/products/${Organizationid}/?category=All&page=${page}&page_size=${pageSize}`
+    `${productsAPIendpoint}/products/${organizationId}/?category=All&page=${page}&page_size=${pageSize}`
   );
 
-  // fetchProducts
   const {
     data: videos,
     isLoading: loadingVideos,
-    error: videoserror,
+    error: videosError,
   } = useFetchVideos(
-    `${vidoesapiAPIendpoint}/videos/${Organizationid}/?category=All&page=${page}&page_size=${pageSize}`
+    `${vidoesapiAPIendpoint}/videos/${organizationId}/?category=All&page=${page}&page_size=${pageSize}`
   );
 
   return (
@@ -78,7 +74,6 @@ const DashboardBody = () => {
             {/* Display the Cards */}
             {session?.user?.is_staff ? (
               <>
-                {/* Only Admins */}
                 <div className="col-12 col-md-4">
                   <HorizontalCard
                     iconcolor="primary"
@@ -96,7 +91,7 @@ const DashboardBody = () => {
                     icon="bi bi-cart3"
                     cardbody={userOrders?.length}
                     cardspan={`Service${
-                      userOrders?.length > 1 ? "s" : ""
+                      userOrders?.length !== 1 ? "s" : ""
                     } Ordered`}
                     loading={loadingUserOrders}
                   />
@@ -108,7 +103,7 @@ const DashboardBody = () => {
                     icon="bi bi-people"
                     cardbody={orderReport?.customers?.length}
                     cardspan={`Total Customer${
-                      orderReport?.customers?.length > 1 ? "s" : ""
+                      orderReport?.customers?.length !== 1 ? "s" : ""
                     }`}
                     loading={loadingOrderReport}
                   />

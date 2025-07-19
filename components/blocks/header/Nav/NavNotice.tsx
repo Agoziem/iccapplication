@@ -6,10 +6,17 @@ import { notificationActionSchema } from "@/schemas/notifications";
 import { useFetchNotifications } from "@/data/notificationsAPI/notifications.hook";
 import { useQueryClient } from "react-query";
 import toast from "react-hot-toast";
+import { NotificationMessage, NotificationAction } from "@/types/notifications";
 
-function NavNotice() {
-  const [showmodal, setShowModal] = useState(false);
-  const [modalContent, setModalContent] = useState({
+interface ModalContent {
+  title: string;
+  message: string;
+  time: string;
+}
+
+const NavNotice: React.FC = () => {
+  const [showmodal, setShowModal] = useState<boolean>(false);
+  const [modalContent, setModalContent] = useState<ModalContent>({
     title: "",
     message: "",
     time: "",
@@ -44,10 +51,10 @@ function NavNotice() {
         const newNotification = validatedcontact.data;
   
         // Function to sort notifications by updated_at
-        const sortNotifications = (notifications) =>
+        const sortNotifications = (notifications: NotificationMessage[]): NotificationMessage[] =>
           notifications.sort(
             (a, b) =>
-              new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+              new Date(b.updated_at || '').getTime() - new Date(a.updated_at || '').getTime()
           );
   
         // Define cache key for notifications
@@ -55,7 +62,7 @@ function NavNotice() {
   
         // Handle different actions
         if (newNotification.action === "add") {
-          queryClient.setQueryData(cacheKey, (existingNotifications = []) => {
+          queryClient.setQueryData(cacheKey, (existingNotifications: NotificationMessage[] = []) => {
             const notificationExists = existingNotifications.some(
               (notification) =>
                 notification.id === newNotification.notification.id
@@ -81,7 +88,7 @@ function NavNotice() {
         }
   
         if (newNotification.action === "update") {
-          queryClient.setQueryData(cacheKey, (existingNotifications = []) =>
+          queryClient.setQueryData(cacheKey, (existingNotifications: NotificationMessage[] = []) =>
             sortNotifications(
               existingNotifications.map((notification) =>
                 notification.id === newNotification.notification.id
@@ -94,7 +101,7 @@ function NavNotice() {
         }
   
         if (newNotification.action === "delete") {
-          queryClient.setQueryData(cacheKey, (existingNotifications = []) =>
+          queryClient.setQueryData(cacheKey, (existingNotifications: NotificationMessage[] = []) =>
             existingNotifications.filter(
               (notification) =>
                 notification.id !== newNotification.notification.id
@@ -104,7 +111,7 @@ function NavNotice() {
         }
   
         if (newNotification.action === "mark_viewed") {
-          queryClient.setQueryData(cacheKey, (existingNotifications = []) =>
+          queryClient.setQueryData(cacheKey, (existingNotifications: NotificationMessage[] = []) =>
             existingNotifications.map((notification) =>
               notification.id === newNotification.notification.id
                 ? newNotification.notification
@@ -114,10 +121,9 @@ function NavNotice() {
         }
       };
     }
-  }, [isConnected, ws]);
+  }, [isConnected, ws, queryClient]);
 
-  /** @param {NotificationMessage} notification */
-  const mark_viewed = (notification) => {
+  const mark_viewed = (notification: NotificationMessage): void => {
     if (!notification.viewed) {
       if (ws && ws.readyState === WebSocket.OPEN) {
         /**@type {NotificationAction} */
@@ -140,7 +146,7 @@ function NavNotice() {
         {(() => {
           const unseenCount = notifications?.filter(
             (notification) => !notification?.viewed
-          ).length;
+          ).length || 0;
           return unseenCount > 0 ? (
             <span className="badge bg-danger badge-number">{unseenCount}</span>
           ) : null;
@@ -153,7 +159,7 @@ function NavNotice() {
           const unreadNotifications = notifications?.filter(
             (notification) => !notification.viewed
           );
-          return unreadNotifications?.length > 0 ? (
+          return unreadNotifications && unreadNotifications.length > 0 ? (
             <>
               <li className="dropdown-header text-primary">
                 You have {unreadNotifications.length} unread notification
@@ -176,8 +182,8 @@ function NavNotice() {
         })()}
 
         {/* Notification dropdown messages */}
-        {notifications?.length > 0 ? (
-          notifications?.map((notification, index) => (
+        {notifications && notifications.length > 0 ? (
+          notifications.map((notification, index) => (
             <React.Fragment key={notification.id}>
               <li
                 className="notification-item"
@@ -247,6 +253,6 @@ function NavNotice() {
       </Modal>
     </li>
   );
-}
+};
 
 export default NavNotice;

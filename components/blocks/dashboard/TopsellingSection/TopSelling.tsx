@@ -1,22 +1,21 @@
-import { useEffect, useState } from "react";
-import { FaVideo } from "react-icons/fa";
+import React from "react";
+import { FaVideo } from "react-icons/fa6";
 import { RiShoppingBasketFill } from "react-icons/ri";
 import TopSellingService from "./TopSellingService";
 import TopSellingProduct from "./TopSellingProduct";
 import TopSellingVideo from "./TopSellingVideo";
 import Link from "next/link";
+import { Service, Product, Video } from "@/types/items";
 import "./topSelling.css";
-/**
- * TopSelling Component
- * @param {Object} props
- * @param {"Services" | "Products" | "Videos"} props.itemName
- * @param {Services | Products | Videos} props.data
- * @param {number} props.itemCount
- * @param {boolean} props.loading
- * @returns {JSX.Element}
- */
-function TopSelling({ itemName, data = [], itemCount, loading }) {
 
+interface TopSellingProps {
+  itemName: "Services" | "Products" | "Videos";
+  data: Service[] | Product[] | Video[] | undefined;
+  itemCount?: number;
+  loading: boolean;
+}
+
+const TopSelling: React.FC<TopSellingProps> = ({ itemName, data, itemCount, loading }) => {
   return (
     <div className="card top-selling overflow-auto p-3">
       <div className="card-body pb-0">
@@ -79,14 +78,14 @@ function TopSelling({ itemName, data = [], itemCount, loading }) {
                   <p className="ml-2">Loading {itemName} ...</p>
                 </td>
               </tr>
-            ) : data?.length > 0 ? (
-              data?.map((item) => {
+            ) : data && data.length > 0 ? (
+              data.map((item) => {
                 if (itemName === "Services") {
-                  return <TopSellingService key={item.id} item={item} />;
+                  return <TopSellingService key={item.id} item={item as Service} />;
                 } else if (itemName === "Products") {
-                  return <TopSellingProduct key={item.id} item={item} />;
+                  return <TopSellingProduct key={item.id} item={item as Product} />;
                 } else {
-                  return <TopSellingVideo key={item.id} item={item} />;
+                  return <TopSellingVideo key={item.id} item={item as Video} />;
                 }
               })
             ) : (

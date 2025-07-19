@@ -2,11 +2,13 @@ import { useCart } from "@/data/carts/Cartcontext";
 import React from "react";
 import { useSession } from "next-auth/react";
 import { FaVideo } from "react-icons/fa6";
+import { Video } from "@/types/items";
 
-/**
- * @param {{ item: Video; }} param0
- */
-function TopSellingVideo({ item }) {
+interface TopSellingVideoProps {
+  item: Video;
+}
+
+const TopSellingVideo: React.FC<TopSellingVideoProps> = ({ item }) => {
   const { cart, addToCart, removeFromCart } = useCart();
   const { data: session } = useSession();
   return (
@@ -29,23 +31,25 @@ function TopSellingVideo({ item }) {
         )}
       </th>
       <td className="text-primary fw-bold">{item.title}</td>
-      <td>{item.category.category}</td>
+      <td>{item.category?.category}</td>
       <td>&#8358;{parseFloat(item.price)}</td>
       <td>
-        {item.userIDs_that_bought_this_video.includes(
-          parseInt(session?.user?.id)
+        {item.userIDs_that_bought_this_video?.includes(
+          parseInt(session?.user?.id || "0")
         ) ? (
           <span className="badge bg-primary-light text-primary p-2">
             Purchased
             <i className="bi bi-check-circle ms-2"></i>
           </span>
         ) : cart.find(
-            (video) => video.id === item.id && video.cartType === "video"
+            (cartItem) =>
+              cartItem.cartType === "video" && 
+              cartItem.video.id === item.id
           ) ? (
           <span
             className="badge bg-secondary-light text-secondary p-2"
             style={{ cursor: "pointer" }}
-            onClick={() => removeFromCart(item.id, "video")}
+            onClick={() => removeFromCart(item.id?.toString() || "0", "video")}
           >
             remove Video {"  "}
             <i className="bi bi-cart-dash"></i>
@@ -54,7 +58,7 @@ function TopSellingVideo({ item }) {
           <span
             className="badge bg-success-light text-success p-2"
             style={{ cursor: "pointer" }}
-            onClick={() => addToCart(item, "video")}
+            onClick={() => addToCart({ cartType: "video", video: item }, "video")}
           >
             Add Video {"  "}
             <i className="bi bi-cart-plus"></i>
@@ -63,6 +67,6 @@ function TopSellingVideo({ item }) {
       </td>
     </tr>
   );
-}
+};
 
 export default TopSellingVideo;

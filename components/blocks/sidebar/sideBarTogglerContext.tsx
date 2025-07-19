@@ -1,11 +1,14 @@
-// Context.js
 "use client";
-import React, { createContext, useRef } from 'react';
+import React, { createContext, useRef, ReactNode, RefObject } from 'react';
 
-export const RefContext = createContext(null);
+export const RefContext = createContext<RefObject<HTMLElement | null> | null>(null);
 
-export const SidebartoggleRefProvider = ({ children }) => {
-  const sidebartoggleref = useRef(null);
+interface SidebartoggleRefProviderProps {
+  children: ReactNode;
+}
+
+export const SidebartoggleRefProvider: React.FC<SidebartoggleRefProviderProps> = ({ children }) => {
+  const sidebartoggleref = useRef<HTMLElement>(null);
 
   return (
     <RefContext.Provider value={sidebartoggleref}>

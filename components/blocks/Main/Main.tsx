@@ -1,14 +1,17 @@
 "use client";
-import React from 'react';
+import React, { ReactNode } from 'react';
 import './main.css';
 
+interface MainProps {
+  children: ReactNode;
+}
 
-function Main({children}) {
+const Main: React.FC<MainProps> = ({ children }) => {
   return (
     <main id="main" className="main">
       {children}
     </main>
   );
-}
+};
 
 export default Main;

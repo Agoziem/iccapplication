@@ -1,17 +1,16 @@
+import React from "react";
 import NewsPostItem from "./NewsPostItem";
 import "./news.css";
 import Link from "next/link";
-import { articleAPIendpoint, fetchArticles } from "@/data/articles/fetcher";
+import { articleAPIendpoint } from "@/data/articles/fetcher";
 import { useFetchArticles } from "@/data/articles/articles.hook";
 import Loading from "@/components/custom/Loading/Loading";
 
-function News() {
-  const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
-  // ----------------------------------------------------------
-  // fetch articles by Categories
-  // ----------------------------------------------------------
+const News: React.FC = () => {
+  const organizationId = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
+  
   const { data: articles, isLoading } = useFetchArticles(
-    `${articleAPIendpoint}/orgblogs/${Organizationid}/?category=All&page=1&page_size=6/`
+    `${articleAPIendpoint}/orgblogs/${organizationId}/?category=All&page=1&page_size=6/`
   );
 
   return (
@@ -24,7 +23,7 @@ function News() {
           <Loading item="Articles" />
         ) : (
           <div className="news mt-3">
-            {articles && articles.results.length > 0 ? (
+            {articles && articles.results?.length > 0 ? (
               articles.results
                 .slice(0, 6)
                 .map((item, index) => (
@@ -42,7 +41,7 @@ function News() {
                 </p>
               </div>
             )}
-            {articles && articles.results.length > 5 && (
+            {articles && articles.results?.length > 5 && (
               <Link
                 href={"/articles"}
                 className="text-center text-secondary text-decoration-none"
@@ -55,6 +54,6 @@ function News() {
       </div>
     </div>
   );
-}
+};
 
 export default News;

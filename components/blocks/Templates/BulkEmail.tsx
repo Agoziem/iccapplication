@@ -1,6 +1,10 @@
 import React from "react";
 
-const BulkEmail = ({ message }) => {
+interface BulkEmailProps {
+  message: string;
+}
+
+const BulkEmail: React.FC<BulkEmailProps> = ({ message }) => {
   return <p>{message}</p>;
 };
 

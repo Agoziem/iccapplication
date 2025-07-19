@@ -1,11 +1,13 @@
 import { useCart } from "@/data/carts/Cartcontext";
 import React from "react";
 import { useSession } from "next-auth/react";
+import { Service } from "@/types/items";
 
-/**
- * @param {{ item: Service; }} param0
- */
-function TopSellingService({ item }) {
+interface TopSellingServiceProps {
+  item: Service;
+}
+
+const TopSellingService: React.FC<TopSellingServiceProps> = ({ item }) => {
   const { cart, addToCart, removeFromCart } = useCart();
   const { data: session } = useSession();
   return (
@@ -28,27 +30,28 @@ function TopSellingService({ item }) {
         )}
       </th>
       <td className="text-primary fw-bold">{item.name}</td>
-      <td>{item.category.category}</td>
+      <td>{item.category?.category}</td>
       <td>&#8358;{parseFloat(item.price)}</td>
       <td>
-        {item.userIDs_that_bought_this_service.includes(
-          parseInt(session?.user?.id)
+        {item.userIDs_that_bought_this_service?.includes(
+          parseInt(session?.user?.id || "0")
         ) &&
-        !item.userIDs_whose_services_have_been_completed.includes(
-          parseInt(session?.user?.id)
+        !item.userIDs_whose_services_have_been_completed?.includes(
+          parseInt(session?.user?.id || "0")
         ) ? (
           <span className="badge bg-primary-light text-primary p-2">
             Purchased
             <i className="bi bi-check-circle ms-2"></i>
           </span>
         ) : cart.find(
-            (service) =>
-              service.id === item.id && service.cartType === "service"
+            (cartItem) =>
+              cartItem.cartType === "service" && 
+              cartItem.service.id === item.id
           ) ? (
           <span
             className="badge bg-secondary-light text-secondary p-2"
             style={{ cursor: "pointer" }}
-            onClick={() => removeFromCart(item.id, "service")}
+            onClick={() => removeFromCart(item.id?.toString() || "0", "service")}
           >
             remove Service {"  "}
             <i className="bi bi-cart-dash"></i>
@@ -57,7 +60,7 @@ function TopSellingService({ item }) {
           <span
             className="badge bg-success-light text-success p-2"
             style={{ cursor: "pointer" }}
-            onClick={() => addToCart(item, "service")}
+            onClick={() => addToCart({ cartType: "service", service: item }, "service")}
           >
             Add Service {"  "}
             <i className="bi bi-cart-plus"></i>
@@ -66,6 +69,6 @@ function TopSellingService({ item }) {
       </td>
     </tr>
   );
-}
+};
 
 export default TopSellingService;
