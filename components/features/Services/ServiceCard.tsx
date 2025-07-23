@@ -1,11 +1,35 @@
 import ServicesPlaceholder from "@/components/custom/ImagePlaceholders/ServicesPlaceholder";
 import { useSession } from "next-auth/react";
 
-/**
- * @param {{ service: Service; openModal: any; cart: any; addToCart: any; removeFromCart: any; }} param0
+interface Service {
+  id: number;
+  name: string;
+  description?: string;
+  img_url?: string;
+  preview?: boolean;
+  price: number;
+  category?: {
+    category: string;
+  };
+  userIDs_that_bought_this_service?: number[];
+  userIDs_whose_services_have_been_completed?: number[];
+}
 
- */
-const ServiceCard = ({
+interface CartItem {
+  id: number;
+  quantity: number;
+  cartType: string;
+}
+
+interface ServiceCardProps {
+  service: Service;
+  openModal: (service: Service) => void;
+  cart: CartItem[];
+  addToCart: (service: Service, type: string) => void;
+  removeFromCart: (serviceId: number, type: string) => void;
+}
+
+const ServiceCard: React.FC<ServiceCardProps> = ({
   service,
   openModal,
   cart,
@@ -37,7 +61,7 @@ const ServiceCard = ({
         >
           <h6 className="flex-grow-1">{service.name}</h6>
           <p className="text-primary mb-1">
-            {service.description.length > 80 ? (
+            {service.description && service.description.length > 80 ? (
               <span>
                 {service.description.substring(0, 80)}...{" "}
                 <span
@@ -54,15 +78,15 @@ const ServiceCard = ({
           </p>
           <div className="d-flex justify-content-between mt-3 flex-wrap">
             <span className="fw-bold text-primary me-2">
-              &#8358;{parseFloat(service.price)}
+              &#8358;{service.price.toString()}
             </span>
 
             <div className="me-2 me-md-3">
-              {service.userIDs_that_bought_this_service.includes(
-                parseInt(session?.user?.id)
+              {service.userIDs_that_bought_this_service?.includes(
+                parseInt(session?.user?.id || "0")
               ) &&
-              !service.userIDs_whose_services_have_been_completed.includes(
-                parseInt(session?.user?.id)
+              !service.userIDs_whose_services_have_been_completed?.includes(
+                parseInt(session?.user?.id || "0")
               ) ? (
                 <span className="badge bg-primary-light text-primary p-2">
                   Purchased

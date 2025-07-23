@@ -5,13 +5,24 @@ import { useForm } from "react-hook-form";
 import Alert from "../../custom/Alert/Alert";
 import { useCreateNotification, useUpdateNotification } from "@/data/notificationsAPI/notifications.hook";
 
-/**
- * @param {{ notification: NotificationMessage; editmode: boolean; setEditMode: (value: boolean) => void; formRef:React.RefObject<HTMLFormElement>; }} param0
- * @returns {JSX.Element}
- */
-const NotificationForm = ({ notification, editmode, setEditMode, formRef }) => {
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+interface NotificationMessage {
+  id?: number;
+  title: string;
+  message: string;
+  created_at?: string;
+  [key: string]: any;
+}
+
+interface NotificationFormProps {
+  notification: NotificationMessage | null;
+  editmode: boolean;
+  setEditMode: (value: boolean) => void;
+  formRef: React.RefObject<HTMLFormElement>;
+}
+
+const NotificationForm: React.FC<NotificationFormProps> = ({ notification, editmode, setEditMode, formRef }) => {
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
 
   // -----------------------------------------------------------------
   // Default values for the form, used for reset and initial state
@@ -42,7 +53,7 @@ const NotificationForm = ({ notification, editmode, setEditMode, formRef }) => {
 
   // useEffect to reset form values whenever notification or editmode changes
   useEffect(() => {
-    if (editmode) {
+    if (editmode && notification) {
       reset({
         title: notification.title || "",
         message: notification.message || "",
@@ -50,7 +61,7 @@ const NotificationForm = ({ notification, editmode, setEditMode, formRef }) => {
     }
   }, [notification, editmode, reset]);
 
-  const getRandomInt = (min, max) => {
+  const getRandomInt = (min: number, max: number): number => {
     const randomBuffer = new Uint32Array(1);
     window.crypto.getRandomValues(randomBuffer);
     const randomNumber = randomBuffer[0] / (0xffffffff + 1);
@@ -62,7 +73,7 @@ const NotificationForm = ({ notification, editmode, setEditMode, formRef }) => {
   // --------------------------------------
   const { mutateAsync: createNotification } = useCreateNotification();
   const { mutateAsync: updateNotification } = useUpdateNotification();
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: any) => {
     try {
       setError("");
       setSuccess("");

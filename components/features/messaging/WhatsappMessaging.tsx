@@ -3,20 +3,25 @@ import { TbBrandWhatsapp } from "react-icons/tb";
 import WATemplateForm from "./WhatsappForm";
 import { PulseLoader } from "react-spinners";
 import { useGetSentTemplates } from "@/data/whatsappAPI/whatsapp.hook";
+import React from "react";
 
-const WhatsappMessaging = () => {
+interface SentMessage {
+  id: number;
+  message: string;
+  status: "pending" | "sent" | "failed";
+  created_at: string;
+  [key: string]: any;
+}
+
+const WhatsappMessaging: React.FC = () => {
   // fetch all the messages and populate cache
   const {
     data: senttemplatemessages,
     isLoading,
     error,
-  } = useGetSentTemplates()
+  } = useGetSentTemplates();
 
-  
-  /**
- * @param {string} messagestatus
- */
-  const statusComponent = (messagestatus) => {
+  const statusComponent = (messagestatus: "pending" | "sent" | "failed") => {
     switch (messagestatus) {
       case "pending":
         return (
@@ -64,8 +69,8 @@ const WhatsappMessaging = () => {
             </div>
           )}
 
-          {senttemplatemessages?.length > 0
-            ? senttemplatemessages.map((sentmessage) => (
+          {(senttemplatemessages?.length ?? 0) > 0
+            ? senttemplatemessages?.map((sentmessage) => (
                 <div key={sentmessage.id} className="card p-4 py-4">
                   <div className="d-flex justify-content-between">
                     <h6 className="mb-1">
@@ -77,7 +82,7 @@ const WhatsappMessaging = () => {
                         color: "var(--bgDarkerColor)",
                       }}
                     >
-                      {new Date(sentmessage.created_at).toLocaleTimeString([], {
+                      {new Date(sentmessage.created_at || new Date()).toLocaleTimeString([], {
                         month: "short",
                         day: "numeric",
                         hour: "2-digit",
@@ -86,9 +91,9 @@ const WhatsappMessaging = () => {
                     </span>
                   </div>
                   <p>
-                    {sentmessage.text?.length > 100
-                      ? `${sentmessage.text.slice(0, 100)}...`
-                      : sentmessage.text}
+                    {(sentmessage.text?.length ?? 0) > 100
+                      ? `${sentmessage.text?.slice(0, 100)}...`
+                      : sentmessage.text || ""}
                   </p>
                   <div className="d-flex justify-content-end">
                     {statusComponent(sentmessage.status)}

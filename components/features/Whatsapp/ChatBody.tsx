@@ -9,8 +9,12 @@ import { WAMessageWebsocketSchema } from "@/schemas/whatsapp";
 import { useFetchWAMessages } from "@/data/whatsappAPI/whatsapp.hook";
 import { useQueryClient } from "react-query";
 
-// Component to show when there are no chat messages
-const NoMessages = ({ messagesloading, messageserror }) => (
+interface NoMessagesProps {
+  messagesloading: boolean;
+  messageserror: any;
+}
+
+const NoMessages: React.FC<NoMessagesProps> = ({ messagesloading, messageserror }) => (
   <div>
     {messagesloading && <div>Loading...</div>}
     {messageserror && <div>Error occurred while fetching messages.</div>}
@@ -27,13 +31,13 @@ const NoMessages = ({ messagesloading, messageserror }) => (
   </div>
 );
 
-const ChatBody = () => {
+const ChatBody: React.FC = () => {
   const { selectedContact, setSelectedContact } = useWhatsappAPIContext();
   const { bottomRef, scrollToBottom, setAtthebottom } = useWhatsappAPIContext();
   const { isConnected, ws } = useWebSocket(
     `${process.env.NEXT_PUBLIC_DJANGO_WEBSOCKET_URL}/ws/whatsappapiSocket/messages/`
   );
-  const chatContainerRef = useRef(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   // ------------------------------------------------------
   // Fetch chat messages
@@ -42,7 +46,7 @@ const ChatBody = () => {
     data: chatmessages,
     error: messageserror,
     isLoading: messagesloading,
-  } = useFetchWAMessages(selectedContact?.id);
+  } = useFetchWAMessages(selectedContact?.id || 0);
 
   // -----------------------------------------------------
   // append a new message upon recieval from websocket
@@ -72,7 +76,7 @@ const ChatBody = () => {
           if (newMessage.operation === "create") {
             queryClient.setQueryData(
               ["waMessages", newMessage.message.contact],
-              (oldData = []) => {
+              (oldData: any[] = []) => {
                 return [...oldData, newMessage.message];
               }
             );
@@ -97,7 +101,7 @@ const ChatBody = () => {
   // Handle scroll event to check if the user has scrolled up
   // ------------------------------------------------------
   useEffect(() => {
-    const handleScroll = () => {
+    const handleScroll = (): void => {
       if (chatContainerRef.current) {
         const { scrollTop, scrollHeight, clientHeight } =
           chatContainerRef.current;
@@ -107,13 +111,15 @@ const ChatBody = () => {
     };
 
     const chatContainer = chatContainerRef.current;
-    chatContainer.addEventListener("scroll", handleScroll);
+    if (chatContainer) {
+      chatContainer.addEventListener("scroll", handleScroll);
 
-    // Cleanup event listener on component unmount
-    return () => {
-      chatContainer.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
+      // Cleanup event listener on component unmount
+      return () => {
+        chatContainer.removeEventListener("scroll", handleScroll);
+      };
+    }
+  }, [setAtthebottom]);
 
   return (
     <div className="position-relative">
@@ -121,10 +127,10 @@ const ChatBody = () => {
         ref={chatContainerRef}
         className="chatbody mt-3 p-4 rounded text-white d-flex flex-column"
       >
-        <div className={chatmessages?.length > 0 ? "mt-auto" : "my-auto"}>
-          {chatmessages?.length > 0 ? (
-            chatmessages.map((message) => (
-              <ChatMessage key={message.id} message={message} />
+        <div className={(chatmessages?.length || 0) > 0 ? "mt-auto" : "my-auto"}>
+          {(chatmessages?.length || 0) > 0 ? (
+            chatmessages?.map((message) => (
+              <ChatMessage key={message.id} message={message as any} />
             ))
           ) : (
             <NoMessages

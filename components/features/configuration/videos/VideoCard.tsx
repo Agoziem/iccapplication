@@ -1,11 +1,24 @@
 import VideosPlaceholder from '@/components/custom/ImagePlaceholders/Videosplaceholder';
 import React from 'react'
 
+interface Video {
+  id: string;
+  title: string;
+  img_url?: string;
+  price: number | string;
+  description?: string;
+  [key: string]: any;
+}
 
-/**
- * @param {{ openModal: any; item: Video; onDelete: any; onEdit: any; tab: any; }} param0
- */
-const VideoCard = ({ openModal, item, onDelete, onEdit, tab }) => {
+interface VideoCardProps {
+  openModal: (item: Video) => void;
+  item: Video;
+  onDelete: (item: Video) => void;
+  onEdit: (item: Video) => void;
+  tab: string;
+}
+
+const VideoCard: React.FC<VideoCardProps> = ({ openModal, item, onDelete, onEdit, tab }) => {
   return (
     <div className="col-12 col-md-4">
     <div className="card p-3 py-4">
@@ -32,7 +45,7 @@ const VideoCard = ({ openModal, item, onDelete, onEdit, tab }) => {
         <div className="flex-fill py-2">
           <h6>{item.title}</h6>
           <p className="text-primary mb-1">
-            {item.description.length > 80 ? (
+            {item.description && item.description.length > 80 ? (
               <span className="text-primary">
                 {item.description.substring(0, 80)}...{" "}
                 <span
@@ -44,13 +57,13 @@ const VideoCard = ({ openModal, item, onDelete, onEdit, tab }) => {
                 </span>
               </span>
             ) : (
-              item.description
+              item.description || ""
             )}
           </p>
 
           <div className="d-flex align-items-center justify-content-between mt-3">
             <span className="fw-bold text-primary">
-              &#8358;{parseFloat(item.price)}
+              &#8358;{parseFloat(String(item.price))}
             </span>
             <div>
               <button

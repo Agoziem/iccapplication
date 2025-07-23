@@ -1,9 +1,33 @@
 import ImageUploader from "@/components/custom/Imageuploader/ImageUploader";
+import React from "react";
 
-/**
- * @param {{ addStaff: any; addorupdate: any; staff: Staff; setStaff: (value:Staff) => void; closeModal: any;loading:boolean }} param0
- */
-const StaffForm = ({
+interface Staff {
+  id?: number;
+  first_name: string;
+  last_name: string;
+  position: string;
+  bio: string;
+  phone: string;
+  email: string;
+  [key: string]: any;
+}
+
+interface AddOrUpdateMode {
+  type: string;
+  mode?: string;
+  state: boolean;
+}
+
+interface StaffFormProps {
+  addStaff: (e: React.FormEvent) => void;
+  addorupdate: AddOrUpdateMode;
+  staff: Staff;
+  setStaff: (value: Staff | Record<string, any>) => void;
+  closeModal: () => void;
+  loading: boolean;
+}
+
+const StaffForm: React.FC<StaffFormProps> = ({
   addStaff,
   addorupdate,
   staff,

@@ -7,12 +7,17 @@ import Alert from "../../custom/Alert/Alert";
 import Modal from "../../custom/Modal/modal";
 import { useFetchPaymentsByUser } from "@/data/payments/orders.hook";
 
-const ProfileCard = ({ alert, setEditMode }) => {
+interface ProfileCardProps {
+  alert: { show: boolean; message: string; type: string };
+  setEditMode: (editMode: boolean) => void;
+}
+
+const ProfileCard: React.FC<ProfileCardProps> = ({ alert, setEditMode }) => {
   const [showModal, setShowModal] = useState(false);
   const { data: session } = useSession();
   const [active, setActive] = useState(1);
 
-  const { data: userOrders } = useFetchPaymentsByUser(session?.user?.id);
+  const { data: userOrders } = useFetchPaymentsByUser(session?.user?.id || 0);
 
   const deleteUser = async () => {
     const response = await fetch(
@@ -117,7 +122,7 @@ const ProfileCard = ({ alert, setEditMode }) => {
               <div className="">
                 {
                   <div className="mt-3">
-                    <Alert type={alert.type}>
+                    <Alert type={alert.type as any}>
                       <div>{alert.message}</div>
                       {alert.type === "success" && (
                         <div className="mt-2">
@@ -208,7 +213,7 @@ const ProfileCard = ({ alert, setEditMode }) => {
                           </span>
                           <span className="text-secondary p fw-bold">
                             Order
-                            {userOrders?.length > 1 && "s"}
+                            {userOrders && userOrders.length > 1 && "s"}
                           </span>
                         </div>
                       </div>
@@ -228,9 +233,11 @@ const ProfileCard = ({ alert, setEditMode }) => {
                           </span>
                           <span className="p fw-bold">
                             Order
-                            {userOrders?.filter(
-                              (order) => order.status === "Completed"
-                            ).length > 1 && "s"}
+                            {userOrders &&
+                              userOrders.filter(
+                                (order) => order.status === "Completed"
+                              ).length > 1 &&
+                              "s"}
                           </span>
                         </div>
                       </div>
@@ -250,9 +257,11 @@ const ProfileCard = ({ alert, setEditMode }) => {
                           </span>
                           <span className="p fw-bold">
                             Order
-                            {userOrders?.filter(
-                              (order) => order.status === "Pending"
-                            ).length > 1 && "s"}
+                            {userOrders &&
+                              userOrders.filter(
+                                (order) => order.status === "Pending"
+                              ).length > 1 &&
+                              "s"}
                           </span>
                         </div>
                       </div>
@@ -330,7 +339,7 @@ const ProfileCard = ({ alert, setEditMode }) => {
               <div className="pt-4 pt-md-4 pb-3">
                 <h5 className="my-2">delete Account</h5>
                 <hr />
-                <div className=" bg-danger-light text-danger border border-1 border-danger rounded p-3">
+                <div className=" bg-danger-light text-danger border-danger rounded p-3">
                   you are about to delete your account, this action is
                   irreversible and all your Order data will be lost, and you
                   will be logged out

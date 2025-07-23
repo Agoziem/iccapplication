@@ -4,23 +4,72 @@ import CbtTimer from "./CbtTimer";
 import CbtResult from "./CbtResult";
 import QuestionAndAnswers from "./CbtQuestionAndAnswers"; // Import the new component
 
-const CbtQuiz = ({ Test, setTestMode }) => {
-  const [startTest, setStartTest] = useState(false);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [currentSubjectIndex, setCurrentSubjectIndex] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState({});
-  const [submitted, setSubmitted] = useState(false);
-  const [Score, setScore] = useState({
+interface Answer {
+  id: string | number;
+  answertext: string;
+  [key: string]: any;
+}
+
+interface Question {
+  id: string | number;
+  questiontext: string;
+  answers: Answer[];
+  correctAnswer: {
+    id: string | number;
+  };
+  [key: string]: any;
+  questionIndex?: number;
+}
+
+interface Subject {
+  id: string | number;
+  subjectname: string;
+  questions: Question[];
+  [key: string]: any;
+}
+
+interface Test {
+  testSubject: Subject[];
+  texttype: {
+    testtype: string;
+  };
+  testYear: {
+    year: string;
+  };
+  [key: string]: any;
+}
+
+interface Score {
+  subjectscores: any[];
+  totalscore: number;
+}
+
+interface SelectedAnswers {
+  [key: string]: any;
+}
+
+interface CbtQuizProps {
+  Test: Test;
+  setTestMode: (mode: boolean) => void;
+}
+
+const CbtQuiz: React.FC<CbtQuizProps> = ({ Test, setTestMode }) => {
+  const [startTest, setStartTest] = useState<boolean>(false);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
+  const [currentSubjectIndex, setCurrentSubjectIndex] = useState<number>(0);
+  const [selectedAnswers, setSelectedAnswers] = useState<SelectedAnswers>({});
+  const [submitted, setSubmitted] = useState<boolean>(false);
+  const [Score, setScore] = useState<Score>({
     subjectscores: [],
     totalscore: 0,
   });
-  const [reviewAnswers, setReviewAnswers] = useState(false);
+  const [reviewAnswers, setReviewAnswers] = useState<boolean>(false);
 
   const currentSubject = Test.testSubject[currentSubjectIndex];
   const currentQuestion = {
     ...currentSubject.questions[currentQuestionIndex],
     questionIndex: currentQuestionIndex,
-  };
+  } as Question & { questionIndex: number };
 
   // -------------------------------------------
   // function to handle next question
@@ -70,7 +119,7 @@ const CbtQuiz = ({ Test, setTestMode }) => {
   // -------------------------------------------
   // function to handle answer selection
   // -------------------------------------------
-  const handleAnswerSelect = (subjectId, questionId, answerId) => {
+  const handleAnswerSelect = (subjectId: string | number, questionId: string | number, answerId: string | number): void => {
     setSelectedAnswers({
       ...selectedAnswers,
       [subjectId]: {
@@ -83,7 +132,7 @@ const CbtQuiz = ({ Test, setTestMode }) => {
   // -------------------------------------------
   // function to handle subject selection
   // -------------------------------------------
-  const handleSubjectSelect = (subjectIndex) => {
+  const handleSubjectSelect = (subjectIndex: number): void => {
     setCurrentSubjectIndex(subjectIndex);
     setCurrentQuestionIndex(0);
   };
@@ -169,7 +218,7 @@ const CbtQuiz = ({ Test, setTestMode }) => {
     <div className="pt-3">
       {!startTest ? (
         <div className="card mx-auto py-5 px-5" style={{ maxWidth: "500px" }}>
-          <CbtInstructions Test={Test} setStartTest={setStartTest} />
+          <CbtInstructions Test={Test as any} setStartTest={setStartTest} />
         </div>
       ) : (
         <div className="card mx-auto py-5 px-5" style={{ maxWidth: "500px" }}>
@@ -190,11 +239,12 @@ const CbtQuiz = ({ Test, setTestMode }) => {
                 <div className="text-center mb-3">
                   <CbtTimer
                     time={
-                      Test.testSubject.length > 0 &&
-                      Test.testSubject.reduce(
-                        (acc, curr) => acc + parseInt(curr.subjectduration),
-                        0
-                      )
+                      Test.testSubject.length > 0
+                        ? Test.testSubject.reduce(
+                            (acc, curr) => acc + parseInt(curr.subjectduration),
+                            0
+                          )
+                        : 0
                     }
                     handleSubmit={calculateScores}
                   />
@@ -202,8 +252,8 @@ const CbtQuiz = ({ Test, setTestMode }) => {
               )}
 
               <QuestionAndAnswers
-                currentSubject={currentSubject}
-                currentQuestion={currentQuestion}
+                currentSubject={currentSubject as any}
+                currentQuestion={currentQuestion as any}
                 selectedAnswers={selectedAnswers}
                 handleAnswerSelect={handleAnswerSelect}
                 reviewAnswers={reviewAnswers}
@@ -255,7 +305,7 @@ const CbtQuiz = ({ Test, setTestMode }) => {
                     onClick={
                       subject.questions.length > 0
                         ? () => handleSubjectSelect(index)
-                        : null
+                        : undefined
                     }
                     className={`badge px-3 py-2 ${
                       currentSubjectIndex === index

@@ -1,6 +1,44 @@
 import React from "react";
 
-const QuestionAndAnswers = ({
+interface Answer {
+  id: string | number;
+  answertext: string;
+  [key: string]: any;
+}
+
+interface Question {
+  id: string | number;
+  questiontext: string;
+  questionIndex: number;
+  answers: Answer[];
+  correctAnswer: {
+    id: string | number;
+  };
+  [key: string]: any;
+}
+
+interface Subject {
+  id: string | number;
+  subjectname: string;
+  questions: Question[];
+  [key: string]: any;
+}
+
+interface SelectedAnswers {
+  [subjectId: string]: {
+    [questionId: string]: string | number;
+  };
+}
+
+interface QuestionAndAnswersProps {
+  currentSubject: Subject;
+  currentQuestion: Question;
+  selectedAnswers: SelectedAnswers;
+  handleAnswerSelect: (subjectId: string | number, questionId: string | number, answerId: string | number) => void;
+  reviewAnswers: boolean;
+}
+
+const QuestionAndAnswers: React.FC<QuestionAndAnswersProps> = ({
   currentSubject,
   currentQuestion,
   selectedAnswers,

@@ -2,7 +2,34 @@ import React from "react";
 import ProductPlaceholder from "../../custom/ImagePlaceholders/Productplaceholder";
 import { useSession } from "next-auth/react";
 
-const ProductCard = ({
+interface Product {
+  id: number;
+  name: string;
+  description?: string;
+  img_url?: string;
+  preview?: boolean;
+  price: number;
+  category?: {
+    category: string;
+  };
+  userIDs_that_bought_this_product?: number[];
+}
+
+interface CartItem {
+  id: number;
+  quantity: number;
+  cartType: string;
+}
+
+interface ProductCardProps {
+  product: Product;
+  openModal: (product: Product) => void;
+  cart: CartItem[];
+  addToCart: (product: Product, type: string) => void;
+  removeFromCart: (productId: number, type: string) => void;
+}
+
+const ProductCard: React.FC<ProductCardProps> = ({
   product,
   openModal,
   cart,
@@ -34,7 +61,7 @@ const ProductCard = ({
         >
           <h6 className="flex-grow-1">{product.name}</h6>
           <p className="text-primary mb-1">
-            {product.description.length > 80 ? (
+            {product.description && product.description.length > 80 ? (
               <span>
                 {product.description.substring(0, 80)}...{" "}
                 <span
@@ -51,12 +78,12 @@ const ProductCard = ({
           </p>
           <div className="d-flex justify-content-between mt-3 flex-wrap">
             <span className="fw-bold text-primary me-2">
-              &#8358;{parseFloat(product.price)}
+              &#8358;{product.price.toString()}
             </span>
 
             <div className="me-2 me-md-3">
-              {product.userIDs_that_bought_this_product.includes(
-                parseInt(session?.user?.id)
+              {product.userIDs_that_bought_this_product?.includes(
+                parseInt(session?.user?.id || "0")
               ) ? (
                 <span className="badge bg-primary-light text-primary p-2">
                   Purchased

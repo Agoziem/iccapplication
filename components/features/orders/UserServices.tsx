@@ -9,7 +9,7 @@ import SearchInput from "@/components/custom/Inputs/SearchInput";
 import { useMemo, useState } from "react";
 import { useFetchServices } from "@/data/services/service.hook";
 
-const UserServices = () => {
+const UserServices: React.FC = () => {
   const { data: session } = useSession();
   const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
   const router = useRouter();
@@ -26,13 +26,13 @@ const UserServices = () => {
   } = useFetchServices(
     session?.user.id
       ? `${servicesAPIendpoint}/userboughtservices/${Organizationid}/${session?.user.id}/?category=${currentCategory}&page=${page}&page_size=${pageSize}`
-      : null
+      : ""
   );
   // -----------------------------------------
   // Handle page change
   // -----------------------------------------
   /**  @param {string} newPage */
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     router.push(
       `?category=${currentCategory}&page=${newPage}&page_size=${pageSize}`,
       {
@@ -45,7 +45,7 @@ const UserServices = () => {
   // Handle category change
   // -------------------------------
   /**  @param {string} category */
-  const handleCategoryChange = (category) => {
+  const handleCategoryChange = (category: string) => {
     router.push(`?category=${category}&page=${page}&page_size=${pageSize}`, {
       scroll: false,
     });
@@ -63,7 +63,7 @@ const UserServices = () => {
 
   // Setting the Correct Service Status for the user on the card
   /** * @param {Service} service */
-  const ServiceStatus = (service) => {
+  const ServiceStatus = (service: any) => {
     if (
       service.userIDs_whose_services_is_in_progress.includes(session?.user.id)
     ) {
@@ -76,7 +76,7 @@ const UserServices = () => {
 
     if (
       service.userIDs_whose_services_have_been_completed.includes(
-        parseInt(session?.user.id)
+        parseInt(session?.user?.id || "0")
       )
     ) {
       return (
@@ -96,7 +96,7 @@ const UserServices = () => {
         <div>
           <h4 className="mt-3">Services Purchased</h4>
           <p>
-            {services?.count} Service{services?.count > 1 ? "s" : ""} purchased
+            {services?.count || 0} Service{(services?.count || 0) > 1 ? "s" : ""} purchased
           </p>
         </div>
         <div className="mb-4 mb-md-0">
@@ -119,7 +119,7 @@ const UserServices = () => {
                   <div className="me-3">
                     {service.preview ? (
                       <img
-                        src={service.img_url}
+                        src={service.img_url || ""}
                         alt="services"
                         width={68}
                         height={68}
@@ -136,10 +136,10 @@ const UserServices = () => {
                       className="small mb-1"
                       style={{ color: "var(--bgDarkerColor)" }}
                     >
-                      {service.category.category} Service
+                      {service.category?.category} Service
                     </p>
                     <p className="text-capitalize mb-1">
-                      {service.description.length > 80 ? (
+                      {service.description && service.description.length > 80 ? (
                         <span>{service.description.substring(0, 80)}... </span>
                       ) : (
                         service.description
@@ -155,8 +155,8 @@ const UserServices = () => {
                       >
                         {
                           // check if the service is already completed for the user
-                          service.userIDs_whose_services_have_been_completed.includes(
-                            parseInt(session.user.id)
+                          service.userIDs_whose_services_have_been_completed?.includes(
+                            parseInt(session?.user?.id || "0")
                           ) ? null : (
                             <Link
                               href={`/dashboard/my-orders/service?servicetoken=${service.service_token}`}

@@ -3,10 +3,18 @@ import React, { useState } from "react";
 import EmailBody from "./EmailBody";
 import Messages from "./Messages";
 
-const Email = () => {
-  /** @type {[Email,(value:Email) => void]} */
-  const [selectedMessage, setSelectedMessage] = useState(null);
-  const [showlist, setShowlist] = useState(true);
+interface EmailMessage {
+  id?: number;
+  subject?: string;
+  sender?: string;
+  content?: string;
+  timestamp?: string;
+  [key: string]: any;
+}
+
+const Email: React.FC = () => {
+  const [selectedMessage, setSelectedMessage] = useState<EmailMessage | null>(null);
+  const [showlist, setShowlist] = useState<boolean>(true);
   return (
     <div
       className="row justify-content-between"

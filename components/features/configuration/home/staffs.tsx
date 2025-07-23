@@ -10,17 +10,24 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Pagination from "@/components/custom/Pagination/Pagination";
 import { useCreateStaff, useDeleteStaff, useFetchStaffs, useUpdateStaff } from "@/data/organization/organization.hook";
 import toast from "react-hot-toast";
+import { Staff } from "@/types/organizations";
 
-const Staffs = () => {
+interface AddOrUpdateMode {
+  mode: string;
+  type?: string;
+  state: boolean;
+}
+
+const Staffs: React.FC = () => {
   const OrganizationID = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
-  const [staff, setStaff] = useState(staffdefault);
-  const [addorupdate, setAddorupdate] = useState({
+  const [staff, setStaff] = useState<Staff>(staffdefault);
+  const [addorupdate, setAddorupdate] = useState<AddOrUpdateMode>({
     mode: "add",
     state: false,
   });
-  const [showModal, setShowModal] = useState(false);
-  const [showdeleteModal, setShowDeleteModal] = useState(false);
-  const [openIndex, setOpenIndex] = useState(0);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [showdeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -35,32 +42,32 @@ const Staffs = () => {
  
 
   // Handle page change
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     router.push(`?page=${newPage}&page_size=${pageSize}`);
   };
 
-  const handleToggle = (index) => {
+  const handleToggle = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
   };
 
   // add a staff or edit a staff
   const { mutateAsync: createStaff, isLoading:isCreating } = useCreateStaff();
   const { mutateAsync: updateStaff, isLoading:isUpdating } = useUpdateStaff();
-  const addStaff = async (e) => {
+  const addStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     const { organization, ...restData } = staff;
     const stafftosubmit = {
       ...restData,
-      organization: parseInt(OrganizationID),
+      organization: parseInt(OrganizationID || "0"),
     };
     try {
       if (addorupdate.mode === "add") {
-        await createStaff(stafftosubmit);
+        await createStaff(stafftosubmit as any);
       } else {
-        await updateStaff(stafftosubmit);
+        await updateStaff(stafftosubmit as any);
       }
       toast.success(`Staff ${addorupdate.mode === "add" ? "added" : "updated"} successfully`);
-    } catch (error) {
+    } catch (error: any) {
       console.log(error.message);
       toast.error(`An error just occurred`);
     } finally {
@@ -71,20 +78,16 @@ const Staffs = () => {
   const closeModal = () => {
     setShowDeleteModal(false);
     setShowModal(false);
-    setStaff(staffdefault);
+    setStaff(staffdefault as any);
   };
 
   // remove a staff
   const { mutateAsync: deleteStaff, isLoading:isDeleting } = useDeleteStaff();
-  /**
-   * @async
-   * @param {number} id
-   */
-  const deletestaff = async (id) => {
+  const deletestaff = async (id: number) => {
     try {
       await deleteStaff(id);
       toast.success("Staff Deleted Successfully");
-    } catch (error) {
+    } catch (error: any) {
       console.log(error.message);
       toast.error("Error Deleting Staff");
     } finally {
@@ -118,7 +121,7 @@ const Staffs = () => {
         <div>
           <div className="my-4">
             <h4 className="mb-1">
-              {staffs?.count} Staff{staffs?.count > 1 ? "s" : ""}
+              {staffs?.count || 0} Staff{(staffs?.count || 0) > 1 ? "s" : ""}
             </h4>
             <p>in total</p>
           </div>
@@ -185,7 +188,7 @@ const Staffs = () => {
                         className="badge text-secondary bg-secondary-light me-2 rounded p-2 px-3"
                         onClick={() => {
                           setAddorupdate({ mode: "update", state: true });
-                          setStaff(staff);
+                          setStaff(staff as any);
                           setShowModal(true);
                         }}
                         style={{ cursor: "pointer" }}
@@ -199,7 +202,7 @@ const Staffs = () => {
                           setStaff({
                             ...staff,
                             id: staff.id,
-                          });
+                          } as any);
                           setShowDeleteModal(true);
                         }}
                       >
@@ -271,7 +274,7 @@ const Staffs = () => {
           <div className="d-flex justify-content-end mt-4">
             <button
               className="btn btn-danger rounded me-3"
-              onClick={() => deletestaff(staff.id)}
+              onClick={() => staff.id && deletestaff(staff.id)}
               disabled={isDeleting}
             >
               {isDeleting ? "Deleting..." : "Yes"}
@@ -293,9 +296,9 @@ const Staffs = () => {
           <hr />
           <StaffForm
             addStaff={addStaff}
-            addorupdate={addorupdate}
-            staff={staff}
-            setStaff={setStaff}
+            addorupdate={addorupdate as any}
+            staff={staff as any}
+            setStaff={setStaff as any}
             closeModal={closeModal}
             loading={isCreating || isUpdating}
           />

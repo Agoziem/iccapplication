@@ -6,14 +6,27 @@ import { useState } from "react";
 import Alert from "../../custom/Alert/Alert";
 import { emailAPIendpoint, submitResponse } from "@/data/Emails/fetcher";
 import { useQueryClient } from "react-query";
+import React from "react";
 
-/**
- * @param {{message: Email}} props
- * @returns {JSX.Element}
- */
-const EmailInput = ({ message }) => {
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+interface EmailMessage {
+  id?: number;
+  subject?: string;
+  sender?: string;
+  content?: string;
+  timestamp?: string;
+  name?: string;
+  email?: string;
+  message?: string;
+  [key: string]: any;
+}
+
+interface EmailInputProps {
+  message: EmailMessage;
+}
+
+const EmailInput: React.FC<EmailInputProps> = ({ message }) => {
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
   const queryClient = useQueryClient();
 
   // Initialize React Hook Form and connect it to Zod via zodResolver
@@ -34,22 +47,19 @@ const EmailInput = ({ message }) => {
     },
   });
 
-  /**
-   * @async
-   * @param {EmailResponse} data
-   */
-  const onSubmit = async (data) => {
+  // Function to handle form submission
+  const onSubmit = async (data: any) => {
     try {
       reset();
       const result = await sendReplyEmail(data);
-      if (!result.error) {
+      if (result.success) {
         setSuccess(result.message);
         queryClient.invalidateQueries(["responses", message.id]);
       } else {
         setError(result.message);
       }
-    } catch (error) {
-      setError(error.message);
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "An error occurred");
     }
     setTimeout(() => {
       setError("");

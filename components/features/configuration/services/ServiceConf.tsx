@@ -9,15 +9,17 @@ import {
 } from "@/data/services/service.hook";
 import Pagination from "@/components/custom/Pagination/Pagination";
 
-/**
- * @typedef {Object} Category
- * @property {number} id - The unique ID of the category.
- * @property {string} name - The display name of the category.
- * @property {"all"| "progress"| "completed"} category - The key used for filtering (e.g., "all", "progress", "completed").
- */
+interface Category {
+  id: number;
+  name: string;
+  category: "all" | "progress" | "completed";
+}
 
-/** @type {Category[]} */
-const categories = [
+interface ServiceConfigProps {
+  serviceid: string | number;
+}
+
+const categories: Category[] = [
   {
     id: 1,
     name: "Purchased Service",
@@ -35,13 +37,12 @@ const categories = [
   },
 ];
 
-const ServiceConfig = ({ serviceid }) => {
+const ServiceConfig: React.FC<ServiceConfigProps> = ({ serviceid }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-
-  const currentCategory =
-    searchParams.get("category") || categories[0].category;
+  const currentCategory = (searchParams.get("category") ||
+    categories[0].category) as "all" | "progress" | "completed";
   const page = searchParams.get("page") || "1";
   const pageSize = "20";
 
@@ -53,19 +54,18 @@ const ServiceConfig = ({ serviceid }) => {
     error,
   } = useFetchService(
     `${servicesAPIendpoint}/service/${serviceid}/`,
-    serviceid
+    typeof serviceid === "string" ? parseInt(serviceid) : serviceid
   );
 
   const { data: users, isLoading: loadingUsers } = useFetchServiceUsers(
-    service ? service.id : null,
+    service?.id || 0,
     currentCategory
   );
-
 
   // -------------------------------
   // Handle Page Change
   // -------------------------------
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number): void => {
     router.push(`?category=${currentCategory}&page=${newPage}`, {
       scroll: false,
     });
@@ -74,11 +74,23 @@ const ServiceConfig = ({ serviceid }) => {
   // -------------------------------
   // Handle Category Change
   // -------------------------------
-  const handleCategoryChange = (category) => {
+  const handleCategoryChange = (category: string): void => {
     router.push(`?category=${category}&page=1`, {
       scroll: false,
     });
   };
+
+  if (!service || loadingService) {
+    return <div>Loading service...</div>;
+  }
+
+  if (!users || loadingUsers) {
+    return <div>Loading users...</div>;
+  }
+
+  if (error) {
+    return <div>Error loading service: {error.message}</div>;
+  }
 
   return (
     <section>

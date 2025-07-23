@@ -4,7 +4,7 @@ import Alert from "@/components/custom/Alert/Alert";
 import Tiptap from "@/components/custom/Richtexteditor/Tiptap";
 import { TiTimes } from "react-icons/ti";
 import { ArticleDefault } from "@/constants";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, FieldErrors } from "react-hook-form";
 import { ArticleSchema } from "@/schemas/articles";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createArticle, updateArticle } from "@/data/articles/fetcher";
@@ -13,30 +13,51 @@ import {
   useCreateArticle,
   useUpdateArticle,
 } from "@/data/articles/articles.hook";
+import { Article, ArticlesResponse, Tag } from "@/types/articles";
+import { Categories } from "@/types/categories";
 
-/**
- * @param {{ article: Article;setArticle: (value:Article) => void; editMode: any; setEditMode: any; articles: ArticlesResponse; categories: any;  }} param0
- */
-const ArticleForm = ({
+type AlertType = "success" | "danger" | "warning" | "info";
+
+interface AlertState {
+  show: boolean;
+  message: string;
+  type: AlertType;
+}
+
+interface TagInput {
+  id: number | null;
+  tag: string;
+}
+
+interface ArticleFormProps {
+  article: Article;
+  setArticle: (value: Article) => void;
+  editMode: boolean;
+  setEditMode: (value: boolean) => void;
+  articles?: ArticlesResponse;
+  categories: Categories;
+}
+
+const ArticleForm: React.FC<ArticleFormProps> = ({
   article,
   setArticle,
   editMode,
   setEditMode,
   categories,
 }) => {
-  const [alert, setAlert] = useState({
+  const [alert, setAlert] = useState<AlertState>({
     show: false,
     message: "",
-    type: "",
+    type: "info",
   });
-  const [tag, setTag] = useState({ id: null, tag: "" });
-  const [saving, setSaving] = useState(false);
-  const [hasStartedEditing, setHasStartedEditing] = useState(false); // New state to track if editing has started
-  const [progressRestoredMessage, setProgressRestoredMessage] = useState("");
+  const [tag, setTag] = useState<TagInput>({ id: null, tag: "" });
+  const [saving, setSaving] = useState<boolean>(false);
+  const [hasStartedEditing, setHasStartedEditing] = useState<boolean>(false);
+  const [progressRestoredMessage, setProgressRestoredMessage] = useState<string>("");
   const { data: session } = useSession();
   const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
-  const { mutateAsync: createArticle } = useCreateArticle();
-  const { mutateAsync: updateArticle } = useUpdateArticle();
+  const { mutateAsync: createArticleMutation } = useCreateArticle();
+  const { mutateAsync: updateArticleMutation } = useUpdateArticle();
 
   
   const {
@@ -59,20 +80,28 @@ const ArticleForm = ({
 
   useEffect(() => {
     console.log("working");
-    if (article) reset(article);
-  }, [article]);
+    if (article && Object.keys(article).length > 0) {
+      reset(article);
+    }
+  }, [article, reset]);
 
   // Load draft from local storage on mount
   useEffect(() => {
     const savedDraft = localStorage.getItem("draftArticle");
-    if (savedDraft) {
-      reset(JSON.parse(savedDraft));
-      setProgressRestoredMessage("Your Draft was restored");
-      setTimeout(() => {
-        setProgressRestoredMessage("");
-      }, 3000);
+    if (savedDraft && !editMode) {
+      try {
+        const parsedDraft = JSON.parse(savedDraft);
+        reset(parsedDraft);
+        setProgressRestoredMessage("Your Draft was restored");
+        setTimeout(() => {
+          setProgressRestoredMessage("");
+        }, 3000);
+      } catch (error) {
+        console.error("Error parsing saved draft:", error);
+        localStorage.removeItem("draftArticle");
+      }
     }
-  }, []);
+  }, [reset, editMode]);
 
   const watchformvalues = watch();
 
@@ -93,40 +122,38 @@ const ArticleForm = ({
     return () => clearInterval(interval);
   }, [watchformvalues, editMode, hasStartedEditing]);
 
-  const createSlug = (title) => {
+  const createSlug = (title: string): string => {
     return title
       .toLowerCase()
       .replace(/ /g, "-")
       .replace(/[^\w-]+/g, "");
   };
 
-  const closeEditMode = () => {
+  const closeEditMode = (): void => {
     setEditMode(false);
     reset(ArticleDefault);
-    setHasStartedEditing(false); // Reset editing state
+    setHasStartedEditing(false);
     localStorage.removeItem("editArticle");
     localStorage.removeItem("draftArticle");
   };
 
-
-  /** @param {Article} data */
-  const addArticle = async (data) => {
+  const addArticle = async (data: Article): Promise<void> => {
     try {
       const { category, tags, organization, ...restData } = data;
 
-      // sublime relational fields to their Ids to avoid issues at the backend
+      // Submit relational fields to their IDs to avoid issues at the backend
       const data_to_submit = {
         ...restData,
         category: category?.id || null,
         tags: tags?.map((tag) => tag.tag) || [],
-        author: editMode ? article.author.id : session?.user?.id,
+        author: editMode && article.author?.id ? article.author.id : session?.user?.id,
         organization: Organizationid,
       };
 
       if (editMode) {
-        await updateArticle(data_to_submit);
+        await updateArticleMutation(data_to_submit as Partial<Article>);
       } else {
-        await createArticle(data_to_submit);
+        await createArticleMutation(data_to_submit as Partial<Article>);
       }
       setAlert({
         show: true,
@@ -142,17 +169,19 @@ const ArticleForm = ({
       });
     } finally {
       setTimeout(() => {
-        setAlert({ show: false, message: "", type: "" });
+        setAlert({ show: false, message: "", type: "info" });
       }, 3000);
       closeEditMode();
     }
   };
 
   // handle Validation Error
-  const onError = (errors) => {
+  const onError = (errors: FieldErrors<Article>): void => {
     console.log("Form errors:", errors);
     Object.entries(errors).forEach(([field, error]) => {
-      console.error(`${field}: ${error.message}`);
+      if (error && typeof error === 'object' && 'message' in error) {
+        console.error(`${field}: ${error.message}`);
+      }
     });
   };
 
@@ -183,7 +212,9 @@ const ArticleForm = ({
             )}
           />
           {errors.title && (
-            <div className="invalid-feedback">{errors.title.message}</div>
+            <div className="invalid-feedback">
+              {typeof errors.title.message === 'string' ? errors.title.message : 'Title is required'}
+            </div>
           )}
         </div>
 
@@ -196,7 +227,9 @@ const ArticleForm = ({
             {...register("subtitle")}
           />
           {errors.subtitle && (
-            <div className="invalid-feedback">{errors.subtitle.message}</div>
+            <div className="invalid-feedback">
+              {typeof errors.subtitle.message === 'string' ? errors.subtitle.message : 'Subtitle is required'}
+            </div>
           )}
         </div>
 
@@ -221,7 +254,9 @@ const ArticleForm = ({
             )}
           />
           {errors.body && (
-            <div className="text-danger">{errors.body.message}</div>
+            <div className="text-danger">
+              {typeof errors.body.message === 'string' ? errors.body.message : 'Body content is required'}
+            </div>
           )}
         </div>
 
@@ -235,7 +270,9 @@ const ArticleForm = ({
             {...register("readTime", { valueAsNumber: true })}
           />
           {errors.readTime && (
-            <div className="invalid-feedback">{errors.readTime.message}</div>
+            <div className="invalid-feedback">
+              {typeof errors.readTime.message === 'string' ? errors.readTime.message : 'Read time is required'}
+            </div>
           )}
         </div>
 
@@ -248,16 +285,16 @@ const ArticleForm = ({
             render={({ field }) => (
               <select
                 className={`form-select ${errors.category ? "is-invalid" : ""}`}
-                value={field.value.category}
+                value={field.value?.category || ""}
                 onChange={(e) => {
-                  const selectedCategory = categories.find(
+                  const selectedCategory = categories?.find(
                     (cat) => cat.category === e.target.value
                   );
                   field.onChange(
                     selectedCategory || {
                       id: null,
                       category: "",
-                      description: "",
+                      description: null,
                     }
                   );
                 }}
@@ -272,12 +309,8 @@ const ArticleForm = ({
             )}
           />
           {errors.category && (
-            <div className="invalid-feedback">{errors.category.message}</div>
-          )}
-
-          {errors.category?.category && (
             <div className="invalid-feedback">
-              {errors.category.category.message}
+              {typeof errors.category.message === 'string' ? errors.category.message : 'Category is required'}
             </div>
           )}
         </div>
@@ -301,10 +334,15 @@ const ArticleForm = ({
                   type="button"
                   className="rounded btn btn-primary ms-2 flex-fill text-nowrap"
                   onClick={() => {
-                    field.onChange([...field.value, tag]);
-                    setTag({ id: null, tag: "" });
-                    setHasStartedEditing(true);
+                    if (tag.tag.trim()) {
+                      const currentTags = field.value || [];
+                      const newTag: Tag = { id: tag.id, tag: tag.tag.trim() };
+                      field.onChange([...currentTags, newTag]);
+                      setTag({ id: null, tag: "" });
+                      setHasStartedEditing(true);
+                    }
                   }}
+                  disabled={!tag.tag.trim()}
                 >
                   Add Tag
                 </button>
@@ -324,9 +362,10 @@ const ArticleForm = ({
                   className="ms-2"
                   style={{ cursor: "pointer" }}
                   onClick={() => {
+                    const currentTags = watch("tags") || [];
                     setValue(
                       "tags",
-                      watch("tags").filter((tag) => tag.tag !== t.tag)
+                      currentTags.filter((tag) => tag.tag !== t.tag)
                     );
                     setHasStartedEditing(true);
                   }}
@@ -343,7 +382,13 @@ const ArticleForm = ({
             name="slug"
             control={control}
             render={({ field }) => (
-              <input type="text" className="form-control" {...field} readOnly />
+              <input 
+                type="text" 
+                className="form-control" 
+                {...field} 
+                value={field.value || ""} 
+                readOnly 
+              />
             )}
           />
         </div>
@@ -361,7 +406,11 @@ const ArticleForm = ({
               ]) || [null, "", ""];
               return (
                 <ArticleImageUploader
-                  value={{ img, img_url, img_name }} // Get current form values
+                  value={{ 
+                    img: img || null, 
+                    img_url: img_url || null, 
+                    img_name: img_name || null 
+                  }}
                   onChange={(value) => {
                     console.log(value);
                     setValue("img", value.img, { shouldValidate: true });
@@ -377,7 +426,9 @@ const ArticleForm = ({
             }}
           />
           {errors.img && (
-            <div className="text-danger">{errors.img.message}</div>
+            <div className="text-danger">
+              {typeof errors.img.message === 'string' ? errors.img.message : 'Image is required'}
+            </div>
           )}
         </div>
 

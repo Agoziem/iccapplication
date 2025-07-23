@@ -5,25 +5,34 @@ import { emailAPIendpoint, getResponses } from "@/data/Emails/fetcher";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { useFetchOrganization } from "@/data/organization/organization.hook";
 import { useFetchResponses } from "@/data/Emails/emails.hook";
-/**
- * Holds all the Messages that was sent well paginated with load more button
- *
- * @param {{
- * message : Email,
- * selectMessage:(value:Email)=> void,
- * showlist:boolean,
- * setShowlist:(value:boolean)=> void,
- * }} props
- * @returns {JSX.Element}
- */
+import React from "react";
 
-const EmailBody = ({ message, selectMessage, showlist, setShowlist }) => {
+interface EmailMessage {
+  id?: number;
+  subject?: string;
+  sender?: string;
+  content?: string;
+  timestamp?: string;
+  name?: string;
+  email?: string;
+  message?: string;
+  [key: string]: any;
+}
+
+interface EmailBodyProps {
+  message: EmailMessage | null;
+  selectMessage: (value: EmailMessage | null) => void;
+  showlist: boolean;
+  setShowlist: (value: boolean) => void;
+}
+
+const EmailBody: React.FC<EmailBodyProps> = ({ message, selectMessage, showlist, setShowlist }) => {
   const { data: OrganizationData } = useFetchOrganization();
   const {
     data: emailresponses,
     error: responseerror,
     isLoading: loadingresponse,
-  } = useFetchResponses(message ? message.id : null);
+  } = useFetchResponses(message?.id || 0);
 
   return (
     <>
@@ -111,21 +120,21 @@ const EmailBody = ({ message, selectMessage, showlist, setShowlist }) => {
 
         {emailresponses
           ? emailresponses.map((response) => (
-              <div key={response.created_at} className="mb-4 mb-2">
+              <div key={response.created_at} className="mb-4">
                 <div className="d-flex mt-4">
                   <div className="flex-fill d-flex">
                     <img
-                      src={OrganizationData.Organizationlogo}
+                      src={OrganizationData?.Organizationlogo || ""}
                       alt="Organization Logo"
                       className="rounded-circle mb-2"
                       style={{ width: "60px", height: "auto" }}
                     />
                     <div className="ms-2">
                       <p className="text-primary small fw-bold my-0">
-                        From: {OrganizationData.name}
+                        From: {OrganizationData?.name || "Organization"}
                       </p>
                       <p className="text-primary small my-0">
-                        response to: {message.subject}
+                        response to: {message?.subject || "No subject"}
                       </p>
                     </div>
                   </div>

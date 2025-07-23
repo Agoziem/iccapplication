@@ -4,19 +4,20 @@ import ArticleForm from "./ArticleForm";
 import ArticleList from "./ArticleList";
 import ArticleCategoryForm from "./ArticleCategoryForm";
 import { useSearchParams } from "next/navigation";
-import { articleAPIendpoint, fetchArticles, fetchArticlesCategories } from "@/data/articles/fetcher";
+import { articleAPIendpoint } from "@/data/articles/fetcher";
 import { ArticleDefault } from "@/constants";
 import { useFetchCategories } from "@/data/categories/categories.hook";
 import { useFetchArticles } from "@/data/articles/articles.hook";
+import { Article } from "@/types/articles";
 
-const ArticleConf = () => {
+const ArticleConf: React.FC = () => {
   const searchParams = useSearchParams();
   const currentCategory = searchParams.get("category") || "All";
   const page = searchParams.get("page") || "1";
   const pageSize = "10";
-  const [editMode, setEditMode] = useState(false);
+  const [editMode, setEditMode] = useState<boolean>(false);
   const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
-  const [article,setArticle] = useState(ArticleDefault)
+  const [article, setArticle] = useState<Article>(ArticleDefault);
 
   const {
     data: categories,
@@ -30,9 +31,15 @@ const ArticleConf = () => {
     error: articleError,
   } = useFetchArticles(
     `${articleAPIendpoint}/orgblogs/${Organizationid}/?category=${currentCategory}&page=${page}&page_size=${pageSize}`,
-  )
+  );
 
+  if (!categories || loadingCategories || !articles || loadingArticles) {
+    return <div>Loading...</div>;
+  }
 
+  if (categoryError) {
+    return <div>Error loading categories: {categoryError.message}</div>;
+  } 
 
   return (
     <div className="row mt-4 justify-content-between">

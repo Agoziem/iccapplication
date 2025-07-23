@@ -16,19 +16,32 @@ import {
   useUpdateDepartment,
 } from "@/data/organization/organization.hook";
 import toast from "react-hot-toast";
+import { Department } from "@/types/organizations";
 
-const Depts = () => {
+interface Staff {
+  id: number;
+  first_name: string;
+  last_name: string;
+  [key: string]: any;
+}
+
+interface AddOrUpdateMode {
+  type: string;
+  state: boolean;
+}
+
+const Depts: React.FC = () => {
   const OrganizationID = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
-  const [showModal, setShowModal] = useState(false);
-  const [showdeleteModal, setShowDeleteModal] = useState(false);
-  const [service, setService] = useState("");
-  const [department, setDepartment] = useState(deptDefault);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [showdeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [service, setService] = useState<string>("");
+  const [department, setDepartment] = useState<Department>(deptDefault);
 
   const router = useRouter();
   const searchParams = useSearchParams();
   const page = searchParams.get("page") || "1";
   const pageSize = "10";
-  const [addorupdate, setAddOrUpdate] = useState({
+  const [addorupdate, setAddOrUpdate] = useState<AddOrUpdateMode>({
     type: "add",
     state: false,
   });
@@ -44,7 +57,7 @@ const Depts = () => {
   );
 
   // Handle page change
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     router.push(`?page=${newPage}&page_size=${pageSize}`);
   };
 
@@ -54,20 +67,20 @@ const Depts = () => {
 
   const { mutateAsync: createDepartment,isLoading: isCreating } = useCreateDepartment();
   const { mutateAsync: updateDepartment,isLoading: isUpdating } = useUpdateDepartment();
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     const { organization, staff_in_charge, services, ...restData } = department;
     const departmenttosubmit = {
       ...restData,
-      organization: parseInt(OrganizationID),
-      staff_in_charge: staff_in_charge.id || "",
+      organization: parseInt(OrganizationID || "0"),
+      staff_in_charge: staff_in_charge?.id || "",
       services: services?.map((Service) => Service.name) || [],
     };
     e.preventDefault();
     try {
       if (addorupdate.type === "add") {
-        await createDepartment(departmenttosubmit);
+        await createDepartment(departmenttosubmit as any);
       } else {
-        await updateDepartment(departmenttosubmit);
+        await updateDepartment(departmenttosubmit as any);
       }
       toast.success(
         `Department ${addorupdate.type === "add" ? "added" : "updated"} successfully`
@@ -94,7 +107,7 @@ const Depts = () => {
       type: "add",
       state: false,
     });
-    setDepartment(deptDefault);
+    setDepartment(deptDefault as any);
     setService("");
   };
 
@@ -103,10 +116,7 @@ const Depts = () => {
   // -------------------------------------------------------------
   const { mutateAsync: deleteDepartment, isLoading: isDeleting } =
     useDeleteDepartment();
-  /**
-   * @param {number} id
-   */
-  const removeDepartment = async (id) => {
+  const removeDepartment = async (id: number) => {
     try {
       await deleteDepartment(id);
       toast.success("Department deleted successfully");
@@ -137,7 +147,7 @@ const Depts = () => {
         </div>
         <div>
           <h4 className="mb-1">
-            {depts?.count} Department{depts?.count > 1 ? "s" : ""}
+            {depts?.count || 0} Department{(depts?.count || 0) > 1 ? "s" : ""}
           </h4>
           <p>in total</p>
         </div>
@@ -197,7 +207,7 @@ const Depts = () => {
                           type: "update",
                           state: true,
                         });
-                        setDepartment(department);
+                        setDepartment(department as any);
                         setShowModal(true);
                       }}
                     >
@@ -207,7 +217,7 @@ const Depts = () => {
                     <button
                       className="btn btn-sm btn-danger rounded px-3"
                       onClick={() => {
-                        setDepartment(department);
+                        setDepartment(department as any);
                         setShowDeleteModal(true);
                       }}
                     >
@@ -237,11 +247,11 @@ const Depts = () => {
           {addorupdate.state ? (
             <DepartmentForm
               addorupdate={addorupdate}
-              department={department}
-              setDepartment={setDepartment}
+              department={department as any}
+              setDepartment={setDepartment as any}
               handleSubmit={handleSubmit}
               closeModal={closeModal}
-              staffs={staffs.results}
+              staffs={(staffs?.results || []) as any}
               loading={isCreating || isUpdating}
             />
           ) : null}
@@ -258,7 +268,7 @@ const Depts = () => {
             <button
               className="btn btn-accent-secondary border-0 text-secondary mt-3 rounded"
               onClick={() => {
-                removeDepartment(department.id);
+                department.id && removeDepartment(department.id);
               }}
               disabled={isDeleting}
             >

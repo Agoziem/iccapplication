@@ -2,19 +2,35 @@ import React from "react";
 import "./OrderTableItems.css";
 import { useSession } from "next-auth/react";
 
-const OrderTableItems = ({ currentItems = [] }) => {
+interface OrderItem {
+  id: number;
+  amount: number;
+  payment_reference: string;
+  reference: string;
+  created_at: string;
+  last_updated_date?: string;
+  status: string;
+  customer: {
+    username: string;
+    name: string;
+  };
+}
+
+interface OrderTableItemsProps {
+  currentItems?: OrderItem[];
+}
+
+const OrderTableItems: React.FC<OrderTableItemsProps> = ({ currentItems = [] }) => {
   const { data: session } = useSession();
-  const handleStatus = (status) => {
+  
+  const handleStatus = (status: string): string => {
     switch (status) {
       case "Completed":
         return "success";
-        break;
       case "Pending":
         return "secondary";
-        break;
       case "Failed":
         return "danger";
-        break;
       default:
         return "secondary";
     }
@@ -45,7 +61,7 @@ const OrderTableItems = ({ currentItems = [] }) => {
                   <td className="fw-bold">
                     {/* total Amount */}
                     &#8358;
-                    {parseFloat(item.amount).toLocaleString()}
+                    {item.amount.toLocaleString()}
                   </td>
                   <td>{item.reference}</td>
                   <td>

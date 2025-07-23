@@ -1,3 +1,4 @@
+import React from "react";
 import {
   FacebookShareButton,
   TwitterShareButton,
@@ -10,7 +11,12 @@ import {
 } from "react-share";
 import { toast } from "react-hot-toast";
 
-const ShareButtons = ({ url, title }) => {
+interface ShareButtonsProps {
+  url: string;
+  title: string;
+}
+
+const ShareButtons: React.FC<ShareButtonsProps> = ({ url, title }) => {
   const copyLink = () => {
     navigator.clipboard.writeText(url);
     toast.success("Link copied to clipboard successfully");

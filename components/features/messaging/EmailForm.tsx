@@ -4,12 +4,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import Alert from "../../custom/Alert/Alert";
-import { createEmailOptions } from "@/data/Emails/fetcherOptions";
 import { useCreateEmail } from "@/data/Emails/emails.hook";
 
-const EmailForm = () => {
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+const EmailForm: React.FC = () => {
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
 
   // -----------------------------------------------------------------
   // Initialize React Hook Form and connect it to Zod via zodResolver
@@ -35,22 +34,19 @@ const EmailForm = () => {
     },
   });
 
-  const getRandomInt = (min, max) => {
+  const getRandomInt = (min: number, max: number): number => {
     const randomBuffer = new Uint32Array(1);
     window.crypto.getRandomValues(randomBuffer);
     const randomNumber = randomBuffer[0] / (0xffffffff + 1);
     return Math.floor(randomNumber * (max - min)) + min;
   };
 
-  // --------------------------------------
   // Submit function to send the email
-  // --------------------------------------
   const { mutateAsync: createEmail } = useCreateEmail();
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: any) => {
     try {
       setError("");
       setSuccess("");
-      /** @type {EmailMessage} */
       const emailData = {
         ...data,
         id: getRandomInt(100_000, 1_000_000),

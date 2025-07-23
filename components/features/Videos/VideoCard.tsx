@@ -3,13 +3,41 @@ import VideosPlaceholder from "../../custom/ImagePlaceholders/Videosplaceholder"
 import { useSession } from "next-auth/react";
 import { shortenMessage } from "@/utils/utilities";
 
+interface Video {
+  id: number;
+  name: string;
+  title: string;
+  description?: string;
+  img_url?: string;
+  thumbnail?: boolean;
+  price: number;
+  category?: {
+    category: string;
+  };
+  userIDs_that_bought_this_video?: number[];
+}
 
-/**
- * Description placeholder
- *
- * @param {{ video: Video; openModal: any; cart: any; addToCart: any; removeFromCart: any; }} param0
- */
-const VideoCard = ({ video, openModal, cart, addToCart, removeFromCart }) => {
+interface CartItem {
+  id: number;
+  quantity: number;
+  cartType: string;
+}
+
+interface VideoCardProps {
+  video: Video;
+  openModal: (video: Video) => void;
+  cart: CartItem[];
+  addToCart: (video: Video, type: string) => void;
+  removeFromCart: (videoId: number, type: string) => void;
+}
+
+const VideoCard: React.FC<VideoCardProps> = ({ 
+  video, 
+  openModal, 
+  cart, 
+  addToCart, 
+  removeFromCart 
+}) => {
   const { data: session } = useSession();
   return (
     <div className="card p-4 py-4">
@@ -35,7 +63,7 @@ const VideoCard = ({ video, openModal, cart, addToCart, removeFromCart }) => {
         >
           <h6 className="flex-grow-1">{video.title}</h6>
           <p className="text-primary mb-1">
-            {video.description.length > 80 ? (
+            {video.description && video.description.length > 80 ? (
               <span>
                 {shortenMessage(video.description,80)}
                 <span
@@ -52,12 +80,12 @@ const VideoCard = ({ video, openModal, cart, addToCart, removeFromCart }) => {
           </p>
           <div className="d-flex justify-content-between mt-3 flex-wrap">
             <span className="fw-bold text-primary me-2">
-              &#8358;{parseFloat(video.price)}
+              &#8358;{video.price.toString()}
             </span>
 
             <div className="me-2 me-md-3">
-              {video.userIDs_that_bought_this_video.includes(
-                parseInt(session?.user?.id)
+              {video.userIDs_that_bought_this_video?.includes(
+                parseInt(session?.user?.id || "0")
               ) ? (
                 <span className="badge bg-primary-light text-primary p-2">
                   Purchased

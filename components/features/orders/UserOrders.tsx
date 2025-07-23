@@ -8,16 +8,30 @@ import OrderTableItems from "./OrderTableItems";
 import { useFetchPaymentsByUser } from "@/data/payments/orders.hook";
 import { useSession } from "next-auth/react";
 
-const UserOrders = () => {
+interface UserOrder {
+  id: number;
+  amount: number;
+  payment_reference: string;
+  reference: string;
+  created_at: string;
+  last_updated_date?: string;
+  status: string;
+  customer: {
+    username: string;
+    name: string;
+  };
+}
+
+const UserOrders: React.FC = () => {
   const { data: session } = useSession();
   const categories = ["services", "products", "videos"];
-  const [activeTab, setActiveTab] = useState(categories[0]);
-  const [items, setItems] = useState([]);
+  const [activeTab, setActiveTab] = useState<string>(categories[0]);
+  const [items, setItems] = useState<UserOrder[]>([]);
   const { data: userOrders, isLoading: loadingUserOrders } =
-    useFetchPaymentsByUser(session?.user?.id);
+    useFetchPaymentsByUser(session?.user?.id || 0);
 
   useEffect(() => {
-    setItems(userOrders);
+    setItems((userOrders as any) || []);
   }, [userOrders]);
 
   return (

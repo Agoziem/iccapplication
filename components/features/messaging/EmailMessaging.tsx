@@ -3,15 +3,22 @@ import EmailForm from "./EmailForm";
 import { TbMessageCancel } from "react-icons/tb";
 import { PulseLoader } from "react-spinners";
 import { useFetchSentEmails } from "@/data/Emails/emails.hook";
+import React from "react";
 
-const EmailMessaging = () => {
+interface SentEmail {
+  id: number;
+  subject: string;
+  body: string;
+  status: "pending" | "sent" | "failed";
+  created_at: string;
+  [key: string]: any;
+}
+
+const EmailMessaging: React.FC = () => {
   // fetch all the messages and populate cache
   const { data: sentemails, isLoading, error } = useFetchSentEmails();
 
-  /**
-   * @param {string} emailstatus
-   */
-  const statusComponent = (emailstatus) => {
+  const statusComponent = (emailstatus: "pending" | "sent" | "failed") => {
     switch (emailstatus) {
       case "pending":
         return (
@@ -59,7 +66,7 @@ const EmailMessaging = () => {
             </div>
           )}
 
-          {sentemails?.length > 0
+          {sentemails && sentemails.length > 0
             ? sentemails.map((sentemail) => (
                 <div key={sentemail.id} className="card p-4 py-4">
                   <div className="d-flex justify-content-between">
@@ -70,7 +77,7 @@ const EmailMessaging = () => {
                         color: "var(--bgDarkerColor)",
                       }}
                     >
-                      {new Date(sentemail.created_at).toLocaleTimeString([], {
+                      {sentemail.created_at && new Date(sentemail.created_at).toLocaleTimeString([], {
                         month: "short",
                         day: "numeric",
                         hour: "2-digit",

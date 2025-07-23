@@ -2,11 +2,25 @@ import React from 'react'
 import "./OrderTableItems.css";
 import Link from 'next/link';
 
+interface Customer {
+  customer__id: number;
+  customer__username: string;
+  customer__count: number;
+  amount__sum: number;
+  amount__avg: number;
+}
 
-/**
- * @param {{ currentItems?: Customers; setCustomerID: any; toggleModal: any; }} param0
- */
-const CustomersTable = ({ currentItems = [],setCustomerID,toggleModal }) => {
+interface CustomersTableProps {
+  currentItems?: Customer[];
+  setCustomerID: (id: number) => void;
+  toggleModal: () => void;
+}
+
+const CustomersTable: React.FC<CustomersTableProps> = ({ 
+  currentItems = [],
+  setCustomerID,
+  toggleModal 
+}) => {
   return (
     <div className="card p-3 overflow-auto">
       <table className="table table-bordered">

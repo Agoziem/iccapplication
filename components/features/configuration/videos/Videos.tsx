@@ -25,22 +25,39 @@ import { PulseLoader } from "react-spinners";
 import { useFetchCategories } from "@/data/categories/categories.hook";
 import { useCreateVideo, useDeleteVideo, useFetchVideos, useUpdateVideo } from "@/data/videos/video.hook";
 
-const Videos = () => {
+interface AlertState {
+  show: boolean;
+  message: string;
+  type: string;
+}
+
+interface AddOrUpdateMode {
+  mode: "add" | "update" | "";
+  state: boolean;
+}
+
+interface Category {
+  id: number;
+  category: string;
+  description: string;
+}
+
+const Videos: React.FC = () => {
   const { openModal } = useAdminContext();
   const [video, setVideo] = useState(VideoDefault);
-  const [showModal, setShowModal] = useState(false);
-  const [showModal2, setShowModal2] = useState(false);
-  const [alert, setAlert] = useState({ show: false, message: "", type: "" });
-  const [addorupdate, setAddorupdate] = useState({ mode: "add", state: false });
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [showModal2, setShowModal2] = useState<boolean>(false);
+  const [alert, setAlert] = useState<AlertState>({ show: false, message: "", type: "" });
+  const [addorupdate, setAddorupdate] = useState<AddOrUpdateMode>({ mode: "add", state: false });
 
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentCategory = searchParams.get("category") || "All";
   const page = searchParams.get("page") || "1";
   const pageSize = "10";
-  const [allCategories, setAllCategories] = useState([]);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
   const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
-  const [searchQuery, setSearchQuery] = useState(""); // State for search input
+  const [searchQuery, setSearchQuery] = useState<string>(""); // State for search input
   const [isPending, startTransition] = useTransition();
   const [isdeleting, startDeletion] = useTransition();
 
@@ -55,13 +72,11 @@ const Videos = () => {
     if (categories.length > 0)
       setAllCategories([
         { id: 0, category: "All", description: "All Categories" },
-        ...categories,
+        ...(categories as Category[]),
       ]);
   }, [categories]);
 
-  // ----------------------------------------
   // Fetch Videos based on category
-  // ----------------------------------------
   const {
     data: videos,
     isLoading: loadingVideos,
@@ -70,11 +85,8 @@ const Videos = () => {
     `${vidoesapiAPIendpoint}/videos/${Organizationid}/?category=${currentCategory}&page=${page}&page_size=${pageSize}`
   );
 
-  // -----------------------------------------
   // Handle page change
-  // -----------------------------------------
-  /**  @param {string} newPage */
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: string) => {
     router.push(
       `?category=${currentCategory}&page=${newPage}&page_size=${pageSize}`,
       {
@@ -83,9 +95,7 @@ const Videos = () => {
     );
   };
 
-  // ---------------------------------------
   // Filter videos based on search input
-  // ---------------------------------------
   let filteredVideos = videos?.results || [];
   if (searchQuery) {
     filteredVideos = filteredVideos.filter((video) =>
@@ -93,19 +103,14 @@ const Videos = () => {
     );
   }
 
-  // -------------------------------
   // Handle category change
-  // -------------------------------
-  /**  @param {string} category */
-  const handleCategoryChange = (category) => {
+  const handleCategoryChange = (category: string) => {
     router.push(`?category=${category}&page=${page}&page_size=${pageSize}`, {
       scroll: false,
     });
   };
 
-  // ------------------------------------------------------
   // Fetch all videos and paginate them
-  // ------------------------------------------------------
   const closeModal = () => {
     setShowModal(false);
     setShowModal2(false);
@@ -113,18 +118,16 @@ const Videos = () => {
     setAddorupdate({ mode: "", state: false });
   };
 
-  const handleAlert = (message, type) => {
+  const handleAlert = (message: string, type: string) => {
     setAlert({ show: true, message, type });
     setTimeout(() => setAlert({ show: false, message: "", type: "" }), 3000);
   };
 
-  //----------------------------------------------------
   // Create a new video or update an existing video
-  //----------------------------------------------------
   const {mutateAsync: createVideo} = useCreateVideo();
   const {mutateAsync: updateVideo} = useUpdateVideo();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     startTransition(async () => {
       const { organization, category, subcategory, ...restData } = video;
@@ -141,9 +144,9 @@ const Videos = () => {
       };
       try {
         if (addorupdate.mode === "add") {
-          await createVideo(videostosubmit);
+          await createVideo(videostosubmit as any);
         } else {
-          await updateVideo(videostosubmit);
+          await updateVideo(videostosubmit as any);
         }
         handleAlert(
           `your Video have been ${
@@ -151,7 +154,7 @@ const Videos = () => {
           } successfully `,
           "success"
         );
-      } catch (error) {
+      } catch (error: unknown) {
         handleAlert("An error have occurred, please try again", "danger");
       } finally {
         closeModal();
@@ -159,21 +162,15 @@ const Videos = () => {
     });
   };
 
-  //----------------------------------------------------
   // Delete a Video
-  //----------------------------------------------------
   const {mutateAsync: deleteVideo} = useDeleteVideo();
-  /**
-   * @async
-   * @param {number} id
-   */
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: number) => {
     startDeletion(async () => {
       try {
         await deleteVideo(id);
         handleAlert("Service deleted Successfully", "success");
-      } catch (error) {
-        console.log(error.message);
+      } catch (error: unknown) {
+        console.log(error instanceof Error ? error.message : "Unknown error");
         handleAlert("Error deleting Service", "danger");
       } finally {
         closeModal();
@@ -181,19 +178,15 @@ const Videos = () => {
     });
   };
 
-  //   ------------------------------------------------------
-  //   // Create a new service
-  //   // ------------------------------------------------------
-  const handleEdit = (video) => {
+  // Create a new service
+  const handleEdit = (video: any) => {
     setVideo(video);
     setAddorupdate({ mode: "update", state: true });
     setShowModal(true);
   };
 
-  //   ------------------------------------------------------
-  //   // Delete a service
-  //   // ------------------------------------------------------
-  const handleDeleteConfirm = (video) => {
+  // Delete a service
+  const handleDeleteConfirm = (video: any) => {
     setVideo(video);
     setShowModal2(true);
   };
@@ -259,7 +252,7 @@ const Videos = () => {
         <div>
           <h5 className="mb-1">{currentCategory} Videos</h5>
           <p className="mb-0 text-primary">
-            {videos?.count} Video{videos?.count > 1 ? "s" : ""} in Total
+            {videos?.count ?? 0} Video{(videos?.count ?? 0) > 1 ? "s" : ""} in Total
           </p>
         </div>
         <div className="ms-0 ms-md-auto mb-4 mb-md-0">
@@ -271,7 +264,7 @@ const Videos = () => {
         </div>
       </div>
 
-      {alert.show && <Alert type={alert.type}>{alert.message}</Alert>}
+      {alert.show && <Alert type={alert.type as any}>{alert.message}</Alert>}
       {searchQuery && <h5>Search Results</h5>}
       <div className="row">
         {
@@ -288,10 +281,10 @@ const Videos = () => {
         {!loadingVideos && filteredVideos?.length > 0 ? (
           filteredVideos?.map((video) => (
             <VideoCard
-              openModal={openModal}
+              openModal={openModal as any}
               key={video.id}
               tab={currentCategory}
-              item={video}
+              item={video as any}
               onEdit={handleEdit}
               onDelete={handleDeleteConfirm}
             />
@@ -314,7 +307,7 @@ const Videos = () => {
             <Pagination
               currentPage={page}
               totalPages={Math.ceil(videos.count / parseInt(pageSize))}
-              handlePageChange={handlePageChange}
+              handlePageChange={handlePageChange as any}
             />
           )}
       </div>
@@ -329,7 +322,7 @@ const Videos = () => {
           setVideo={setVideo}
           handleSubmit={handleSubmit}
           addorupdate={addorupdate}
-          categories={categories}
+          categories={categories || []}
           isSubmitting={isPending}
         />
       </Modal>
@@ -342,7 +335,7 @@ const Videos = () => {
           <div className="d-flex justify-content-center">
             <button
               className="btn btn-danger border-0 rounded me-2"
-              onClick={() => handleDelete(video.id)}
+              onClick={() => video.id && handleDelete(video.id)}
               disabled={isdeleting}
             >
               {isdeleting ? (

@@ -1,11 +1,16 @@
 import React, { useEffect, useState } from 'react'
 
-const CbtTimer = ({time,handleSubmit}) => {
-  const [minutes, setMinutes] = useState(time);
-  const [seconds, setSeconds] = useState(0);
+interface CbtTimerProps {
+  time: number;
+  handleSubmit: () => void;
+}
+
+const CbtTimer: React.FC<CbtTimerProps> = ({ time, handleSubmit }) => {
+  const [minutes, setMinutes] = useState<number>(time);
+  const [seconds, setSeconds] = useState<number>(0);
 
   // reduce the time by 1 second
-  const tick = () => {
+  const tick = (): void => {
     if (minutes === 0 && seconds === 0) {
       handleSubmit()
     } else if (seconds === 0) {

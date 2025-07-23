@@ -7,7 +7,16 @@ import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa6";
 import { useSearchParams } from "next/navigation";
 
-const FormWrapper = ({
+interface FormWrapperProps {
+  children: React.ReactNode;
+  headerLabel: string;
+  backButtonlabel: string;
+  backButtonHref: string;
+  backButtonHrefText: string;
+  showSocial?: boolean;
+}
+
+const FormWrapper: React.FC<FormWrapperProps> = ({
   children,
   headerLabel,
   backButtonlabel,

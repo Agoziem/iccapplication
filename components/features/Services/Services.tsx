@@ -16,7 +16,13 @@ import {
 } from "@/data/services/service.hook";
 import AnimationContainer from "@/components/animation/animation-container";
 
-const Services = () => {
+interface Category {
+  id: number;
+  category: string;
+  description: string;
+}
+
+const Services: React.FC = () => {
   const { openModal } = useAdminContext();
   const { cart, addToCart, removeFromCart } = useCart();
   const router = useRouter();
@@ -24,8 +30,8 @@ const Services = () => {
   const currentCategory = searchParams.get("category") || "All";
   const page = searchParams.get("page") || "1";
   const pageSize = "10";
-  const [allCategories, setAllCategories] = useState([]);
-  const [searchQuery, setSearchQuery] = useState(""); // State for search input
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>(""); // State for search input
   const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
 
   const {
@@ -38,7 +44,7 @@ const Services = () => {
     if (categories && categories.length > 0) {
       setAllCategories([
         { id: 0, category: "All", description: "All Categories" },
-        ...categories,
+        ...(categories as Category[]),
       ]);
     }
   }, [categories]);
@@ -62,14 +68,14 @@ const Services = () => {
   );
 
   // Handle category change
-  const handleCategoryChange = (category) => {
+  const handleCategoryChange = (category: string) => {
     router.push(`?category=${category}&page=1&page_size=${pageSize}`, {
       scroll: false,
     });
   };
 
   // Handle page change
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     router.push(
       `?category=${currentCategory}&page=${newPage}&page_size=${pageSize}`
     );
@@ -81,7 +87,7 @@ const Services = () => {
     if (!searchQuery) return services.results;
 
     return services.results.filter((service) =>
-      service.name.toLowerCase().includes(searchQuery.toLowerCase())
+      service.name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [services, searchQuery]);
 
@@ -91,7 +97,7 @@ const Services = () => {
         <div>
           <h3 className="me-2">{currentCategory} Services</h3>
           <p className="mb-0 text-primary">
-            {services?.count} Service{services?.count > 1 ? "s" : ""} in Total
+            {services?.count || 0} Service{(services?.count || 0) > 1 ? "s" : ""} in Total
           </p>
         </div>
         <CartButton />
@@ -143,10 +149,10 @@ const Services = () => {
           filteredServices?.map((service,index) => (
             <AnimationContainer delay={index * 0.1} key={service.id} className="col-12 col-md-4">
               <ServiceCard
-                service={service}
-                addToCart={addToCart}
-                removeFromCart={removeFromCart}
-                cart={cart}
+                service={service as any}
+                addToCart={addToCart as any}
+                removeFromCart={removeFromCart as any}
+                cart={cart as any}
                 openModal={openModal}
               />
             </AnimationContainer>
@@ -173,20 +179,20 @@ const Services = () => {
       </div>
 
       {/* Trending Services */}
-      {!loadingTrendingServices && trendingservices?.results.length > 0 && (
+      {!loadingTrendingServices && (trendingservices?.results?.length || 0) > 0 && (
         <>
           <hr />
           <div className="mb-3">
             <h5>Top Trending Services</h5>
           </div>
           <div className="row">
-            {trendingservices.results.map((service) => (
+            {trendingservices?.results.map((service) => (
               <div key={service.id} className="col-12 col-md-4">
                 <ServiceCard
-                  service={service}
-                  addToCart={addToCart}
-                  removeFromCart={removeFromCart}
-                  cart={cart}
+                  service={service as any}
+                  addToCart={addToCart as any}
+                  removeFromCart={removeFromCart as any}
+                  cart={cart as any}
                   openModal={openModal}
                 />
               </div>

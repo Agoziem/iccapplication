@@ -3,24 +3,34 @@ import ProfileimagePlaceholders from "../../custom/ImagePlaceholders/Profileimag
 import "./whatsapp.css";
 import { useWhatsappAPIContext } from "@/data/whatsappAPI/WhatsappContext";
 
-/**
- * @param {{ contact: WAContact,
- * updateContactfn:(contact:WAContact) => Promise<void>,
-* setShowlist:(value:boolean)=> void,
- * }} props
- * @returns {JSX.Element}
- */
+interface Contact {
+  id: number;
+  name: string;
+  phone: string;
+  new_messages_count?: number;
+  [key: string]: any;
+}
 
-const ContactCard = ({ contact, updateContactfn, setShowlist }) => {
+interface ContactCardProps {
+  contact: Contact;
+  updateContactfn: (contact: Contact) => Promise<void>;
+  setShowlist: (value: boolean) => void;
+}
+
+const ContactCard: React.FC<ContactCardProps> = ({ 
+  contact, 
+  updateContactfn, 
+  setShowlist 
+}) => {
   const { setSelectedContact } = useWhatsappAPIContext();
 
   // ------------------------------------------------------
   // handle contact click
   // ------------------------------------------------------
-  const handleContactClick = async () => {
+  const handleContactClick = async (): Promise<void> => {
     try {
-      await updateContactfn(contact);
-      setSelectedContact(contact);
+      await updateContactfn(contact as any);
+      setSelectedContact(contact as any);
       setShowlist(false)
     } catch (error) {
       console.error("Error handling contact click:", error);
@@ -30,7 +40,7 @@ const ContactCard = ({ contact, updateContactfn, setShowlist }) => {
   // ------------------------------------------------------
   // Function to shorten the message body
   // ------------------------------------------------------
-  const shortenBody = (body, length = 18) => {
+  const shortenBody = (body: string, length: number = 18): string => {
     if (!body) return "";
     return body.length > length ? `${body.slice(0, length)}...` : body;
   };

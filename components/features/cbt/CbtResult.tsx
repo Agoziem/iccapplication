@@ -1,7 +1,24 @@
 import React from "react";
 import { FaCheckCircle } from "react-icons/fa";
 
-const CbtResult = ({ Score , retaketest,ReviewAnswers,takeanothertest }) => {
+interface SubjectScore {
+  subjectname: string;
+  score: number;
+}
+
+interface Score {
+  totalscore: number;
+  subjectscores: SubjectScore[];
+}
+
+interface CbtResultProps {
+  Score: Score;
+  retaketest: () => void;
+  ReviewAnswers: () => void;
+  takeanothertest: () => void;
+}
+
+const CbtResult: React.FC<CbtResultProps> = ({ Score, retaketest, ReviewAnswers, takeanothertest }) => {
   return (
     <div>
       <h6 className="text-center">

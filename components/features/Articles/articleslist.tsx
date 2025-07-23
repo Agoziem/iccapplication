@@ -15,14 +15,15 @@ import {
 } from "@/data/articles/fetcher";
 import { useRouter } from "next/navigation";
 import { useFetchArticleCategories, useFetchArticles } from "@/data/articles/articles.hook";
+import { ArticleCategory } from "@/types/articles";
 
-const ArticlesList = () => {
+const ArticlesList: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentCategory = searchParams.get("category") || "All";
   const page = searchParams.get("page") || "1";
   const pageSize = "10";
-  const [allCategories, setAllCategories] = useState([]);
+  const [allCategories, setAllCategories] = useState<ArticleCategory[]>([]);
 
   const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
   // Fetch categories
@@ -36,7 +37,7 @@ const ArticlesList = () => {
   // Add All categories once fetched
   // -----------------------------------------
   useEffect(() => {
-    if (categories?.length > 0) {
+    if (categories && categories.length > 0) {
       setAllCategories([{ id: 0, category: "All" }, ...categories]);
     }
   }, [categories]);
@@ -55,8 +56,7 @@ const ArticlesList = () => {
   // -----------------------------------------
   // Handle page change
   // -----------------------------------------
-  /**  @param {string} newPage */
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     router.push(
       `?category=${currentCategory}&page=${newPage}&page_size=${pageSize}`,
       {
@@ -68,8 +68,9 @@ const ArticlesList = () => {
   // -------------------------------
   // Handle category change
   // -------------------------------
-  /**  @param {string} category */
-  const handleCategoryChange = (category) => {
+  // Handle category change
+  // -------------------------------
+  const handleCategoryChange = (category: string) => {
     router.push(`?category=${category}&page=${page}&page_size=${pageSize}`, {
       scroll: false,
     });

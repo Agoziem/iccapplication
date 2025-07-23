@@ -1,20 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, FormEvent } from "react";
 import { useSession } from "next-auth/react";
 import Modal from "../../custom/Modal/modal";
 import { ArticleCommentDefault } from "@/constants";
 import { useDeleteComment, useUpdateComment } from "@/data/articles/articles.hook";
+import { ArticleComment, type ArticleComments } from "@/types/articles";
 
-/**
- * Article Comments
- * @param {{ comments: ArticleComments; }} param0
- */
-const ArticleComments = ({
+interface ArticleCommentsProps {
+  comments: ArticleComments;
+}
+
+const ArticleComments: React.FC<ArticleCommentsProps> = ({
   comments,
 }) => {
-  const [showModal, setShowModal] = useState(false);
-  const [deletemode, setDeleteMode] = useState(false);
-  /**  @type {[ArticleComment,(value: ArticleComment) => void]} */
-  const [commenttoedit, setCommenttoEdit] = useState(ArticleCommentDefault);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [deletemode, setDeleteMode] = useState<boolean>(false);
+  const [commenttoedit, setCommenttoEdit] = useState<ArticleComment>(ArticleCommentDefault);
   const { data: session } = useSession();
 
 
@@ -24,14 +24,12 @@ const ArticleComments = ({
     setCommenttoEdit(ArticleCommentDefault);
   };
 
-  /**  @param {ArticleComment} comment */
-  const editComment = (comment) => {
+  const editComment = (comment: ArticleComment) => {
     setCommenttoEdit(comment);
     setShowModal(true);
   };
 
-  /**  @param {ArticleComment} comment */
-  const deletecomment = (comment) => {
+  const deletecomment = (comment: ArticleComment) => {
     setCommenttoEdit(comment);
     setDeleteMode(true);
     setShowModal(true);
@@ -43,9 +41,11 @@ const ArticleComments = ({
   const { mutate:deleteComment } = useDeleteComment();
   const handledelete = async () => {
     try {
-      deleteComment(commenttoedit.id);
+      if (commenttoedit.id) {
+        deleteComment(commenttoedit.id);
+      }
     } catch (error) {
-      console.log(error.message);
+      console.log((error as Error).message);
     } finally {
       closeModal();
     }
@@ -56,12 +56,12 @@ const ArticleComments = ({
   // Update Comment
   // -----------------------------------------------
   const {mutate: updateComment} = useUpdateComment();
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     try {
       updateComment(commenttoedit);
     } catch (error) {
-      console.log(error.message);
+      console.log((error as Error).message);
     } finally {
       closeModal();
     }
@@ -109,7 +109,7 @@ const ArticleComments = ({
                   <span>
                     <small>{new Date(comment.date).toDateString()}</small>
                   </span>
-                  {parseInt(session?.user?.id) === comment.user.id && (
+                  {parseInt(session?.user?.id || "0") === comment.user.id && (
                     <span
                       className="fw-bold text-secondary mx-3"
                       style={{ cursor: "pointer" }}
@@ -118,7 +118,7 @@ const ArticleComments = ({
                       <small>edit</small>
                     </span>
                   )}
-                  {parseInt(session?.user?.id) === comment.user.id && (
+                  {parseInt(session?.user?.id || "0") === comment.user.id && (
                     <span
                       className="fw-bold text-danger"
                       style={{ cursor: "pointer" }}

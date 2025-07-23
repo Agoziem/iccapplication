@@ -1,10 +1,24 @@
+import React from "react";
 import ProductPlaceholder from "@/components/custom/ImagePlaceholders/Productplaceholder";
 
+interface Product {
+  id: string;
+  name: string;
+  img_url?: string;
+  price: number;
+  description?: string;
+  [key: string]: any;
+}
 
-/**
- * @param {{ openModal: any; item: Product; onDelete: any; onEdit: any; tab: any; }} param0
- */
-const ProductCard = ({ openModal, item, onDelete, onEdit, tab }) => {
+interface ProductCardProps {
+  openModal: (item: Product) => void;
+  item: Product;
+  onDelete: (item: Product) => void;
+  onEdit: (item: Product) => void;
+  tab: string;
+}
+
+const ProductCard: React.FC<ProductCardProps> = ({ openModal, item, onDelete, onEdit, tab }) => {
   return (
     <div className="col-12 col-md-4">
       <div className="card p-3 py-4">
@@ -31,7 +45,7 @@ const ProductCard = ({ openModal, item, onDelete, onEdit, tab }) => {
           <div className="flex-fill py-2">
             <h6>{item.name}</h6>
             <p className="text-primary mb-1">
-              {item.description.length > 80 ? (
+              {item.description && item.description.length > 80 ? (
                 <span className="text-primary">
                   {item.description.substring(0, 80)}...{" "}
                   <span
@@ -49,7 +63,7 @@ const ProductCard = ({ openModal, item, onDelete, onEdit, tab }) => {
 
             <div className="d-flex align-items-center justify-content-between mt-3">
               <span className="fw-bold text-primary">
-                &#8358;{parseFloat(item.price)}
+                &#8358;{item.price.toFixed(2)}
               </span>
               <div>
                 <button

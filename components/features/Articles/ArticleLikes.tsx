@@ -3,13 +3,15 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useAddLike, useDeleteLike } from "@/data/articles/articles.hook";
 import toast from "react-hot-toast";
+import { Article } from "@/types/articles";
 
-/**
- * @param {{ article: Article;}} param0
- */
-const ArticleLikes = ({ article }) => {
+interface ArticleLikesProps {
+  article: Article;
+}
+
+const ArticleLikes: React.FC<ArticleLikesProps> = ({ article }) => {
   const { data: session } = useSession();
-  const [likes, setLikes] = useState([]);
+  const [likes, setLikes] = useState<number[]>([]);
   const { mutateAsync: addLike } = useAddLike();
   const { mutateAsync: removeLike } = useDeleteLike();
 
@@ -20,7 +22,7 @@ const ArticleLikes = ({ article }) => {
   }, [article]);
 
   const handleLikeToggle = async () => {
-    const userId = parseInt(session?.user?.id);
+    const userId = parseInt(session?.user?.id || "0");
     const isLiked = likes.includes(userId);
     try {
       isLiked
@@ -29,7 +31,7 @@ const ArticleLikes = ({ article }) => {
       toast.success(isLiked ? "You unliked the post" : "You liked the post");
     } catch (error) {
       console.error(error);
-      toast.error(error.message);
+      toast.error((error as Error).message);
     }
   };
 

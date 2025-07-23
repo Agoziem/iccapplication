@@ -4,13 +4,24 @@ import { MdRefresh } from "react-icons/md";
 import { v4 as uuidv4 } from "uuid";
 import AggregatorInst from "./AggregatorInst";
 
-const Aggregator = () => {
-  const [scores, setScores] = useState({
+interface ScoresState {
+  jamb: string;
+  postUTME: string;
+}
+
+interface OlevelItem {
+  id: string;
+  subject: string;
+  grade: string;
+}
+
+const Aggregator: React.FC = () => {
+  const [scores, setScores] = useState<ScoresState>({
     jamb: "",
     postUTME: "",
   });
-  const [aggregate, setAggregate] = useState(0);
-  const [olevel, setOlevel] = useState([
+  const [aggregate, setAggregate] = useState<string>("0");
+  const [olevel, setOlevel] = useState<OlevelItem[]>([
     {
       id: uuidv4(),
       subject: "",
@@ -38,14 +49,14 @@ const Aggregator = () => {
     },
   ]);
 
-  const [showOlevelForm, setShowOlevelForm] = useState(false);
-  const [showPostUTMEForm, setShowPostUTMEForm] = useState(false);
-  const [isPostUTMEOver100, setIsPostUTMEOver100] = useState(true);
+  const [showOlevelForm, setShowOlevelForm] = useState<boolean>(false);
+  const [showPostUTMEForm, setShowPostUTMEForm] = useState<boolean>(false);
+  const [isPostUTMEOver100, setIsPostUTMEOver100] = useState<boolean>(true);
 
   //   ----------------------------------
   //   set scores
   //  ----------------------------------
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target;
     setScores((prev) => {
       return { ...prev, [name]: value };
@@ -79,12 +90,12 @@ const Aggregator = () => {
   //   ----------------------------------
   //   reset form
   //  ----------------------------------
-  const reset = () => {
+  const reset = (): void => {
     setScores({
       jamb: "",
       postUTME: "",
     });
-    setAggregate(0);
+    setAggregate("0");
     setOlevel([
       {
         id: uuidv4(),
@@ -115,7 +126,7 @@ const Aggregator = () => {
   };
 
   // get the equivalent grade point for each subject, based on if the post-utme is included or not
-  const getGradePoint = (grade) => {
+  const getGradePoint = (grade: string): number => {
     if (grade === "A1") {
       return showPostUTMEForm ? 4.0 : 10;
     } else if (grade === "B2") {
@@ -129,10 +140,11 @@ const Aggregator = () => {
     } else if (grade === "C6") {
       return showPostUTMEForm ? 2.0 : 5;
     }
+    return 0; // Default return value
   };
 
   // handle toggling of PostUTME form
-  const handlePostUTMEToggle = () => {
+  const handlePostUTMEToggle = (): void => {
     setShowPostUTMEForm(!showPostUTMEForm);
     if (!showPostUTMEForm) {
       setShowOlevelForm(false);
@@ -144,7 +156,7 @@ const Aggregator = () => {
   };
 
   // handle toggling of Olevel form
-  const handleOlevelToggle = () => {
+  const handleOlevelToggle = (): void => {
     setShowOlevelForm(!showOlevelForm);
     if (!showOlevelForm) {
       setShowPostUTMEForm(false);

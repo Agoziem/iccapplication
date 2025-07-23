@@ -1,16 +1,28 @@
 import { FaCircle } from "react-icons/fa";
 import "./Email.css";
+import React from "react";
 
-/**
- * @param {{ message: Email,
- * selectMessage:(value:Email)=> void,
- * updateMessagefn:(message:Email) => Promise<void>
- * setShowlist:(value:boolean)=> void,
- * }} props
- * @returns {JSX.Element}
- */
+interface EmailMessage {
+  id?: number;
+  subject?: string;
+  sender?: string;
+  content?: string;
+  timestamp?: string;
+  name?: string;
+  email?: string;
+  message?: string;
+  read?: boolean;
+  [key: string]: any;
+}
 
-const MessageCard = ({ message, selectMessage, updateMessagefn ,setShowlist}) => {
+interface MessageCardProps {
+  message: EmailMessage;
+  selectMessage: (value: EmailMessage) => void;
+  updateMessagefn: (message: EmailMessage) => Promise<void>;
+  setShowlist: (value: boolean) => void;
+}
+
+const MessageCard: React.FC<MessageCardProps> = ({ message, selectMessage, updateMessagefn, setShowlist }) => {
   const handleClick = async () => {
     await updateMessagefn(message);
     selectMessage(message);
@@ -42,9 +54,9 @@ const MessageCard = ({ message, selectMessage, updateMessagefn ,setShowlist}) =>
       {/* shortened message */}
       <div>
         <p className="text-muted mt-1">
-          {message.message.length > 100
-            ? `${message.message.slice(0, 100)}...`
-            : message.message}
+          {(message.message?.length ?? 0) > 100
+            ? `${message.message?.slice(0, 100)}...`
+            : message.message || ""}
         </p>
       </div>
     </div>

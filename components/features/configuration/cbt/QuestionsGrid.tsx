@@ -1,7 +1,58 @@
 import React, { useState } from "react";
 import Modal from "@/components/custom/Modal/modal";
 import Alert from "@/components/custom/Alert/Alert";
-const QuestionsGrid = ({
+
+type AlertType = "success" | "danger" | "warning" | "info";
+
+interface AlertState {
+  show: boolean;
+  message: string;
+  type: AlertType;
+}
+
+interface Answer {
+  answertext: string;
+  isCorrect: boolean;
+}
+
+interface Question {
+  id: string;
+  questiontext: string;
+  questionMark: string;
+  answers: Answer[];
+  correctAnswerdescription: string;
+}
+
+interface Subject {
+  id: string;
+  name: string;
+  questions?: Question[];
+  [key: string]: any;
+}
+
+interface Test {
+  id: string;
+  testSubject: Subject[];
+  [key: string]: any;
+}
+
+interface QuestionToDelete {
+  id: string;
+  questionnumber: string;
+}
+
+interface QuestionsGridProps {
+  currentSubject: Subject;
+  setQuestion: (value: Question) => void;
+  setEditMode: (value: boolean) => void;
+  setShowModal: (value: boolean) => void;
+  setCorrectAnswer: (value: string) => void;
+  test: Test;
+  setTest: (value: Test) => void;
+  setCurrentSubject: (value: Subject) => void;
+}
+
+const QuestionsGrid: React.FC<QuestionsGridProps> = ({
   currentSubject,
   setQuestion,
   setEditMode,
@@ -11,20 +62,22 @@ const QuestionsGrid = ({
   setTest,
   setCurrentSubject,
 }) => {
-  const [questiontodelete, setQuestionToDelete] = useState({
+  const [questiontodelete, setQuestionToDelete] = useState<QuestionToDelete>({
     id: "",
     questionnumber: "",
   });
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [alert, setAlert] = useState({ show: true, message: "", type: "" });
-  const closeModal = () => {
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [alert, setAlert] = useState<AlertState>({ show: true, message: "", type: "info" });
+  
+  const closeModal = (): void => {
     setShowDeleteModal(false);
     setQuestionToDelete({
       id: "",
       questionnumber: "",
     });
   };
-  const deleteQuestion = async (questionID) => {
+  
+  const deleteQuestion = async (questionID: string): Promise<void> => {
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/CBTapi/deleteQuestion/${questionID}`,
@@ -45,15 +98,15 @@ const QuestionsGrid = ({
       });
       setCurrentSubject({
         ...currentSubject,
-        questions: currentSubject.questions.filter(
+        questions: currentSubject.questions?.filter(
           (question) => question.id !== questionID
-        ),
+        ) || [],
       });
       setTest({
         ...test,
         testSubject: test.testSubject.map((subject) =>
           subject.id === currentSubject.id
-            ? { ...subject, questions: subject.questions.filter((q) => q.id !== questionID) }
+            ? { ...subject, questions: subject.questions?.filter((q) => q.id !== questionID) || [] }
             : subject
         ),
       });
@@ -67,7 +120,7 @@ const QuestionsGrid = ({
     } finally {
       closeModal();
       setTimeout(() => {
-        setAlert({ show: false, message: "", type: "" });
+        setAlert({ show: false, message: "", type: "info" });
       }, 3000);
     }
   };
@@ -76,9 +129,9 @@ const QuestionsGrid = ({
     <>
       {alert.show && <Alert type={alert.type}>{alert.message}</Alert>}
       <div className="my-4">
-        {currentSubject?.questions?.length > 0 ? (
+        {(currentSubject?.questions?.length || 0) > 0 ? (
           <div className="">
-            {currentSubject.questions.map((question, index) => (
+            {currentSubject.questions?.map((question, index) => (
               <div
                 className="card p-4 px-md-5 mx-auto"
                 key={index}
@@ -99,10 +152,11 @@ const QuestionsGrid = ({
                           ...question,
                           answers: question.answers.map((a) => ({
                             ...a,
-                            isCorrect: a.id === question?.correctAnswer?.id,
+                            isCorrect: a.isCorrect,
                           })),
                         });
-                        setCorrectAnswer(question?.correctAnswer?.answertext);
+                        const correctAnswer = question.answers.find(a => a.isCorrect);
+                        setCorrectAnswer(correctAnswer?.answertext || "");
                         setEditMode(true);
                         setShowModal(true);
                       }}
@@ -114,7 +168,7 @@ const QuestionsGrid = ({
                       onClick={() => {
                         setQuestionToDelete({
                           id: question.id,
-                          questionnumber: index + 1,
+                          questionnumber: (index + 1).toString(),
                         });
                         setShowDeleteModal(true);
                       }}

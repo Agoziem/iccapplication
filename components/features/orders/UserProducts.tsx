@@ -10,7 +10,7 @@ import SearchInput from "@/components/custom/Inputs/SearchInput";
 import { useMemo, useState } from "react";
 import { useFetchProducts } from "@/data/product/product.hook";
 
-const UserProducts = () => {
+const UserProducts: React.FC = () => {
   const { data: session } = useSession();
   const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
   const router = useRouter();
@@ -27,14 +27,14 @@ const UserProducts = () => {
   } = useFetchProducts(
     session?.user.id
       ? `${productsAPIendpoint}/userboughtproducts/${Organizationid}/${session?.user.id}/?category=${currentCategory}&page=${page}&page_size=${pageSize}`
-      : null
+      : ""
   );
 
   // -----------------------------------------
   // Handle page change
   // -----------------------------------------
   /**  @param {string} newPage */
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     router.push(
       `?category=${currentCategory}&page=${newPage}&page_size=${pageSize}`,
       {
@@ -47,7 +47,7 @@ const UserProducts = () => {
   // Handle category change
   // -------------------------------
   /**  @param {string} category */
-  const handleCategoryChange = (category) => {
+  const handleCategoryChange = (category: string) => {
     router.push(`?category=${category}&page=${page}&page_size=${pageSize}`, {
       scroll: false,
     });
@@ -59,7 +59,7 @@ const UserProducts = () => {
     if (!searchQuery) return products.results;
 
     return products.results.filter((product) =>
-      product.name.toLowerCase().includes(searchQuery.toLowerCase())
+      product.name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [products, searchQuery]);
 
@@ -69,7 +69,7 @@ const UserProducts = () => {
         <div>
           <h4 className="mt-3">Products Purchased</h4>
           <p>
-            {products?.count} Product{products?.count > 1 ? "s" : ""} purchased
+            {products?.count || 0} Product{(products?.count || 0) > 1 ? "s" : ""} purchased
           </p>
         </div>
         <div className="mb-4 mb-md-0">
@@ -91,7 +91,7 @@ const UserProducts = () => {
                   <div className="me-3">
                     {product.preview ? (
                       <img
-                        src={product.img_url}
+                        src={product.img_url || ""}
                         alt="products"
                         width={68}
                         height={68}
@@ -113,7 +113,7 @@ const UserProducts = () => {
                     </p>
                     <div className="d-flex justify-content-between align-items-center mt-3">
                       <p className="small mb-1">
-                        {product.category.category} Product
+                        {product.category?.category} Product
                       </p>
                       <div
                         className="badge bg-primary py-2 px-2"

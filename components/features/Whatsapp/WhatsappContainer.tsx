@@ -3,8 +3,8 @@ import Contacts from "./Contacts";
 import Chat from "./Chat";
 import { useState } from "react";
 
-const WhatsappContainer = () => {
-  const [showlist, setShowlist] = useState(true);
+const WhatsappContainer: React.FC = () => {
+  const [showlist, setShowlist] = useState<boolean>(true);
 
   return (
     <div className="row mt-1">

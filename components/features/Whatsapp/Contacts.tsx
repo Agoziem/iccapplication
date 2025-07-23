@@ -11,20 +11,27 @@ import { WAContactWebsocketSchema } from "@/schemas/whatsapp";
 import { useFetchWAContacts } from "@/data/whatsappAPI/whatsapp.hook";
 import { useQueryClient } from "react-query";
 
-/**
- * Holds all the
- * @param {{showlist:boolean,
- * setShowlist:(value:boolean)=> void,}} props
- * @returns {JSX.Element}
- */
+interface WAContact {
+  id: string | number;
+  profile_name: string;
+  unread_message_count: number;
+  last_message: {
+    timestamp: string;
+  };
+}
 
-const Contacts = ({ showlist, setShowlist }) => {
+interface ContactsProps {
+  showlist: boolean;
+  setShowlist: (value: boolean) => void;
+}
+
+const Contacts: React.FC<ContactsProps> = ({ showlist, setShowlist }) => {
   const { selectedContact, setSelectedContact } = useWhatsappAPIContext();
   const { isConnected, ws } = useWebSocket(
     `${process.env.NEXT_PUBLIC_DJANGO_WEBSOCKET_URL}/ws/whatsappapiSocket/contacts/`
   );
-  const [showUnread, setShowUnread] = useState(false); // State to filter unread messages
-  const [searchQuery, setSearchQuery] = useState(""); // State for search input
+  const [showUnread, setShowUnread] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   // fetch all the contacts
   const {
@@ -56,7 +63,7 @@ const Contacts = ({ showlist, setShowlist }) => {
         const cacheKey = ["waContacts"];
   
         // Function to sort contacts by `last_message.timestamp`
-        const sortContacts = (contacts) =>
+        const sortContacts = (contacts: WAContact[]): WAContact[] =>
           contacts.sort(
             (a, b) =>
               new Date(b.last_message.timestamp).getTime() -
@@ -65,30 +72,30 @@ const Contacts = ({ showlist, setShowlist }) => {
   
         // Handle different operations
         if (newContact.operation === "create") {
-          queryClient.setQueryData(cacheKey, (existingContacts = []) => {
+          queryClient.setQueryData(cacheKey, (existingContacts: WAContact[] = []) => {
             const contactExists = existingContacts.some(
-              (contact) => contact.id === newContact.contact.id
+              (contact: WAContact) => contact.id === newContact.contact.id
             );
   
             if (contactExists) {
               return sortContacts([
-                newContact.contact,
+                newContact.contact as any,
                 ...existingContacts.filter(
-                  (contact) => contact.id !== newContact.contact.id
+                  (contact: WAContact) => contact.id !== newContact.contact.id
                 ),
               ]);
             } else {
               // If the contact doesn't exist, just add it to the top
-              return sortContacts([newContact.contact, ...existingContacts]);
+              return sortContacts([newContact.contact as any, ...existingContacts]);
             }
           });
         }
   
         if (newContact.operation === "update_seen_status") {
-          queryClient.setQueryData(cacheKey, (existingContacts = []) =>
-            existingContacts.map((contact) =>
+          queryClient.setQueryData(cacheKey, (existingContacts: WAContact[] = []) =>
+            existingContacts.map((contact: WAContact) =>
               contact.id === newContact.contact.id
-                ? newContact.contact
+                ? (newContact.contact as any)
                 : contact
             )
           );
@@ -107,7 +114,7 @@ const Contacts = ({ showlist, setShowlist }) => {
   // Filter messages further based on search input
   if (searchQuery) {
     filteredContacts = filteredContacts?.filter((contact) =>
-      contact.profile_name.toLowerCase().includes(searchQuery.toLowerCase())
+      contact.profile_name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }
 
@@ -122,11 +129,9 @@ const Contacts = ({ showlist, setShowlist }) => {
   // ----------------------------------------------------------
   // update a Message and populate/update Cache from Websocket
   // -----------------------------------------------------------
-  /** @param {WAContact} updatedContact */
-  const updateContact = async (updatedContact) => {
+  const updateContact = async (updatedContact: WAContact): Promise<void> => {
     if (updatedContact.unread_message_count !== 0) {
       if (ws && ws.readyState === WebSocket.OPEN) {
-        /**@type {WAContactSocket} */
         const payload = {
           operation: "update_seen_status",
           contact: updatedContact,
@@ -187,12 +192,12 @@ const Contacts = ({ showlist, setShowlist }) => {
           />
         </div>
         <div className={`d-flex flex-column Contacts g-1 pe-2 `}>
-          {filteredContacts.length > 0 ? (
-            filteredContacts.map((contact) => (
+          {(filteredContacts?.length || 0) > 0 ? (
+            filteredContacts?.map((contact) => (
               <ContactCard
                 key={contact.id}
-                contact={contact}
-                updateContactfn={updateContact}
+                contact={contact as any}
+                updateContactfn={updateContact as any}
                 setShowlist={setShowlist}
               />
             ))

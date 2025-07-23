@@ -4,27 +4,28 @@ import { updateOrganization } from "@/data/organization/fetcher";
 import { useUpdateOrganization } from "@/data/organization/organization.hook";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { Organization } from "@/types/organizations";
 
-/**
- * @param {{ OrganizationData: Organization }} param0
- */
-const PrivacyPolicy = ({ OrganizationData }) => {
-  const [organizationdata, setOrganizationData] = useState(OrganizationDefault);
+interface PrivacyPolicyProps {
+  OrganizationData: Organization;
+}
 
+const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ OrganizationData }) => {
+  const [organizationdata, setOrganizationData] = useState<Organization>(OrganizationDefault);
 
   useEffect(() => {
     if (OrganizationData?.id) {
-      setOrganizationData(OrganizationData);
+      setOrganizationData(OrganizationData as any);
     }
   }, [OrganizationData]);
 
   const { mutateAsync } = useUpdateOrganization();
-  const editPrivacyPolicy = async (e) => {
+  const editPrivacyPolicy = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await mutateAsync(organizationdata);
       toast.success("Privacy Policy Updated Successfully");
-    } catch (error) {
+    } catch (error: any) {
       console.log(error.message);
       toast.error("Error Updating Privacy Policy");
     }

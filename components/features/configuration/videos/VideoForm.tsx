@@ -4,11 +4,43 @@ import { useFetchSubCategories } from "@/data/categories/categories.hook";
 import { fetchSubCategories } from "@/data/categories/fetcher";
 import { vidoesapiAPIendpoint } from "@/data/videos/fetcher";
 import { PulseLoader } from "react-spinners";
+import React from "react";
 
-/**
- * @param {{ video: Video; setVideo: (value:Video) => void; handleSubmit: any; addorupdate: any; categories: Categories;isSubmitting:boolean }} param0
- */
-const VideoForm = ({
+interface Video {
+  id?: number;
+  title: string;
+  description: string;
+  price: string;
+  category: {
+    id?: number | null;
+    category: string;
+    description?: string | null;
+  };
+  subcategory: any;
+  free?: boolean;
+}
+
+interface AddOrUpdateMode {
+  mode: "add" | "update" | "";
+  state: boolean;
+}
+
+interface Category {
+  id?: number | null;
+  category: string;
+  description?: string | null;
+}
+
+interface VideoFormProps {
+  video: Video;
+  setVideo: (value: Video) => void;
+  handleSubmit: (e: React.FormEvent) => void;
+  addorupdate: AddOrUpdateMode;
+  categories: Category[];
+  isSubmitting: boolean;
+}
+
+const VideoForm: React.FC<VideoFormProps> = ({
   video,
   setVideo,
   handleSubmit,
@@ -19,23 +51,19 @@ const VideoForm = ({
   const { data: subcategories, isLoading: loadingsubcategories } =
     useFetchSubCategories(
       `${vidoesapiAPIendpoint}/subcategories/${video.category.id}/`,
-      video.category?.id
+      video.category?.id || 0
     );
 
-  // ------------------------------
   // Handle category change
-  // -------------------------------
-  const handleCategoryChange = (e) => {
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedCategory = videoCategories?.find(
       (category) => category.category === e.target.value
     );
-    setVideo({ ...video, category: selectedCategory, subcategory: null });
+    setVideo({ ...video, category: selectedCategory || { category: "", id: null }, subcategory: null });
   };
 
-  // - -------------------------------
   // Handle subcategory change
-  //  -------------------------------
-  const handleSubCategoryChange = (e) => {
+  const handleSubCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedSubCategory = subcategories?.find(
       (subcategory) => subcategory.subcategory === e.target.value
     );
@@ -58,8 +86,8 @@ const VideoForm = ({
             imagekey={"thumbnail"}
             imageurlkey={"img_url"}
             imagename={"img_name"}
-            formData={video}
-            setFormData={setVideo}
+            formData={video as any}
+            setFormData={setVideo as any}
           />
         </div>
 
@@ -182,8 +210,8 @@ const VideoForm = ({
             videokey={"video"}
             videourlkey={"video_url"}
             videoname={"video_name"}
-            formData={video}
-            setFormData={setVideo}
+            formData={video as any}
+            setFormData={setVideo as any}
           />
         </div>
 

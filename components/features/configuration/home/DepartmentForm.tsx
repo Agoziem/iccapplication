@@ -2,10 +2,40 @@ import ImageUploader from "@/components/custom/Imageuploader/ImageUploader";
 import React, { useState } from "react";
 import { TiTimes } from "react-icons/ti";
 
-/**
- * @param {{ addorupdate: {type: string;state: boolean;}; department: Department; setDepartment: (value:Department) => void; handleSubmit: any; closeModal: any;staffs:Staffs;loading:boolean }} param0
- */
-const DepartmentForm = ({
+interface Department {
+  name: string;
+  description: string;
+  staff_in_charge?: {
+    id: number;
+    [key: string]: any;
+  };
+  services: Array<{ name: string; [key: string]: any }>;
+  [key: string]: any;
+}
+
+interface Staff {
+  id: number;
+  first_name: string;
+  last_name: string;
+  [key: string]: any;
+}
+
+interface AddOrUpdateMode {
+  type: string;
+  state: boolean;
+}
+
+interface DepartmentFormProps {
+  addorupdate: AddOrUpdateMode;
+  department: Department;
+  setDepartment: (value: Department | Record<string, any>) => void;
+  handleSubmit: (e: React.FormEvent) => void;
+  closeModal: () => void;
+  staffs: Staff[];
+  loading: boolean;
+}
+
+const DepartmentForm: React.FC<DepartmentFormProps> = ({
   addorupdate,
   department,
   setDepartment,
@@ -14,9 +44,9 @@ const DepartmentForm = ({
   closeModal,
   loading,
 }) => {
-  const [service, setService] = useState("");
+  const [service, setService] = useState<string>("");
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = (e: React.FormEvent) => {
     handleSubmit(e);
   };
 

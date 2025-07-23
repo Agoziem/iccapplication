@@ -3,11 +3,46 @@ import Tiptap from "@/components/custom/Richtexteditor/Tiptap";
 import { servicesAPIendpoint } from "@/data/services/fetcher";
 import { PulseLoader } from "react-spinners";
 import { useFetchSubCategories } from "@/data/categories/categories.hook";
+import React from "react";
 
-/**
- * @param {{ service: Service; setService: (value:Service) => void; handleSubmit: any; addorupdate: any; OrganizationData: any; tab: any; categories: any;isSubmitting: boolean; }} param0
- */
-const ServiceForm = ({
+interface Category {
+  id: string | number;
+  category: string;
+  [key: string]: any;
+}
+
+interface SubCategory {
+  id: string | number;
+  subcategory: string;
+  [key: string]: any;
+}
+
+interface Service {
+  id?: string | number;
+  name: string;
+  description: string;
+  price: number;
+  category: Category;
+  subcategory: SubCategory | null;
+  [key: string]: any;
+}
+
+interface AddOrUpdateMode {
+  mode: "add" | "edit";
+  [key: string]: any;
+}
+
+interface ServiceFormProps {
+  service: Service;
+  setService: (value: Service) => void;
+  handleSubmit: (e: React.FormEvent) => void;
+  addorupdate: AddOrUpdateMode;
+  tab: string;
+  categories: Category[];
+  isSubmitting: boolean;
+}
+
+const ServiceForm: React.FC<ServiceFormProps> = ({
   service,
   setService,
   handleSubmit,
@@ -18,27 +53,32 @@ const ServiceForm = ({
 }) => {
   const { data: subcategories, isLoading: loadingsubcategories } =
     useFetchSubCategories(
-      `${servicesAPIendpoint}/subcategories/${service.category.id}/`
+      `${servicesAPIendpoint}/subcategories/${service.category.id}/`,
+      typeof service.category.id === 'string' ? parseInt(service.category.id) : service.category.id
     );
 
   // ------------------------------
   // Handle category change
   // -------------------------------
-  const handleCategoryChange = (e) => {
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
     const selectedCategory = servicecategories?.find(
       (category) => category.category === e.target.value
     );
-    setService({ ...service, category: selectedCategory, subcategory: null });
+    if (selectedCategory) {
+      setService({ ...service, category: selectedCategory, subcategory: null });
+    }
   };
 
   // - -------------------------------
   // Handle subcategory change
   //  -------------------------------
-  const handleSubCategoryChange = (e) => {
+  const handleSubCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
     const selectedSubCategory = subcategories?.find(
       (subcategory) => subcategory.subcategory === e.target.value
     );
-    setService({ ...service, subcategory: selectedSubCategory });
+    if (selectedSubCategory) {
+      setService({ ...service, subcategory: selectedSubCategory as SubCategory });
+    }
   };
 
   return (
@@ -61,7 +101,7 @@ const ServiceForm = ({
             imageurlkey={"img_url"}
             imagename={"img_name"}
             formData={service}
-            setFormData={setService}
+            setFormData={(data: Record<string, any>) => setService(data as Service)}
           />
         </div>
 
@@ -110,7 +150,7 @@ const ServiceForm = ({
             id="price"
             name="price"
             value={service.price}
-            onChange={(e) => setService({ ...service, price: e.target.value })}
+            onChange={(e) => setService({ ...service, price: parseFloat(e.target.value) || 0 })}
             required
           />
         </div>

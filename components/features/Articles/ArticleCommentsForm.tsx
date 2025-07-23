@@ -1,39 +1,42 @@
-import React, { useState } from "react";
+import React, { useState, FormEvent, ChangeEvent } from "react";
 import Modal from "../../custom/Modal/modal";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Alert from "@/components/custom/Alert/Alert";
 import { ArticleCommentDefault } from "@/constants";
 import { useCreateComment } from "@/data/articles/articles.hook";
+import { Article, ArticleComment } from "@/types/articles";
 
-/**
- * @param {{ article: Article; comments: any; }} param0
- */
-const ArticleCommentsForm = ({ article, comments }) => {
+interface ArticleCommentsFormProps {
+  article: Article;
+  comments: any;
+}
+
+const ArticleCommentsForm: React.FC<ArticleCommentsFormProps> = ({ article, comments }) => {
   const { data: session } = useSession();
-  const [showModal, setShowModal] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [commenttoedit, setCommenttoEdit] = useState(ArticleCommentDefault);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
+  const [commenttoedit, setCommenttoEdit] = useState<ArticleComment>(ArticleCommentDefault);
   const { mutateAsync:createComment } = useCreateComment();
   
-  const addComment = async (e) => {
+  const addComment = async (e: FormEvent) => {
     e.preventDefault();
     const { blog, user, ...restdata } = commenttoedit;
     const datatosubmit = {
       ...restdata,
-      blog: article.id,
+      blog: article.id || 0,
       user: {
-        id: session?.user?.id,
-        username: session?.user?.username,
-        img: session?.user?.avatar_url,
+        id: parseInt(session?.user?.id || "0"),
+        username: session?.user?.username || "",
+        img: session?.user?.avatar_url || null,
       },
     };
     try {
       await createComment(datatosubmit);
       setSuccess("submitted successfully!");
     } catch (error) {
-      console.log(error.message);
+      console.log((error as Error).message);
       setError("failed to Submit!, try again");
     } finally {
       setCommenttoEdit(ArticleCommentDefault);

@@ -31,23 +31,34 @@ import SearchInput from "@/components/custom/Inputs/SearchInput";
 import { PulseLoader } from "react-spinners";
 import { useFetchCategories } from "@/data/categories/categories.hook";
 import { useCreateProduct, useDeleteProduct, useFetchProducts, useUpdateProduct } from "@/data/product/product.hook";
+import { Product } from "@/types/items";
 
-// /...
-const Products = () => {
+interface AddOrUpdateMode {
+  mode: "add" | "edit";
+  state: boolean;
+}
+
+interface AlertState {
+  show: boolean;
+  message: string;
+  type: string;
+}
+
+const Products: React.FC = () => {
   const { openModal } = useAdminContext();
   const { fetchProductsSubCategories } = useSubCategoriesContext();
-  const [product, setProduct] = useState(defaultProduct);
-  const [showModal, setShowModal] = useState(false);
-  const [showModal2, setShowModal2] = useState(false);
-  const [alert, setAlert] = useState({ show: false, message: "", type: "" });
-  const [addorupdate, setAddorupdate] = useState({ mode: "add", state: false });
+  const [product, setProduct] = useState<Product>(defaultProduct);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [showModal2, setShowModal2] = useState<boolean>(false);
+  const [alert, setAlert] = useState<AlertState>({ show: false, message: "", type: "" });
+  const [addorupdate, setAddorupdate] = useState<AddOrUpdateMode>({ mode: "add", state: false });
 
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentCategory = searchParams.get("category") || "All";
   const page = searchParams.get("page") || "1";
   const pageSize = "10";
-  const [allCategories, setAllCategories] = useState([]);
+  const [allCategories, setAllCategories] = useState<any[]>([]);
   const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
   const [searchQuery, setSearchQuery] = useState(""); // State for search input
   const [isPending, startTransition] = useTransition();
@@ -87,8 +98,7 @@ const Products = () => {
   // -----------------------------------------
   // Handle page change
   // -----------------------------------------
-  /**  @param {string} newPage */
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     router.push(
       `?category=${currentCategory}&page=${newPage}&page_size=${pageSize}`,
       {
@@ -100,8 +110,7 @@ const Products = () => {
   // -------------------------------
   // Handle category change
   // -------------------------------
-  /**  @param {string} category */
-  const handleCategoryChange = (category) => {
+  const handleCategoryChange = (category: string) => {
     router.push(`?category=${category}&page=${page}&page_size=${pageSize}`, {
       scroll: false,
     });
@@ -113,7 +122,7 @@ const Products = () => {
     if (!searchQuery) return products.results;
 
     return products.results.filter((product) =>
-      product.name.toLowerCase().includes(searchQuery.toLowerCase())
+      product.name?.toLowerCase().includes(searchQuery.toLowerCase()) || false
     );
   }, [products, searchQuery]);
 
@@ -124,10 +133,10 @@ const Products = () => {
     setShowModal(false);
     setShowModal2(false);
     setProduct(defaultProduct);
-    setAddorupdate({ mode: "", state: false });
+    setAddorupdate({ mode: "add", state: false });
   };
 
-  const handleAlert = (message, type) => {
+  const handleAlert = (message: string, type: string) => {
     setAlert({ show: true, message, type });
     setTimeout(() => setAlert({ show: false, message: "", type: "" }), 3000);
   };
@@ -137,7 +146,7 @@ const Products = () => {
   //----------------------------------------------------
   const { mutateAsync: createProduct } = useCreateProduct();
   const { mutateAsync: updateProduct } = useUpdateProduct();
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     startTransition(async () => {
       const { organization, category, subcategory, ...restData } = product;
@@ -148,15 +157,15 @@ const Products = () => {
         subcategory: subcategory
           ? {
               ...subcategory,
-              category: category.id,
+              category: category?.id || "",
             }
           : "",
       };
       try {
         if (addorupdate.mode !== "add") {
-          await updateProduct(producttosubmit);
+          await updateProduct(producttosubmit as any);
         } else {
-          await createProduct(producttosubmit);
+          await createProduct(producttosubmit as any);
         }
         handleAlert(
           `your Service have been ${
@@ -176,16 +185,12 @@ const Products = () => {
   // Delete a product
   //----------------------------------------------------
   const { mutateAsync: deleteProduct } = useDeleteProduct();
-  /**
-   * @async
-   * @param {number} id
-   */
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: number) => {
     startDeletion(async () => {
       try {
         await deleteProduct(id);
         handleAlert("Service deleted Successfully", "success");
-      } catch (error) {
+      } catch (error: any) {
         console.log(error.message);
         handleAlert("Error deleting Service", "danger");
       } finally {
@@ -197,16 +202,16 @@ const Products = () => {
   //   ------------------------------------------------------
   //   // Create a new service
   //   // ------------------------------------------------------
-  const handleEdit = (product) => {
+  const handleEdit = (product: Product) => {
     setProduct(product);
-    setAddorupdate({ mode: "update", state: true });
+    setAddorupdate({ mode: "edit", state: true });
     setShowModal(true);
   };
 
   //   ------------------------------------------------------
   //   // Delete a service
   //   // ------------------------------------------------------
-  const handleDeleteConfirm = (product) => {
+  const handleDeleteConfirm = (product: Product) => {
     setProduct(product);
     setShowModal2(true);
   };
@@ -274,7 +279,7 @@ const Products = () => {
         <div>
           <h5 className="mb-1">{currentCategory} Products</h5>
           <p className="mb-0 text-primary">
-            {products?.count} Product{products?.count > 1 ? "s" : ""} in Total
+            {products?.count || 0} Product{(products?.count || 0) > 1 ? "s" : ""} in Total
           </p>
         </div>
         <div className="ms-0 ms-md-auto mb-4 mb-md-0">
@@ -286,7 +291,7 @@ const Products = () => {
         </div>
       </div>
 
-      {alert.show && <Alert type={alert.type}>{alert.message}</Alert>}
+      {alert.show && <Alert type={alert.type as any}>{alert.message}</Alert>}
       {searchQuery && <h5>Search Results</h5>}
       <div className="row">
         {
@@ -303,12 +308,12 @@ const Products = () => {
         {!loadingProducts && filteredProducts?.length > 0 ? (
           filteredProducts?.map((product) => (
             <ProductCard
-              openModal={openModal}
+              openModal={openModal as any}
               key={product.id}
               tab={currentCategory}
-              item={product}
-              onEdit={handleEdit}
-              onDelete={handleDeleteConfirm}
+              item={product as any}
+              onEdit={handleEdit as any}
+              onDelete={handleDeleteConfirm as any}
             />
           ))
         ) : (
@@ -341,11 +346,11 @@ const Products = () => {
         overlayclose={false}
       >
         <ProductForm
-          product={product}
-          setProduct={setProduct}
+          product={product as any}
+          setProduct={setProduct as any}
           handleSubmit={handleSubmit}
           addorupdate={addorupdate}
-          categories={categories}
+          categories={categories || []}
           isSubmitting={isPending}
         />
       </Modal>
@@ -358,7 +363,7 @@ const Products = () => {
           <div className="d-flex justify-content-center">
             <button
               className="btn btn-danger border-0 rounded me-2"
-              onClick={() => handleDelete(product.id)}
+              onClick={() => product.id && handleDelete(product.id)}
               disabled={isdeleting}
             >
               {isdeleting ? (

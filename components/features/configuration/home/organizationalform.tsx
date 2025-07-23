@@ -1,11 +1,30 @@
-import ImageUploader from '@/components/custom/Imageuploader/ImageUploader'
-import React from 'react'
+import ImageUploader from '@/components/custom/Imageuploader/ImageUploader';
+import React from 'react';
 
+interface Organization {
+  name: string;
+  description: string;
+  vision: string;
+  mission: string;
+  address: string;
+  phone: string;
+  email: string;
+  [key: string]: any;
+}
 
-/**
- * @param {{ handleSubmit: any; OrganizationData: Organization; setOrganizationData: (value:Organization) => void; setEditMode: any; }} param0
- */
-const OrganizationalForm = ({handleSubmit,OrganizationData,setOrganizationData,setEditMode}) => {
+interface OrganizationalFormProps {
+  handleSubmit: (e: React.FormEvent) => void;
+  OrganizationData: Organization;
+  setOrganizationData: (value: Organization | Record<string, any>) => void;
+  setEditMode: (mode: boolean) => void;
+}
+
+const OrganizationalForm: React.FC<OrganizationalFormProps> = ({
+  handleSubmit,
+  OrganizationData,
+  setOrganizationData,
+  setEditMode
+}) => {
   return (
     <form onSubmit={handleSubmit}>
     <div className="form-group mb-4">

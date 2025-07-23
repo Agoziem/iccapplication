@@ -12,16 +12,23 @@ import {  useFetchEmails } from "@/data/Emails/emails.hook";
 import { useQueryClient } from "react-query";
 import toast from "react-hot-toast";
 
-/**
- * Holds all the Messages that was sent well paginated with load more button
- * @param {{ message : Email,
- * selectMessage:(value:Email)=> void,
- * showlist:boolean,
- * setShowlist:(value:boolean)=> void,
- * }} props
- * @returns {JSX.Element}
- */
-const Messages = ({ message, selectMessage, showlist, setShowlist }) => {
+interface EmailMessage {
+  id?: number;
+  subject?: string;
+  sender?: string;
+  content?: string;
+  timestamp?: string;
+  [key: string]: any;
+}
+
+interface MessagesProps {
+  message: EmailMessage | null;
+  selectMessage: (value: EmailMessage | null) => void;
+  showlist: boolean;
+  setShowlist: (value: boolean) => void;
+}
+
+const Messages: React.FC<MessagesProps> = ({ message, selectMessage, showlist, setShowlist }) => {
   const { isConnected, ws } = useWebSocket(
     `${process.env.NEXT_PUBLIC_DJANGO_WEBSOCKET_URL}/ws/emailapiSocket/`
   );
@@ -39,12 +46,12 @@ const Messages = ({ message, selectMessage, showlist, setShowlist }) => {
   } = useFetchEmails();
 
   // Handle page change
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     router.push(`?page=${newPage}&page_size=${pageSize}`);
   };
 
-  const [showUnread, setShowUnread] = useState(false); // State to filter unread messages
-  const [searchQuery, setSearchQuery] = useState(""); // State for search input
+  const [showUnread, setShowUnread] = useState<boolean>(false); // State to filter unread messages
+  const [searchQuery, setSearchQuery] = useState<string>(""); // State for search input
 
   // -----------------------------------------
   // Handling WebSocket onmessage event
@@ -72,14 +79,14 @@ const Messages = ({ message, selectMessage, showlist, setShowlist }) => {
             (oldData) => {
               if (!oldData) return; // No cache to update
 
-              const updatedResults = [...(oldData.results || [])];
+              const updatedResults = [...((oldData as any).results || [])];
 
               switch (operation) {
                 case "create":
                   toast.success("you have a new message");
                   return {
                     ...oldData,
-                    count: oldData.count + 1,
+                    count: (oldData as any).count + 1,
                     results: [message, ...updatedResults], // Add new message at the top
                   };
 
@@ -95,7 +102,7 @@ const Messages = ({ message, selectMessage, showlist, setShowlist }) => {
                   toast.success("A message was deleted");
                   return {
                     ...oldData,
-                    count: oldData.count - 1,
+                    count: (oldData as any).count - 1,
                     results: updatedResults.filter(
                       (msg) => msg.id !== message.id
                     ), // Remove deleted message
@@ -125,7 +132,7 @@ const Messages = ({ message, selectMessage, showlist, setShowlist }) => {
   // Filter messages based on the `read` state
   let filteredMessages = showUnread
     ? messages?.results?.filter((message) => !message.read) // Show only unread messages
-    : messages.results;
+    : messages?.results;
 
   // Filter messages further based on search input
   if (searchQuery) {
@@ -137,14 +144,10 @@ const Messages = ({ message, selectMessage, showlist, setShowlist }) => {
     );
   }
 
-  // -----------------------------------------------------------
   // update a Message and populate/update Cache from Websocket
-  // ------------------------------------------------------------
-  /** @param {Email} updatedMessage */
-  const updateMessage = async (updatedMessage) => {
+  const updateMessage = async (updatedMessage: EmailMessage) => {
     if (!updatedMessage.read) {
       if (ws && ws.readyState === WebSocket.OPEN) {
-        /**@type {EmailWebsocket} */
         const payload = {
           operation: "update",
           message: updatedMessage,
@@ -202,8 +205,8 @@ const Messages = ({ message, selectMessage, showlist, setShowlist }) => {
         />
       </div>
       <div className="messageslist d-flex flex-column g-1 pe-2">
-        {filteredMessages.length > 0 ? (
-          filteredMessages.map((message) => (
+        {(filteredMessages?.length ?? 0) > 0 ? (
+          filteredMessages?.map((message) => (
             <MessageCard
               key={message.id}
               message={message}

@@ -1,6 +1,30 @@
 import React from "react";
 
-const CbtInstructions = ({ Test,setStartTest }) => {
+interface TestSubject {
+  subjectname: string;
+  subjectduration: string;
+}
+
+interface Test {
+  texttype: {
+    testtype: string;
+  };
+  testYear: {
+    year: string;
+  };
+  testSubject: TestSubject[];
+}
+
+interface CbtInstructionsProps {
+  Test: Test;
+  setStartTest: (start: boolean) => void;
+}
+
+const CbtInstructions: React.FC<CbtInstructionsProps> = ({ Test, setStartTest }) => {
+  const handleStartTest = (): void => {
+    setStartTest(true);
+  };
+
   return (
     <div>
       <div>
@@ -54,7 +78,7 @@ const CbtInstructions = ({ Test,setStartTest }) => {
       </div>
       <div>
         <button className="btn btn-primary w-100 mt-4"
-            onClick={() => setStartTest(true)}
+            onClick={handleStartTest}
         >Start Test</button>
       </div>
     </div>

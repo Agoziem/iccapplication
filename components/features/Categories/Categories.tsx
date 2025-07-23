@@ -10,33 +10,47 @@ import {
 import { useCreateCategory, useDeleteCategory, useUpdateCategory } from "@/data/categories/categories.hook";
 import { useUpdateComment } from "@/data/articles/articles.hook";
 
-/**
- * @type {Category}
- */
-const categoryDefault = { id: null, category: "", description: "" };
+interface Category {
+  id: number | null;
+  category: string;
+  description: string;
+}
 
-/**
- * @param {{ items: Categories; addUrl: string; updateUrl: string; deleteUrl: string; renderListItem?: (value: any) => JSX.Element; }} param0
- */
-const CategoriesForm = ({
+interface AlertState {
+  show: boolean;
+  message: string;
+  type: string;
+}
+
+interface CategoriesFormProps {
+  items: Category[];
+  addUrl: string;
+  updateUrl: string;
+  deleteUrl: string;
+  renderListItem?: (value: any) => React.ReactElement;
+}
+
+const categoryDefault: Category = { id: null, category: "", description: "" };
+
+const CategoriesForm: React.FC<CategoriesFormProps> = ({
   items,
   addUrl,
   updateUrl,
   deleteUrl,
 }) => {
-  const [item, setItem] = useState(categoryDefault);
-  const [edit, setEdit] = useState(false);
-  const [alert, setAlert] = useState({
+  const [item, setItem] = useState<Category>(categoryDefault);
+  const [edit, setEdit] = useState<boolean>(false);
+  const [alert, setAlert] = useState<AlertState>({
     show: false,
     message: "",
     type: "",
   });
-  const [modal, setModal] = useState(false);
+  const [modal, setModal] = useState<boolean>(false);
 
   // -----------------------------------------
   // close modal
   // -----------------------------------------
-  const closeModal = () => {
+  const closeModal = (): void => {
     setItem(categoryDefault);
     setModal(false);
   };
@@ -47,7 +61,7 @@ const CategoriesForm = ({
   const { mutateAsync:createCategory } = useCreateCategory();
   const { mutateAsync: updateCategory } = useUpdateCategory();
 
-  const handleItem = async (e) => {
+  const handleItem = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     try {
       if (edit) {
@@ -80,11 +94,8 @@ const CategoriesForm = ({
   // delete item
   // -----------------------------------------
   const { mutateAsync: deleteCategory } = useDeleteCategory();
-  /**
-   * @async
-   * @param {number} id
-   */
-  const deleteItem = async (id) => {
+
+  const deleteItem = async (id: number): Promise<void> => {
     try {
       await deleteCategory({deleteUrl, id});
     } catch (error) {
@@ -97,7 +108,7 @@ const CategoriesForm = ({
       <h6 className="mb-3">Create Category</h6>
       {alert.show && (
         <div>
-          <Alert type={alert.type}>{alert.message} </Alert>
+          <Alert type={alert.type as any}>{alert.message} </Alert>
         </div>
       )}
       {/* form */}
@@ -153,7 +164,7 @@ const CategoriesForm = ({
           <button
             className="btn btn-danger rounded"
             onClick={() => {
-              deleteItem(item.id);
+              if (item.id !== null) deleteItem(item.id);
               closeModal();
             }}
           >

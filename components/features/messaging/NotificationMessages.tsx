@@ -5,15 +5,24 @@ import Modal from "../../custom/Modal/modal";
 import Alert from "../../custom/Alert/Alert";
 import { shortenMessage } from "@/utils/utilities";
 import { useDeleteNotification, useFetchNotifications } from "@/data/notificationsAPI/notifications.hook";
+import React from "react";
 
-const NotificationMessages = () => {
-  const [errormessage, setErrorMessage] = useState("");
-  const [success, setSuccess] = useState("");
-  const [Notification, setNotification] = useState(null);
-  const [notificationId, setNotificationId] = useState(null);
-  const [editmode, setEditMode] = useState(false);
-  const formRef = useRef(null);
-  const [showdeleteModal, setShowDeleteModal] = useState(false);
+interface NotificationMessage {
+  id: number;
+  title: string;
+  message: string;
+  created_at: string;
+  [key: string]: any;
+}
+
+const NotificationMessages: React.FC = () => {
+  const [errormessage, setErrorMessage] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
+  const [Notification, setNotification] = useState<NotificationMessage | null>(null);
+  const [notificationId, setNotificationId] = useState<number | null>(null);
+  const [editmode, setEditMode] = useState<boolean>(false);
+  const formRef = useRef<any>(null);
+  const [showdeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const {
     data: notifications,
     isLoading,
@@ -30,7 +39,7 @@ const NotificationMessages = () => {
     try {
       setErrorMessage("");
       setSuccess("");
-      await deleteNotification(notificationId);
+      await deleteNotification(notificationId!);
 
       setSuccess(`Notification deleted successfully!`);
     } catch (error) {
@@ -67,7 +76,7 @@ const NotificationMessages = () => {
 
         {/* All Sent Messages */}
         <div className="flex-fill d-flex flex-column gap-1 px-3">
-          <h5 className="text-center mb-3">{notifications.length} Notification{notifications.length > 1 ? "s": ""}</h5>
+          <h5 className="text-center mb-3">{notifications?.length ?? 0} Notification{(notifications?.length ?? 0) > 1 ? "s": ""}</h5>
           {isLoading && (
             <div className=" d-flex align-items-center justify-content-center">
               <div className="spinner-border text-primary" role="status">
@@ -76,8 +85,8 @@ const NotificationMessages = () => {
             </div>
           )}
 
-          {notifications?.length > 0
-            ? notifications.map((notification) => (
+          {(notifications?.length ?? 0) > 0
+            ? notifications?.map((notification) => (
                 <div key={notification.id} className="card p-4 py-4">
                   <div className="d-flex justify-content-between">
                     <h6 className="mb-2">{notification.title}</h6>
@@ -87,7 +96,7 @@ const NotificationMessages = () => {
                         color: "var(--bgDarkerColor)",
                       }}
                     >
-                      {new Date(notification.created_at).toLocaleTimeString(
+                      {new Date(notification.created_at || new Date()).toLocaleTimeString(
                         [],
                         {
                           month: "short",
@@ -106,7 +115,7 @@ const NotificationMessages = () => {
                         cursor: "pointer",
                       }}
                       onClick={() => {
-                        setNotification(notification);
+                        setNotification(notification as any);
                         setEditMode(true);
                         scrolltoform();
                       }}

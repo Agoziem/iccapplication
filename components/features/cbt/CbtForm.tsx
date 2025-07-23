@@ -4,24 +4,59 @@ import React, { useEffect, useState } from "react";
 import { MultiSelectDropdown } from "@/components/custom/Multiselectinput/MultiSelect";
 import Alert from "@/components/custom/Alert/Alert";
 
-const CbtForm = ({
+interface OrganizationData {
+  id: number;
+}
+
+interface ExamDetails {
+  test_id?: number;
+  examSubjects: any[];
+  user_id?: string;
+}
+
+interface Exam {
+  id: number;
+  name: string;
+  texttype: {
+    testtype: string;
+  };
+  testYear: {
+    year: string;
+  };
+  testSubject: any[];
+}
+
+interface AlertState {
+  show: boolean;
+  message: string;
+  type: string;
+}
+
+interface CbtFormProps {
+  OrganizationData: OrganizationData;
+  examdetails: ExamDetails;
+  setExamDetails: (details: ExamDetails | ((prev: ExamDetails) => ExamDetails)) => void;
+  sendExamDetails: () => void;
+}
+
+const CbtForm: React.FC<CbtFormProps> = ({
   OrganizationData,
   examdetails,
   setExamDetails,
   sendExamDetails,
 }) => {
   const { data: session } = useSession();
-  const [exams, setExams] = useState([]);
-  const [examType, setExamType] = useState(null);
-  const [examSubjects, setExamSubjects] = useState([]);
-  const [loadingExams, setLoadingExams] = useState(false);
-  const [alert, setAlert] = useState({
+  const [exams, setExams] = useState<Exam[]>([]);
+  const [examType, setExamType] = useState<string | null>(null);
+  const [examSubjects, setExamSubjects] = useState<any[]>([]);
+  const [loadingExams, setLoadingExams] = useState<boolean>(false);
+  const [alert, setAlert] = useState<AlertState>({
     show: false,
     message: "",
     type: "",
   });
 
-  const fetchExams = async () => {
+  const fetchExams = async (): Promise<void> => {
     setLoadingExams(true);
     try {
       const response = await fetch(
@@ -39,17 +74,17 @@ const CbtForm = ({
   // -------------------------------------------------------
   // function to change the exam type
   // -------------------------------------------------------
-  const changeExamtype = (examid) => {
+  const changeExamtype = (examid: string): void => {
     const exam = exams.find((exam) => exam.id === parseInt(examid));
-    setExamType(exam?.texttype.testtype);
+    setExamType(exam?.texttype.testtype || null);
   };
 
   // -------------------------------------------------------
   // function to change the exam subjects
   // -------------------------------------------------------
-  const changeExamSubjects = (examid) => {
+  const changeExamSubjects = (examid: string): void => {
     const exam = exams.find((exam) => exam.id === parseInt(examid));
-    setExamSubjects(exam?.testSubject);
+    setExamSubjects(exam?.testSubject || []);
   };
 
   // -------------------------------------------------------
@@ -64,7 +99,7 @@ const CbtForm = ({
   // -------------------------------------------------------
   // Submit the exam details
   // -------------------------------------------------------
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
     if (!examdetails.test_id || examdetails.examSubjects.length === 0) {
       setAlert({
@@ -188,7 +223,7 @@ const CbtForm = ({
               />
             </div>
             <div className="my-2">
-              {alert.show && <Alert type={alert.type}>{alert.message}</Alert>}
+              {alert.show && <Alert type={alert.type as any}>{alert.message}</Alert>}
             </div>
 
             <div className="my-4">

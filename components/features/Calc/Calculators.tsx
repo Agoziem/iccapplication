@@ -3,9 +3,14 @@ import React, { useState } from "react";
 import Aggregator from "./Aggregator";
 import CGPA from "./CGPA";
 
-const Calculators = () => {
-  const categories = ["Aggregator", "CGPA Calculator"];
-  const [activeTab, setActiveTab] = useState(categories[0]);
+const Calculators: React.FC = () => {
+  const categories: string[] = ["Aggregator", "CGPA Calculator"];
+  const [activeTab, setActiveTab] = useState<string>(categories[0]);
+
+  const handleTabClick = (category: string): void => {
+    setActiveTab(category);
+  };
+
   return (
     <div className="py-3">
       {/* Category Tabs */}
@@ -24,7 +29,7 @@ const Calculators = () => {
                 : "1.5px solid var(--bgDarkerColor)",
             cursor: "pointer",
           }}
-          onClick={() => setActiveTab(category)}
+          onClick={() => handleTabClick(category)}
         >
           {category}
         </div>

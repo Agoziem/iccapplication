@@ -14,18 +14,29 @@ import {
 } from "@/data/organization/organization.hook";
 import toast from "react-hot-toast";
 
-const Subscriptions = () => {
+interface Subscription {
+  id?: number;
+  email: string;
+  [key: string]: any;
+}
+
+interface AddOrUpdateMode {
+  mode: string;
+  state: boolean;
+}
+
+const Subscriptions: React.FC = () => {
   const OrganizationID = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
-  const [subscription, setSubscription] = useState(subscriptionDefault);
-  const [showModal, setShowModal] = useState(false);
-  const [showdeleteModal, setShowDeleteModal] = useState(false);
+  const [subscription, setSubscription] = useState<Subscription>(subscriptionDefault);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [showdeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
   const page = searchParams.get("page") || "1";
   const pageSize = "20";
 
-  const [addorupdate, setAddorupdate] = useState({
+  const [addorupdate, setAddorupdate] = useState<AddOrUpdateMode>({
     mode: "",
     state: false,
   });
@@ -36,7 +47,7 @@ const Subscriptions = () => {
       `${MainAPIendpoint}/subscription/${OrganizationID}/?page=${page}&page_size=${pageSize}`
     );
   // Handle page change
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     router.push(`?page=${newPage}&page_size=${pageSize}`);
   };
 
@@ -44,7 +55,7 @@ const Subscriptions = () => {
   const closeModal = () => {
     setShowModal(false);
     setShowDeleteModal(false);
-    setSubscription(subscriptionDefault);
+    setSubscription(subscriptionDefault as any);
   };
 
   // function to add or update Subscription
@@ -52,7 +63,7 @@ const Subscriptions = () => {
     useCreateSubscription();
   const { mutateAsync: updateSubscription, isLoading: isUpdating } =
     useUpdateSubscription();
-  const addorupdateSubscription = async (e) => {
+  const addorupdateSubscription = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (addorupdate.mode === "add") {
@@ -61,7 +72,7 @@ const Subscriptions = () => {
         await updateSubscription(subscription);
       }
       toast.success("Subscription added successfully");
-    } catch (error) {
+    } catch (error: any) {
       console.log(error.message);
       toast.error("An error occured");
     } finally {
@@ -72,14 +83,11 @@ const Subscriptions = () => {
   // function to delete Subscription
   const { mutateAsync: deleteSubscription, isLoading: isDeleting } =
     useDeleteSubscription();
-  /**
-   * @param {number} id
-   */
-  const removeSubscription = async (id) => {
+  const removeSubscription = async (id: number) => {
     try {
       await deleteSubscription(id);
       toast.success("Subscription deleted successfully");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting email :", error);
       toast.error("An error occured while deleting Subscription");
     } finally {
@@ -102,12 +110,12 @@ const Subscriptions = () => {
           <i className="bi bi-plus-circle me-2 h5 mb-0"></i> Add email
         </button>
       </div>
-      {subscriptions?.results.length > 0 ? (
+      {subscriptions?.results && subscriptions.results.length > 0 ? (
         <div>
           <div className="mb-3">
             <h4 className="mb-1">
               {subscriptions?.count} Subscription
-              {subscriptions?.count > 1 ? "s" : ""}
+              {(subscriptions?.count || 0) > 1 ? "s" : ""}
             </h4>
             <p>in total</p>
           </div>
@@ -133,7 +141,7 @@ const Subscriptions = () => {
                   <button
                     className="btn btn-sm btn-accent-secondary me-3 py-1 rounded"
                     onClick={() => {
-                      setSubscription(subscription);
+                      setSubscription(subscription as any);
                       setAddorupdate({ mode: "update", state: true });
                       setShowModal(true);
                     }}
@@ -143,7 +151,7 @@ const Subscriptions = () => {
                   <button
                     className="btn btn-sm btn-danger rounded py-1"
                     onClick={() => {
-                      setSubscription(subscription);
+                      setSubscription(subscription as any);
                       setShowDeleteModal(true);
                     }}
                   >
@@ -239,7 +247,7 @@ const Subscriptions = () => {
             <button
               className="btn btn-danger"
               onClick={() => {
-                removeSubscription(subscription.id);
+                subscription.id && removeSubscription(subscription.id);
               }}
               disabled={isDeleting}
             >

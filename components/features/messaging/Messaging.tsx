@@ -4,9 +4,9 @@ import EmailMessaging from "./EmailMessaging";
 import WhatsappMessaging from "./WhatsappMessaging";
 import NotificationMessages from "./NotificationMessages";
 
-const Messaging = () => {
+const Messaging: React.FC = () => {
   const Templates = ["Emails", "WhatsApp", "Alerts & Notifications"];
-  const [selectedTab, setSelectedTab] = useState(Templates[0]); // Default to the first tab
+  const [selectedTab, setSelectedTab] = useState<string>(Templates[0]); // Default to the first tab
 
   // Function to render content based on selected tab
   const renderContent = () => {

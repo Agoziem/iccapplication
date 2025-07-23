@@ -19,15 +19,23 @@ import {
   useFetchComments,
   useIncrementView,
 } from "@/data/articles/articles.hook";
+import { Article as ArticleType } from "@/types/articles";
 
-const Article = ({ params }) => {
+
+interface ArticlePageProps {
+  params: {
+    slug: string;
+  };
+}
+
+const Article: React.FC<ArticlePageProps> = ({ params }) => {
   const { slug } = params;
   const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
   const searchParams = useSearchParams();
   const page = searchParams.get("page") || "1";
   const pageSize = "10";
-  const [commentpage, setCommentPage] = useState("1");
-  const [otherArticles, setOtherArticles] = useState([]);
+  const [commentpage, setCommentPage] = useState<string>("1");
+  const [otherArticles, setOtherArticles] = useState<ArticleType[]>([]);
   const { data: session } = useSession();
 
   // ------------------------------------------------------------
@@ -41,11 +49,10 @@ const Article = ({ params }) => {
   // ----------------------------------------------------------
   // fetch articles by Categories
   // ----------------------------------------------------------
-  const { data: articles } = useFetchArticles(
-    article?.category.id
-      ? `${articleAPIendpoint}/orgblogs/${Organizationid}/?category=${article?.category.category}&page=${page}&page_size=${pageSize}`
-      : null
-  );
+  const articlesUrl = article?.category?.id 
+    ? `${articleAPIendpoint}/orgblogs/${Organizationid}/?category=${article.category.category}&page=${page}&page_size=${pageSize}`
+    : "";
+  const { data: articles } = useFetchArticles(articlesUrl);
 
   // ------------------------------------------------------------
   // Filter the main article from the other articles
@@ -62,18 +69,19 @@ const Article = ({ params }) => {
   // ------------------------------------------------------------
   // Fetch comments and paginate them
   // ------------------------------------------------------------
+  const commentsUrl = article?.id 
+    ? `${articleAPIendpoint}/getcomments/${article.id}?page=${commentpage}&page_size=${pageSize}`
+    : "";
   const { data: comments, isLoading: loadingComments } = useFetchComments(
-    `${articleAPIendpoint}/getcomments/${article?.id}?page=${commentpage}&page_size=${pageSize}`,
-    article?.id
+    commentsUrl,
+    article?.id || 0
   );
 
   // ------------------------------------------------------------
   // handle comment page change
   // ------------------------------------------------------------
-
-  /** @param {string} page */
-  const handleCommentPageChange = (page) => {
-    setCommentPage(page);
+  const handleCommentPageChange = (page: number) => {
+    setCommentPage(page.toString());
   };
 
   // ------------------------------------------------------------
@@ -143,8 +151,8 @@ const Article = ({ params }) => {
                   <span className="me-3">
                     <small>{new Date(article.date).toDateString()}</small>
                   </span>
-                  {article.tags?.length > 0 &&
-                    article.tags?.map((tag, index) => (
+                  {article.tags && article.tags.length > 0 &&
+                    article.tags.map((tag, index) => (
                       <span
                         key={index}
                         className="badge bg-secondary-light text-secondary rounded-5 px-3 py-2 me-1 mb-2 mb-md-0"
@@ -198,18 +206,18 @@ const Article = ({ params }) => {
                 <span className="me-3">
                   <i
                     className={`bi ${
-                      article.likes?.includes(parseInt(session?.user?.id))
+                      article.likes?.includes(parseInt(session?.user?.id || "0"))
                         ? "bi-heart-fill text-danger"
                         : "bi-heart-fill text-primary"
                     } me-1`}
                   ></i>
                   {article?.likes ? article.likes.length : "0"} like
-                  {article.likes?.length > 1 && "s"}
+                  {article.likes && article.likes.length > 1 && "s"}
                 </span>
                 <span className="me-3">
                   <i className="bi bi-chat-fill me-1"></i>
                   {comments ? comments.count : "0"} comment
-                  {comments?.count > 1 && "s"}
+                  {comments && comments.count > 1 && "s"}
                 </span>
               </div>
 
@@ -284,7 +292,7 @@ const Article = ({ params }) => {
                       >
                         {blog.img ? (
                           <img
-                            src={blog.img_url}
+                            src={blog.img_url || ""}
                             className="object-fit-cover me-3"
                             alt="profile"
                             style={{

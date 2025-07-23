@@ -5,10 +5,28 @@ import SubjectDetails from "./SubjectDetails";
 import QuestionForm from "./QuestionForm";
 import { useFetchOrganization } from "@/data/organization/organization.hook";
 
-const Test = ({ testID }) => {
+interface Subject {
+  id: string;
+  name: string;
+  subjectname: string;
+  subjectduration: number;
+  questions: any[];
+}
+
+interface Test {
+  id: string;
+  testSubject: Subject[];
+  [key: string]: any;
+}
+
+interface TestProps {
+  testID: string;
+}
+
+const Test: React.FC<TestProps> = ({ testID }) => {
   const { data: OrganizationData } = useFetchOrganization();
-  const [test, setTest] = useState(null);
-  const [currentSubject, setCurrentSubject] = useState(null);
+  const [test, setTest] = useState<Test | null>(null);
+  const [currentSubject, setCurrentSubject] = useState<Subject | null>(null);
 
   const fetchTest = async () => {
     try {
@@ -27,19 +45,19 @@ const Test = ({ testID }) => {
   };
 
   useEffect(() => {
-    if (testID && OrganizationData.id) fetchTest();
-  }, [testID, OrganizationData.id]);
+    if (testID && OrganizationData?.id) fetchTest();
+  }, [testID, OrganizationData?.id]);
 
   return (
     <>
-      {Object.keys.length === 0 ? (
+      {!test ? (
         <div className="card p-3">No test available</div>
       ) : (
         <div className="row mt-5">
           <div className="col-12 col-md-4">
             {/* The test details Card */}
             <div className="card p-3">
-              <h6 className="mb-1">{OrganizationData.name}</h6>
+              <h6 className="mb-1">{OrganizationData?.name}</h6>
               <hr />
               <div className="d-flex">
                 <div
@@ -56,12 +74,14 @@ const Test = ({ testID }) => {
             </div>
             {/* The test Subjects details */}
             <div className="mt-2">
-              <SubjectDetails
-                test={test}
-                setTest={setTest}
-                subjects={test?.testSubject}
-                setCurrentSubject={setCurrentSubject}
-              />
+              {test && (
+                <SubjectDetails
+                  test={test as any}
+                  setTest={setTest as any}
+                  subjects={test.testSubject || []}
+                  setCurrentSubject={setCurrentSubject as any}
+                />
+              )}
             </div>
           </div>
           <div className="col-12 col-md-8">
@@ -72,12 +92,14 @@ const Test = ({ testID }) => {
             </h4>
             {/* The QuestionForm */}
             <div>
-              <QuestionForm
-                test={test}
-                setTest={setTest}
-                currentSubject={currentSubject}
-                setCurrentSubject={setCurrentSubject}
-              />
+              {test && currentSubject && (
+                <QuestionForm
+                  test={test as any}
+                  setTest={setTest as any}
+                  currentSubject={currentSubject as any}
+                  setCurrentSubject={setCurrentSubject as any}
+                />
+              )}
             </div>
           </div>
         </div>

@@ -3,10 +3,24 @@ import ServicesPlaceholder from "@/components/custom/ImagePlaceholders/ServicesP
 import ApplicationPlaceholder from "@/components/custom/ImagePlaceholders/ApplicationPlaceholder";
 import Link from "next/link";
 
-/**
- * @param {{ item: Service; tab: any; onEdit: any; onDelete: any; openModal: any; }} param0
- */
-const ServiceCard = ({ item, tab, onEdit, onDelete, openModal }) => (
+interface Service {
+  id: string;
+  name: string;
+  img_url?: string;
+  price: number;
+  description?: string;
+  [key: string]: any;
+}
+
+interface ServiceCardProps {
+  item: Service;
+  tab: string;
+  onEdit: (item: Service) => void;
+  onDelete: (item: Service) => void;
+  openModal: (item: Service) => void;
+}
+
+const ServiceCard: React.FC<ServiceCardProps> = ({ item, tab, onEdit, onDelete, openModal }) => (
   <div className="col-12 col-md-4">
     <div className="card p-3 py-4">
       <div className="d-flex justify-content-center align-items-center">
@@ -38,7 +52,7 @@ const ServiceCard = ({ item, tab, onEdit, onDelete, openModal }) => (
         <div className="flex-fill py-2">
           <h6>{item.name}</h6>
           <p className="text-primary mb-1">
-            {item.description.length > 80 ? (
+            {item.description && item.description.length > 80 ? (
               <span className="text-primary">
                 {item.description.substring(0, 80)}...{" "}
                 {/* <span
@@ -63,7 +77,7 @@ const ServiceCard = ({ item, tab, onEdit, onDelete, openModal }) => (
 
           <div className="d-flex align-items-center justify-content-between mt-3">
             <span className="fw-bold text-primary">
-              &#8358;{parseFloat(item.price)}
+              &#8358;{item.price.toFixed(2)}
             </span>
             <div>
               <button

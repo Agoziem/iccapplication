@@ -1,10 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, ChangeEvent } from "react";
 import { BsCalculator } from "react-icons/bs";
 import { TiTimes } from "react-icons/ti";
 import { v4 as uuidv4 } from "uuid";
 
-const CGPA = () => {
-  const [courses, setCourses] = useState([
+interface Course {
+  _id: string;
+  CourseCode: string;
+  CreditUnit: string;
+  Grade: string;
+}
+
+const CGPA: React.FC = () => {
+  const [courses, setCourses] = useState<Course[]>([
     {
       _id: uuidv4(),
       CourseCode: "",
@@ -12,9 +19,9 @@ const CGPA = () => {
       Grade: "",
     },
   ]);
-  const [cgpa, setCGPA] = useState(0);
+  const [cgpa, setCGPA] = useState<number>(0);
 
-  const handleChange = (e, id) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>, id: string) => {
     const { name, value } = e.target;
     setCourses((prev) => {
       return prev.map((course) => {
@@ -54,7 +61,7 @@ const CGPA = () => {
     });
 
     const cgpa = totalGradePoint / totalCreditUnit;
-    setCGPA(cgpa.toFixed(3));
+    setCGPA(Number(cgpa.toFixed(3)));
   };
 
   //   ----------------------------------

@@ -1,7 +1,13 @@
 import React from "react";
 import { MdOutlineArticle } from "react-icons/md";
 
-const ArticlePlaceholder = ({
+interface ArticlePlaceholderProps {
+  width?: number;
+  height?: number;
+  fontSize?: string;
+}
+
+const ArticlePlaceholder: React.FC<ArticlePlaceholderProps> = ({
   width = 90,
   height = 90,
   fontSize = "2rem",
@@ -15,8 +21,8 @@ const ArticlePlaceholder = ({
         fontSize: fontSize,
         backgroundColor: "var(--bgDarkColor)",
         color: "var(--bgDarkerColor)",
-        flexShrink: 0, // Prevents shrinking
-        overflow: "hidden", // Ensures content fits within the container
+        flexShrink: 0,
+        overflow: "hidden",
       }}
     >
       <MdOutlineArticle />

@@ -2,20 +2,53 @@ import React, { useState } from "react";
 import Modal from "@/components/custom/Modal/modal";
 import Alert from "@/components/custom/Alert/Alert";
 
-const SubjectDetails = ({ test, setTest, subjects, setCurrentSubject }) => {
-  const [alert, setAlert] = useState({
+type AlertType = "success" | "danger" | "warning" | "info";
+
+interface AlertState {
+  show: boolean;
+  message: string;
+  type: AlertType;
+}
+
+interface Subject {
+  id: string;
+  subjectname: string;
+  subjectduration: number;
+  questions: any[];
+}
+
+interface Test {
+  id: string;
+  testSubject: Subject[];
+  [key: string]: any;
+}
+
+interface SubjectToDelete {
+  id: string;
+  subjectname: string;
+}
+
+interface SubjectDetailsProps {
+  test: Test;
+  setTest: (value: Test) => void;
+  subjects: Subject[];
+  setCurrentSubject: (value: Subject) => void;
+}
+
+const SubjectDetails: React.FC<SubjectDetailsProps> = ({ test, setTest, subjects, setCurrentSubject }) => {
+  const [alert, setAlert] = useState<AlertState>({
     show: false,
     message: "",
-    type: "",
+    type: "info",
   });
-  const [showModal, setShowModal] = useState(false);
-  const [subjectToDelete, setSubjectToDelete] = useState({
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [subjectToDelete, setSubjectToDelete] = useState<SubjectToDelete>({
     id: "",
     subjectname: "",
   });
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [subjectToEdit, setSubjectToEdit] = useState({
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [editMode, setEditMode] = useState<boolean>(false);
+  const [subjectToEdit, setSubjectToEdit] = useState<Subject>({
     id: "",
     subjectname: "",
     subjectduration: 0,
@@ -23,7 +56,7 @@ const SubjectDetails = ({ test, setTest, subjects, setCurrentSubject }) => {
   });
 
 //   delete subject
-  const deleteSubject = async (id) => {
+  const deleteSubject = async (id: string): Promise<void> => {
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/CBTapi/deletesubject/${id}`,
@@ -52,16 +85,19 @@ const SubjectDetails = ({ test, setTest, subjects, setCurrentSubject }) => {
       });
     } finally {
       toggleModal(false);
-      setCurrentSubject(test.testSubject.length > 0 ? test.testSubject[0] : {});
+      const remainingSubjects = test.testSubject.filter((subject) => subject.id !== id);
+      if (remainingSubjects.length > 0) {
+        setCurrentSubject(remainingSubjects[0]);
+      }
       setTimeout(() => {
-        setAlert({ show: false, message: "", type: "" });
+        setAlert({ show: false, message: "", type: "info" });
       }, 3000);
     }
   };
 
 
 //   toggle modal
-  const toggleModal = (show) => {
+  const toggleModal = (show: boolean): void => {
     setShowDeleteModal(show);
     setShowModal(show);
     setEditMode(false);
@@ -79,7 +115,7 @@ const SubjectDetails = ({ test, setTest, subjects, setCurrentSubject }) => {
 
 
 //   add or update subject
-  const addorUpdateSubject = async (e, url) => {
+  const addorUpdateSubject = async (e: React.FormEvent, url: string): Promise<void> => {
     e.preventDefault();
     try {
       const response = await fetch(url, {
@@ -125,7 +161,7 @@ const SubjectDetails = ({ test, setTest, subjects, setCurrentSubject }) => {
     } finally {
       toggleModal(false);
       setTimeout(() => {
-        setAlert({ show: false, message: "", type: "" });
+        setAlert({ show: false, message: "", type: "info" });
       }, 3000);
     }
   };
@@ -173,7 +209,7 @@ const SubjectDetails = ({ test, setTest, subjects, setCurrentSubject }) => {
                     setSubjectToEdit({
                       id: subject.id,
                       subjectname: subject.subjectname,
-                      subjectduration: parseInt(subject.subjectduration),
+                      subjectduration: subject.subjectduration,
                       questions: subject.questions,
                     });
                     setEditMode(true);

@@ -9,7 +9,7 @@ import { useMemo, useState } from "react";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
 import { useFetchVideos } from "@/data/videos/video.hook";
 
-const UserVideos = () => {
+const UserVideos: React.FC = () => {
   const { data: session } = useSession();
   const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
   const router = useRouter();
@@ -17,7 +17,7 @@ const UserVideos = () => {
   const currentCategory = searchParams.get("category") || "All";
   const page = searchParams.get("page") || "1";
   const pageSize = "10";
-  const [searchQuery, setSearchQuery] = useState(""); // State for search input
+  const [searchQuery, setSearchQuery] = useState<string>(""); // State for search input
 
   const {
     data: videos,
@@ -26,14 +26,14 @@ const UserVideos = () => {
   } = useFetchVideos(
     session?.user.id
       ? `${vidoesapiAPIendpoint}/userboughtvideos/${Organizationid}/${session?.user.id}/?category=${currentCategory}&page=${page}&page_size=${pageSize}`
-      : null
+      : ""
   );
 
   // -----------------------------------------
   // Handle page change
   // -----------------------------------------
   /**  @param {string} newPage */
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     router.push(
       `?category=${currentCategory}&page=${newPage}&page_size=${pageSize}`,
       {
@@ -46,7 +46,7 @@ const UserVideos = () => {
   // Handle category change
   // -------------------------------
   /**  @param {string} category */
-  const handleCategoryChange = (category) => {
+  const handleCategoryChange = (category: string) => {
     router.push(`?category=${category}&page=${page}&page_size=${pageSize}`, {
       scroll: false,
     });
@@ -68,7 +68,7 @@ const UserVideos = () => {
         <div>
           <h4 className="mt-3">Videos Purchased</h4>
           <p>
-            {videos?.count} Video{videos?.count > 1 ? "s" : ""} purchased
+            {videos?.count || 0} Video{(videos?.count || 0) > 1 ? "s" : ""} purchased
           </p>
         </div>
         <div className="mb-4 mb-md-0">
@@ -90,7 +90,7 @@ const UserVideos = () => {
                   <div className="me-3">
                     {video.thumbnail ? (
                       <img
-                        src={video.img_url}
+                        src={video.img_url || ""}
                         alt="video"
                         width={68}
                         height={68}

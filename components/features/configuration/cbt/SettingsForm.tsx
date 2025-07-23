@@ -6,34 +6,67 @@ import Alert from "@/components/custom/Alert/Alert";
 import { useRouter } from "next/navigation";
 import { useFetchOrganization } from "@/data/organization/organization.hook";
 
-const SettingsForm = () => {
+type AlertType = "success" | "danger" | "warning" | "info";
+
+interface AlertState {
+  show: boolean;
+  message: string;
+  type: AlertType;
+}
+
+interface Test {
+  id: string;
+  year: string;
+  textType: string;
+  subjects: string[];
+}
+
+interface FetchedTest {
+  id: string;
+  name: string;
+  testYear: {
+    year: string;
+  };
+  texttype: {
+    testtype: string;
+  };
+  testSubject: Array<{
+    subjectname: string;
+  }>;
+}
+
+interface TestToDelete {
+  id: string;
+  year: string;
+  textType: string;
+}
+
+const SettingsForm: React.FC = () => {
   const router = useRouter();
   const { data: OrganizationData } = useFetchOrganization();
-  const [tests, setTests] = useState([]);
-  const [loadingTests, setLoadingTests] = useState(false);
-  const [test, setTest] = useState({
+  const [tests, setTests] = useState<FetchedTest[]>([]);
+  const [loadingTests, setLoadingTests] = useState<boolean>(false);
+  const [test, setTest] = useState<Test>({
+    id: "",
     year: "",
     textType: "",
     subjects: [],
   });
-  const [subject, setSubject] = useState("");
-  const [alert, setAlert] = useState({
+  const [subject, setSubject] = useState<string>("");
+  const [alert, setAlert] = useState<AlertState>({
     show: false,
     message: "",
-    type: "",
+    type: "info",
   });
-  const [showModal, setShowModal] = useState(false);
-  const [testtoDelete, setTesttoDelete] = useState({
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [testtoDelete, setTesttoDelete] = useState<TestToDelete>({
     id: "",
     year: "",
     textType: "",
   });
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting, setSubmitting] = useState<boolean>(false);
 
-  // ----------------------------------
-  //   Delete test
-  // ----------------------------------
-  const deleteTest = async (testId) => {
+  const deleteTest = async (testId: string): Promise<void> => {
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/CBTapi/deletetest/${testId}`,
@@ -58,7 +91,7 @@ const SettingsForm = () => {
       });
     } finally {
       setTimeout(() => {
-        setAlert({ show: false, message: "", type: "" });
+        setAlert({ show: false, message: "", type: "info" });
       }, 3000);
       closeModal();
     }
@@ -101,7 +134,7 @@ const SettingsForm = () => {
   // ----------------------------------
   // Add test
   // ----------------------------------
-  const addTest = async (e) => {
+  const addTest = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault();
     setSubmitting(true);
     try {
@@ -127,6 +160,7 @@ const SettingsForm = () => {
           type: "success",
         });
         setTest({
+          id: "",
           year: "",
           textType: "",
           subjects: [],
@@ -150,12 +184,13 @@ const SettingsForm = () => {
     } finally {
       setSubmitting(false);
       setTest({
+        id: "",
         year: "",
         textType: "",
         subjects: [],
       });
       setTimeout(() => {
-        setAlert({ show: false, message: "", type: "" });
+        setAlert({ show: false, message: "", type: "info" });
       }, 3000);
     }
   };
@@ -255,6 +290,7 @@ const SettingsForm = () => {
                   className="btn btn-accent-secondary rounded me-2"
                   onClick={() => {
                     setTest({
+                      id: "",
                       year: "",
                       textType: "",
                       subjects: [],
@@ -288,7 +324,7 @@ const SettingsForm = () => {
         <div>
           {tests.length > 0 ? (
             <div>
-              {tests.map((test, index) => (
+              {tests.map((fetchedTest, index) => (
                 <div
                   key={index}
                   className={`card p-4 ps-md-4 mt-3 ${
@@ -296,16 +332,16 @@ const SettingsForm = () => {
                   }`}
                 >
                   <h6>
-                    {test.name} {test.testYear.year} - {test.texttype.testtype}
+                    {fetchedTest.name} {fetchedTest.testYear.year} - {fetchedTest.texttype.testtype}
                   </h6>
                   <div className="mb-3">
                     <p className="fw-bold text-primary mb-0">Subjects</p>
                     <div>
-                      {test.testSubject.map((subject, index) => (
+                      {fetchedTest.testSubject.map((subject, index: number) => (
                         <div
                           key={index}
                           className={`badge bg-secondary-light text-secondary mt-2 p-2 px-3 ${
-                            test.testSubject.length === index + 1 ? "" : "me-2"
+                            fetchedTest.testSubject.length === index + 1 ? "" : "me-2"
                           }`}
                         >
                           {subject.subjectname}
@@ -318,7 +354,7 @@ const SettingsForm = () => {
                       className="btn btn-sm btn-accent-primary me-3 px-3 py-1 rounded"
                       onClick={() => {
                         router.push(
-                          `/dashboard/configuration/cbt/${test.id}/questions`
+                          `/dashboard/configuration/cbt/${fetchedTest.id}/questions`
                         );
                       }}
                     >
@@ -328,9 +364,9 @@ const SettingsForm = () => {
                       className="btn btn-sm btn-danger me-2 px-3 py-1 rounded"
                       onClick={() => {
                         setTesttoDelete({
-                          id: test.id,
-                          year: test.testYear.year,
-                          textType: test.texttype.testtype,
+                          id: fetchedTest.id,
+                          year: fetchedTest.testYear.year,
+                          textType: fetchedTest.texttype.testtype,
                         });
                         setShowModal(true);
                       }}

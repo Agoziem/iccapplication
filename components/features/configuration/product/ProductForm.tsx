@@ -3,11 +3,33 @@ import FileUploader from "@/components/custom/Fileuploader/FileUploader";
 import { productsAPIendpoint } from "@/data/product/fetcher";
 import { PulseLoader } from "react-spinners";
 import { useFetchSubCategories } from "@/data/categories/categories.hook";
+import React from "react";
 
-/**
- * @param {{ product: Product; setProduct: (value:Product) => void; handleSubmit: any; addorupdate: any; categories: Categories;isSubmitting:boolean; }} param0
- */
-const ProductForm = ({
+interface Product {
+  id?: number;
+  name: string;
+  price: number;
+  description?: string;
+  category: any;
+  subcategory?: any;
+  [key: string]: any;
+}
+
+interface AddOrUpdateMode {
+  mode: "add" | "edit";
+  state: boolean;
+}
+
+interface ProductFormProps {
+  product: Product;
+  setProduct: (value: Product | Record<string, any>) => void;
+  handleSubmit: (e: React.FormEvent) => void;
+  addorupdate: AddOrUpdateMode;
+  categories: any[];
+  isSubmitting: boolean;
+}
+
+const ProductForm: React.FC<ProductFormProps> = ({
   product,
   setProduct,
   handleSubmit,
@@ -23,7 +45,7 @@ const ProductForm = ({
   // ------------------------------
   // Handle category change
   // -------------------------------
-  const handleCategoryChange = (e) => {
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedCategory = productcategories?.find(
       (category) => category.category === e.target.value
     );
@@ -33,7 +55,7 @@ const ProductForm = ({
   // - -------------------------------
   // Handle subcategory change
   //  -------------------------------
-  const handleSubCategoryChange = (e) => {
+  const handleSubCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedSubCategory = subcategories?.find(
       (subcategory) => subcategory.subcategory === e.target.value
     );
@@ -109,7 +131,7 @@ const ProductForm = ({
             id="price"
             name="price"
             value={product.price}
-            onChange={(e) => setProduct({ ...product, price: e.target.value })}
+            onChange={(e) => setProduct({ ...product, price: parseFloat(e.target.value) || 0 })}
             required
           />
         </div>

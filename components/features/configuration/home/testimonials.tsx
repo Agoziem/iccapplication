@@ -15,18 +15,24 @@ import {
   useUpdateTestimonial,
 } from "@/data/organization/organization.hook";
 import toast from "react-hot-toast";
+import { Testimony } from "@/types/organizations";
 
-const Testimonials = () => {
+interface AddOrUpdateMode {
+  type: "add" | "update";
+  state: boolean;
+}
+
+const Testimonials: React.FC = () => {
   const OrganizationID = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
-  const [showModal, setShowModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [testimonial, setTestimonial] = useState(testimonialDefault);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [testimonial, setTestimonial] = useState<Testimony>(testimonialDefault);
   const router = useRouter();
   const searchParams = useSearchParams();
   const page = searchParams.get("page") || "1";
   const pageSize = "10";
 
-  const [addorupdate, setAddOrUpdate] = useState({
+  const [addorupdate, setAddOrUpdate] = useState<AddOrUpdateMode>({
     type: "add",
     state: false,
   });
@@ -38,18 +44,17 @@ const Testimonials = () => {
     );
 
   // Handle page change
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     router.push(`?page=${newPage}&page_size=${pageSize}`);
   };
 
-  // -------------------------------------------------------------
   // Function to handle form submission
-  // -------------------------------------------------------------
+  const { mutateAsync: createTestimonial, isLoading: isCreating } =
+    useCreateTestimonial();
+  const { mutateAsync: updateTestimonial, isLoading: isUpdating } =
+    useUpdateTestimonial();
 
-  const { mutateAsync: createTestimonial , isLoading: isCreating } = useCreateTestimonial();
-  const { mutateAsync: updateTestimonial, isLoading: isUpdating } = useUpdateTestimonial();
-
-  const handleFormSubmit = async (formData) => {
+  const handleFormSubmit = async (formData: Partial<Testimony>) => {
     try {
       if (addorupdate.type === "add") {
         await createTestimonial(formData);
@@ -57,18 +62,15 @@ const Testimonials = () => {
         await updateTestimonial(formData);
       }
       toast.success("Testimonial added successfully");
-    } catch (error) {
-      console.log(error.message);
+    } catch (error: unknown) {
+      console.log(error instanceof Error ? error.message : "Unknown error");
       toast.error("Error adding testimonial");
     } finally {
       closeModal();
     }
   };
 
-  // -------------------------------------------------------------
   // Function to close the modal
-  // -------------------------------------------------------------
-
   const closeModal = () => {
     setShowModal(false);
     setAddOrUpdate({
@@ -78,19 +80,14 @@ const Testimonials = () => {
     setTestimonial(testimonialDefault);
   };
 
-  // -------------------------------------------------------------
   // Function to delete a testimonial
-  // -------------------------------------------------------------
-  /**
-   * @async
-   * @param {number} id
-   */
-  const { mutateAsync: deleteTestimonial,isLoading: isDeleting } = useDeleteTestimonial();
-  const deletetestimonial = async (id) => {
+  const { mutateAsync: deleteTestimonial, isLoading: isDeleting } =
+    useDeleteTestimonial();
+  const deletetestimonial = async (id: number) => {
     try {
       await deleteTestimonial(id);
       toast.success("Testimonial deleted successfully");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error deleting testimonial data:", error);
       toast.error("An error occured while deleting testimonial");
     } finally {
@@ -119,8 +116,8 @@ const Testimonials = () => {
         </div>
         <div>
           <h4 className="mb-1">
-            {testimonials?.count} Testimonial
-            {testimonials?.count > 1 ? "s" : ""}
+            {testimonials?.count ?? 0} Testimonial
+            {(testimonials?.count ?? 0) > 1 ? "s" : ""}
           </h4>
           <p>in total</p>
         </div>
@@ -167,7 +164,7 @@ const Testimonials = () => {
                   <div className="ms-3">
                     <h6 className="mb-1">{testimonial.name}</h6>
                     <p className="my-0 small">{testimonial.role}</p>
-                    <StarRating rating={testimonial.rating} />
+                    <StarRating rating={testimonial.rating ?? 0} />
                   </div>
                 </div>
                 <div className="d-flex flex-wrap justify-content-between align-items-center mt-3">
@@ -223,8 +220,8 @@ const Testimonials = () => {
           {addorupdate.state ? (
             <TestimonialForm
               addorupdate={addorupdate}
-              testimonial={testimonial}
-              setTestimonial={setTestimonial}
+              testimonial={testimonial as any}
+              setTestimonial={setTestimonial as any}
               onSubmit={handleFormSubmit}
               onClose={closeModal}
               loading={isCreating || isUpdating}
@@ -243,7 +240,9 @@ const Testimonials = () => {
             <button
               className="btn btn-accent-secondary border-0 text-secondary mt-3 rounded"
               onClick={() => {
-                deletetestimonial(testimonial.id);
+                if (testimonial.id) {
+                  deletetestimonial(testimonial.id);
+                }
               }}
               disabled={isDeleting}
             >
@@ -251,7 +250,9 @@ const Testimonials = () => {
                 <div className="spinner-border text-secondary" role="status">
                   <span className="visually-hidden">Loading...</span>
                 </div>
-              ) : "Delete"}
+              ) : (
+                "Delete"
+              )}
             </button>
           </div>
         </div>

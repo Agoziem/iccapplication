@@ -5,7 +5,12 @@ import { converttoformData } from "@/utils/formutils";
 import { userDefault } from "@/constants";
 import { authAPIendpoint, updateUser } from "@/data/users/fetcher";
 
-const ProfileForm = ({ setAlert, setEditMode }) => {
+interface ProfileFormProps {
+  setAlert: (alert: { show: boolean; message: string; type: string }) => void;
+  setEditMode: (editMode: boolean) => void;
+}
+
+const ProfileForm: React.FC<ProfileFormProps> = ({ setAlert, setEditMode }) => {
   const { data: session } = useSession();
   const [formData, setFormData] = useState(userDefault);
 
@@ -23,9 +28,8 @@ const ProfileForm = ({ setAlert, setEditMode }) => {
 
   // /
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // const modifiedformData = converttoformData(formData);
     if (session) {
       try {
         await updateUser(

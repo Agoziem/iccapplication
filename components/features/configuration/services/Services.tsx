@@ -1,10 +1,5 @@
 "use client";
-import React, {
-  useEffect,
-  useMemo,
-  useState,
-  useTransition,
-} from "react";
+import React, { useEffect, useMemo, useState, useTransition } from "react";
 import { useAdminContext } from "@/data/payments/Admincontextdata";
 import Modal from "@/components/custom/Modal/modal";
 import Alert from "@/components/custom/Alert/Alert";
@@ -30,8 +25,14 @@ import SearchInput from "@/components/custom/Inputs/SearchInput";
 import { PulseLoader } from "react-spinners";
 import { useFetchOrganization } from "@/data/organization/organization.hook";
 import { useFetchCategories } from "@/data/categories/categories.hook";
-import { useCreateService, useDeleteService, useFetchServices, useUpdateService } from "@/data/services/service.hook";
+import {
+  useCreateService,
+  useDeleteService,
+  useFetchServices,
+  useUpdateService,
+} from "@/data/services/service.hook";
 import toast from "react-hot-toast";
+import { Categories } from "@/types/categories";
 
 const Services = () => {
   const { openModal } = useAdminContext();
@@ -46,7 +47,7 @@ const Services = () => {
   const currentCategory = searchParams.get("category") || "All";
   const page = searchParams.get("page") || "1";
   const pageSize = "10";
-  const [allCategories, setAllCategories] = useState([]);
+  const [allCategories, setAllCategories] = useState<Categories>([]);
   const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
   const [searchQuery, setSearchQuery] = useState(""); // State for search input
   const [isdeleting, startDeletion] = useTransition();
@@ -74,13 +75,14 @@ const Services = () => {
     data: services,
     isLoading: loadingServices,
     error: error,
-  } = useFetchServices(`${servicesAPIendpoint}/services/${Organizationid}/?category=${currentCategory}&page=${page}&page_size=${pageSize}`)
+  } = useFetchServices(
+    `${servicesAPIendpoint}/services/${Organizationid}/?category=${currentCategory}&page=${page}&page_size=${pageSize}`
+  );
 
   // -----------------------------------------
   // Handle page change
   // -----------------------------------------
-  /**  @param {string} newPage */
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: string): void => {
     router.push(
       `?category=${currentCategory}&page=${newPage}&page_size=${pageSize}`,
       {
@@ -92,8 +94,7 @@ const Services = () => {
   // -------------------------------
   // Handle category change
   // -------------------------------
-  /**  @param {string} category */
-  const handleCategoryChange = (category) => {
+  const handleCategoryChange = (category: string): void => {
     router.push(`?category=${category}&page=${page}&page_size=${pageSize}`, {
       scroll: false,
     });
@@ -125,10 +126,15 @@ const Services = () => {
   const { mutateAsync: createService } = useCreateService();
   const { mutateAsync: updateService } = useUpdateService();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
+
     startTransition(async () => {
       const { organization, category, subcategory, ...restData } = service;
+      if (!OrganizationData || !category) {
+        toast.error("Organization data is not available");
+        return;
+      }
       const servicetosubmit = {
         ...restData,
         organization: Organizationid,
@@ -146,12 +152,20 @@ const Services = () => {
         } else {
           await updateService(servicetosubmit);
         }
-       toast.success(
-          `Service ${addorupdate.mode === "add" ? "created" : "updated"} successfully`
-       );
+        toast.success(
+          `Service ${
+            addorupdate.mode === "add" ? "created" : "updated"
+          } successfully`
+        );
       } catch (error) {
-        console.log(error.message);
-        toast.error(`Error ${addorupdate.mode === "add" ? "creating" : "updating"} Service`);
+        console.log(
+          error instanceof Error ? error.message : "An error occurred"
+        );
+        toast.error(
+          `Error ${
+            addorupdate.mode === "add" ? "creating" : "updating"
+          } Service`
+        );
       } finally {
         closeModal();
       }
@@ -162,18 +176,16 @@ const Services = () => {
   // Delete a service
   //----------------------------------------------------
 
-  const {mutateAsync: deleteService} = useDeleteService();
-  /**
-   * @async
-   * @param {number} id
-   */
-  const handleDelete = async (id) => {
+  const { mutateAsync: deleteService } = useDeleteService();
+  const handleDelete = async (id: number): Promise<void> => {
     startDeletion(async () => {
       try {
         await deleteService(id);
         toast.success("Service deleted successfully");
-      } catch (error) {
-        console.log(error.message);
+      } catch (error: unknown) {
+        console.log(
+          error instanceof Error ? error.message : "An error occurred"
+        );
         toast.error("Error deleting Service");
       } finally {
         closeModal();
@@ -184,7 +196,7 @@ const Services = () => {
   // ----------------------------------------------------
   // Edit a service
   // ----------------------------------------------------
-  const handleEdit = (service) => {
+  const handleEdit = (service: any): void => {
     setService(service);
     setAddorupdate({ mode: "update", state: true });
     setShowModal(true);
@@ -193,7 +205,7 @@ const Services = () => {
   // ----------------------------------------------------
   // Delete a service
   // ----------------------------------------------------
-  const handleDeleteConfirm = (service) => {
+  const handleDeleteConfirm = (service: any): void => {
     setService(service);
     setShowModal2(true);
   };
@@ -262,7 +274,7 @@ const Services = () => {
         <div>
           <h5 className="mb-1">{currentCategory} Services</h5>
           <p className="mb-0 text-primary">
-            {services?.count} Service{services?.count > 1 ? "s" : ""} in Total
+            {services?.count} Service{services && services?.count > 1 ? "s" : ""} in Total
           </p>
         </div>
 

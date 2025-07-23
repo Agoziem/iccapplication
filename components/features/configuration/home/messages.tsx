@@ -8,12 +8,29 @@ import Pagination from "@/components/custom/Pagination/Pagination";
 import { useDeleteEmail, useFetchEmails } from "@/data/Emails/emails.hook";
 import toast from "react-hot-toast";
 
-const Messages = () => {
+interface Message {
+  id?: number;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  [key: string]: any;
+}
+
+interface Reply {
+  name: string;
+  sending_email: string;
+  recieving_email: string;
+  subject: string;
+  message: string;
+}
+
+const Messages: React.FC = () => {
   const OrganizationID = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
-  const [showModal, setShowModal] = useState(false);
-  const [deleteMode, setDeleteMode] = useState(false);
-  const [message, setMessage] = useState(messageDefault);
-  const [reply, setReply] = useState({
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [deleteMode, setDeleteMode] = useState<boolean>(false);
+  const [message, setMessage] = useState<Message>(messageDefault);
+  const [reply, setReply] = useState<Reply>({
     name: "",
     sending_email: "",
     recieving_email: "",
@@ -28,20 +45,16 @@ const Messages = () => {
   const { data: messages, isLoading: loadingMessages } = useFetchEmails();
 
   // Handle page change
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     router.push(`?page=${newPage}&page_size=${pageSize}`);
   };
 
   const { mutateAsync: deleteEmail, isLoading: isDeleting } = useDeleteEmail();
-  /**
-   * @async
-   * @param {number} id
-   */
-  const removeMessage = async (id) => {
+  const removeMessage = async (id: number) => {
     try {
       await deleteEmail(id);
       toast.success("Message Deleted Successfully");
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       toast.error("Error Deleting Message");
     } finally {
@@ -63,7 +76,7 @@ const Messages = () => {
   };
 
   // send a reply to a message
-  const replyToMessage = async (e) => {
+  const replyToMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       console.log(reply);
@@ -96,11 +109,11 @@ const Messages = () => {
     <div className="px-1 px-md-4">
       <div>
         <h4 className="mb-1">
-          {messages?.count} Message{messages?.count > 1 ? "s" : ""}
+          {messages?.count || 0} Message{(messages?.count || 0) > 1 ? "s" : ""}
         </h4>
         <p>in total</p>
       </div>
-      {messages?.results?.length > 0 ? (
+      {messages?.results && messages.results.length > 0 ? (
         messages?.results?.map((message) => (
           <div key={message.id} className="card my-3 p-3">
             <div className="card-body">
@@ -261,7 +274,7 @@ const Messages = () => {
               <button
                 className="btn btn-sm btn-danger rounded px-3 me-3"
                 onClick={() => {
-                  removeMessage(message.id);
+                  message.id && removeMessage(message.id);
                 }}
                 disabled={isDeleting}
               >

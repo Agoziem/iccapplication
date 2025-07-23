@@ -1,6 +1,13 @@
 import React, { useEffect } from "react";
+import { ArticleCategory } from "@/types/articles";
 
-const CategoryTabs = ({
+interface CategoryTabsProps {
+  categories: ArticleCategory[];
+  currentCategory: string;
+  setCurrentCategory: (category: string) => void;
+}
+
+const CategoryTabs: React.FC<CategoryTabsProps> = ({
   categories,
   currentCategory,
   setCurrentCategory,
@@ -8,7 +15,7 @@ const CategoryTabs = ({
   return (
     <div>
       {categories?.length > 0 &&
-        categories?.map((category) => (
+        categories?.map((category: ArticleCategory) => (
           <div
             key={category.id}
             className={`badge rounded-5 px-4 py-2 me-2 mb-2`}

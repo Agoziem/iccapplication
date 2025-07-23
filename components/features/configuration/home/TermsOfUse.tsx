@@ -3,28 +3,28 @@ import React, { useEffect, useState } from "react";
 import { OrganizationDefault } from "@/constants";
 import { useUpdateOrganization } from "@/data/organization/organization.hook";
 import toast from "react-hot-toast";
+import { Organization } from "@/types/organizations";
 
+interface TermsOfUseProps {
+  OrganizationData: Organization;
+}
 
-/**
- * @param {{ OrganizationData: Organization }} param0
- */
-const TermsOfUse = ({ OrganizationData }) => {
-  const [organizationdata,setOrganizationData] = useState(OrganizationDefault)
-
+const TermsOfUse: React.FC<TermsOfUseProps> = ({ OrganizationData }) => {
+  const [organizationdata,setOrganizationData] = useState<Organization>(OrganizationDefault);
 
   useEffect(() => {
     if (OrganizationData?.id) {
-      setOrganizationData(OrganizationData);
+      setOrganizationData(OrganizationData as any);
     }
   }, [OrganizationData]);
 
   const { mutateAsync } = useUpdateOrganization();
-  const editTermsOfUse = async (e) => {
+  const editTermsOfUse = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await mutateAsync(organizationdata)
       toast.success("Terms of Use Updated Successfully")
-    } catch (error) {
+    } catch (error: any) {
       console.log(error.message)
       toast.error("Error Updating Terms of Use")
     }

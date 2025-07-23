@@ -10,50 +10,60 @@ import {
   useUpdateSubCategory,
 } from "@/data/categories/categories.hook";
 
-//     "category": {
-//       "id": 2,
-//       "category": "PostUTME",
-//       "description": "This is a Postutme Video"
-//     },
-//     "subcategory": {
-//       "id": 4,
-//       "category": {
-//         "id": 2,
-//         "category": "PostUTME",
-//         "description": "This is a Postutme Video"
-//       },
-//       "subcategory": "Physical Science"
-//     },
+interface Category {
+  id: number;
+  category: string;
+  description: string;
+}
 
-const SubCategoriesForm = ({
+interface SubCategory {
+  id?: number;
+  subcategory: string;
+  category: number;
+}
+
+interface AlertState {
+  show: boolean;
+  message: string;
+  type: string;
+}
+
+interface SubCategoriesFormProps {
+  categories: Category[];
+  apiendpoint: string;
+  addUrl: string;
+  updateUrl: string;
+  deleteUrl: string;
+}
+
+const SubCategoriesForm: React.FC<SubCategoriesFormProps> = ({
   categories, // array of categories
   apiendpoint,
   addUrl,
   updateUrl,
   deleteUrl,
 }) => {
-  /** @type {[Category,(value:Category) => void]} */
-  const [currentCategory, setCurrentCategory] = useState(null);
-  const [item, setItem] = useState(SubCategorydefault);
-  const [edit, setEdit] = useState(false);
-  const [alert, setAlert] = useState({
+  const [currentCategory, setCurrentCategory] = useState<Category | null>(null);
+  const [item, setItem] = useState<SubCategory>(SubCategorydefault as any);
+  const [edit, setEdit] = useState<boolean>(false);
+  const [alert, setAlert] = useState<AlertState>({
     show: false,
     message: "",
     type: "",
   });
-  const [modal, setModal] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [modal, setModal] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const { data: subcategories, isLoading: loadingsubcategories } =
     useFetchSubCategories(
       `${apiendpoint}/subcategories/${currentCategory?.id}/`,
-      currentCategory?.id
+      currentCategory?.id || 0
     );
   //   -----------------------------------------
   // close modal
   //   -----------------------------------------
-  const closeModal = () => {
-    setItem(null);
+  const closeModal = (): void => {
+    setItem(SubCategorydefault as any);
     setModal(false);
   };
 
@@ -62,14 +72,14 @@ const SubCategoriesForm = ({
   //   -----------------------------------------
   const { mutateAsync: createSubCategory } = useCreateSubCategory();
   const { mutateAsync: updateSubCategory } = useUpdateSubCategory();
-  const handleItem = async (e, url) => {
+  const handleItem = async (e: React.FormEvent, url: string): Promise<void> => {
     e.preventDefault();
     try {
       if (edit) {
-        await updateSubCategory(item);
+        await updateSubCategory(item as any);
       } else {
-        await createSubCategory(item);
-        setItem({ id: null, subcategory: "", category: null });
+        await createSubCategory(item as any);
+        setItem({ id: null, subcategory: "", category: null } as any);
         setAlert({
           show: true,
           message: edit ? `Subcategory Updated` : `Subcategory Created`,
@@ -96,9 +106,9 @@ const SubCategoriesForm = ({
   // delete item
   //   -----------------------------------------
   const { mutateAsync: deleteSubCategory } = useDeleteSubCategory();
-  const deleteItem = async (id) => {
+  const deleteItem = async (id: number): Promise<void> => {
     try {
-      await deleteSubCategory({ id, category_id: currentCategory.id });
+      await deleteSubCategory({ id, category_id: currentCategory?.id || 0 });
       setAlert({
         show: true,
         message: `Subcategory deleted`,
@@ -121,21 +131,21 @@ const SubCategoriesForm = ({
   //   -----------------------------------------
   // set current category and fetch subcategories on change of the categories select
   //   -----------------------------------------
-  const handleCategoryChange = async (e) => {
+  const handleCategoryChange = async (e: React.ChangeEvent<HTMLSelectElement>): Promise<void> => {
     if (e.target.value === "") return;
     const category = categories.find((c) => c.category === e.target.value);
-    setCurrentCategory(category);
+    setCurrentCategory(category || null);
   };
 
   //   --------------------------------------------------------
   //   nest the category selected into the subcategory object
   //   --------------------------------------------------------
-  const handleSubCategory = (e) => {
+  const handleSubCategory = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setItem({
       ...item,
       category: currentCategory,
       subcategory: e.target.value,
-    });
+    } as any);
   };
 
   return (
@@ -143,7 +153,7 @@ const SubCategoriesForm = ({
       <h6 className="mb-3">Create Sub-Category</h6>
       {alert.show && (
         <div>
-          <Alert type={alert.type}>{alert.message} </Alert>
+          <Alert type={alert.type as any}>{alert.message} </Alert>
         </div>
       )}
       {/* form */}
@@ -199,7 +209,7 @@ const SubCategoriesForm = ({
           >
             <span
               onClick={() => {
-                setItem(subcategory);
+                setItem(subcategory as any);
                 setEdit(true);
               }}
               style={{ cursor: "pointer" }}
@@ -210,7 +220,7 @@ const SubCategoriesForm = ({
               className="ms-2"
               style={{ cursor: "pointer" }}
               onClick={() => {
-                setItem(subcategory);
+                setItem(subcategory as any);
                 setModal(true);
               }}
             />
@@ -221,7 +231,7 @@ const SubCategoriesForm = ({
         <p>
           Are you sure you want to delete this subcategory ? under{" "}
           <span className="fw-bold text-secondary">
-            {item?.category?.category}
+            {(item?.category as any)?.category}
           </span>
         </p>
         <h6>{item?.subcategory}</h6>
@@ -229,7 +239,7 @@ const SubCategoriesForm = ({
           <button
             className="btn btn-danger rounded"
             onClick={() => {
-              deleteItem(item.id);
+              if (item?.id) deleteItem(item.id);
               closeModal();
             }}
           >

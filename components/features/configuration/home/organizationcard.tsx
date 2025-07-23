@@ -4,32 +4,40 @@ import OrganizationalForm from "./organizationalform";
 import { OrganizationDefault } from "@/constants";
 import { useUpdateOrganization } from "@/data/organization/organization.hook";
 import toast from "react-hot-toast";
+import { Organization } from "@/types/organizations";
 
-/**
- * @param {{ OrganizationData: Organization; }} param0
- */
-const OrganizationCard = ({ OrganizationData }) => {
-  const [Organization, setOrganizationData] = useState(OrganizationDefault);
-  const [alert, setAlert] = useState({
+interface AlertState {
+  show: boolean;
+  message: string;
+  type: string;
+}
+
+interface OrganizationCardProps {
+  OrganizationData: Organization;
+}
+
+const OrganizationCard: React.FC<OrganizationCardProps> = ({ OrganizationData }) => {
+  const [Organization, setOrganizationData] = useState<Organization>(OrganizationDefault);
+  const [alert, setAlert] = useState<AlertState>({
     show: false,
     message: "",
     type: "",
   });
-  const [editMode, setEditMode] = useState(false);
+  const [editMode, setEditMode] = useState<boolean>(false);
 
   useEffect(() => {
     if (OrganizationData?.id){
-      setOrganizationData(OrganizationData)
+      setOrganizationData(OrganizationData as any);
     }
   }, [OrganizationData]);
 
   const { mutateAsync } = useUpdateOrganization();
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await mutateAsync(Organization);
       toast.success("Organization Details Updated Successfully");
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       toast.error("Error Updating Organization Details");
     } finally {
@@ -52,7 +60,7 @@ const OrganizationCard = ({ OrganizationData }) => {
           <OrganizationalForm
             handleSubmit={handleSubmit}
             OrganizationData={Organization}
-            setOrganizationData={setOrganizationData}
+            setOrganizationData={setOrganizationData as any}
             setEditMode={setEditMode}
           />
         </div>
@@ -67,7 +75,7 @@ const OrganizationCard = ({ OrganizationData }) => {
               ></i>
             </div>
             <img
-              src={OrganizationData.Organizationlogo}
+              src={OrganizationData.Organizationlogo || ""}
               alt="Organization Logo"
               className="rounded-circle mb-2"
               style={{ width: "80px", height: "auto" }}

@@ -3,13 +3,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import Alert from "../../custom/Alert/Alert";
-import { createTemplateMessageOptions } from "@/data/whatsappAPI/fetcherOptions";
 import { useCreateTemplateMessage } from "@/data/whatsappAPI/whatsapp.hook";
 
-const WATemplateForm = () => {
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [showLink, setShowLink] = useState(false);
+const WATemplateForm: React.FC = () => {
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
+  const [showLink, setShowLink] = useState<boolean>(false);
 
   const { mutateAsync: createTemplateMessage } = useCreateTemplateMessage();
 
@@ -37,30 +36,27 @@ const WATemplateForm = () => {
     },
   });
 
-  const getRandomInt = (min, max) => {
+  const getRandomInt = (min: number, max: number): number => {
     const randomBuffer = new Uint32Array(1);
     window.crypto.getRandomValues(randomBuffer);
     const randomNumber = randomBuffer[0] / (0xffffffff + 1);
     return Math.floor(randomNumber * (max - min)) + min;
   };
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: any) => {
     try {
       setError("");
       setSuccess("");
-      /**
-       * @type {WATemplate}
-       */
       const templateData = {
         ...data,
         id: getRandomInt(100_000, 1_000_000),
         status: "pending",
         created_at: new Date().toISOString(),
       };
-      await createTemplateMessage(templateData)
+      await createTemplateMessage(templateData);
       setSuccess("WA Broadcast sent successfully!");
       reset();
-    } catch (error) {
+    } catch (error: unknown) {
       console.log(error);
       setError("Failed to send WA Broadcast. Please try again.");
     } finally {

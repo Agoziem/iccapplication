@@ -14,7 +14,13 @@ import { useFetchCategories } from "@/data/categories/categories.hook";
 import { useFetchVideos } from "@/data/videos/video.hook";
 import AnimationContainer from "@/components/animation/animation-container";
 
-const Videos = () => {
+interface Category {
+  id: number;
+  category: string;
+  description: string;
+}
+
+const Videos: React.FC = () => {
   const { openModal } = useAdminContext();
   const { cart, addToCart, removeFromCart } = useCart();
 
@@ -24,8 +30,8 @@ const Videos = () => {
   const page = searchParams.get("page") || "1";
   const pageSize = "10";
   const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
-  const [allCategories, setAllCategories] = useState([]);
-  const [searchQuery, setSearchQuery] = useState(""); // State for search input
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>(""); // State for search input
 
   const {
     data: categories,
@@ -38,7 +44,7 @@ const Videos = () => {
     if (categories.length > 0) {
       setAllCategories([
         { id: 0, category: "All", description: "All Categories" },
-        ...categories,
+        ...(categories as Category[]),
       ]);
     }
   }, [categories]);
@@ -59,14 +65,14 @@ const Videos = () => {
     `${vidoesapiAPIendpoint}/trendingvideos/${Organizationid}/?category=${currentCategory}&page=1&page_size=6`
   );
 
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     router.push(
       `?category=${currentCategory}&page=${newPage}&page_size=${pageSize}`,
       { scroll: false }
     );
   };
 
-  const handleCategoryChange = (category) => {
+  const handleCategoryChange = (category: string) => {
     router.push(`?category=${category}&page=${page}&page_size=${pageSize}`, {
       scroll: false,
     });
@@ -88,7 +94,7 @@ const Videos = () => {
         <div>
           <h3 className="mb-1 me-2">{currentCategory} Videos</h3>
           <p className="mb-0 text-primary">
-            {videos?.count} Video{videos?.count > 1 ? "s" : ""}
+            {videos?.count || 0} Video{(videos?.count || 0) > 1 ? "s" : ""}
           </p>
         </div>
         <CartButton />
@@ -137,10 +143,10 @@ const Videos = () => {
           filteredVideos.map((video,index) => (
             <AnimationContainer delay={index * 0.1} key={video.id} className="col-12 col-md-4 mb-3">
               <VideoCard
-                video={video}
-                addToCart={addToCart}
-                removeFromCart={removeFromCart}
-                cart={cart}
+                video={video as any}
+                addToCart={addToCart as any}
+                removeFromCart={removeFromCart as any}
+                cart={cart as any}
                 openModal={openModal}
               />
             </AnimationContainer>
@@ -166,7 +172,7 @@ const Videos = () => {
           )}
       </div>
 
-      {!loadingTrendingVideos && trendingvideos?.results.length > 0 && (
+      {!loadingTrendingVideos && (trendingvideos?.results?.length || 0) > 0 && (
         <>
           <hr />
           <div className="mb-3">
@@ -176,10 +182,10 @@ const Videos = () => {
             {trendingvideos?.results.map((video) => (
               <div key={video.id} className="col-12 col-md-4 mb-3">
                 <VideoCard
-                  video={video}
-                  addToCart={addToCart}
-                  removeFromCart={removeFromCart}
-                  cart={cart}
+                  video={video as any}
+                  addToCart={addToCart as any}
+                  removeFromCart={removeFromCart as any}
+                  cart={cart as any}
                   openModal={openModal}
                 />
               </div>

@@ -15,7 +15,13 @@ import { useFetchCategories } from "@/data/categories/categories.hook";
 import { useFetchProducts } from "@/data/product/product.hook";
 import AnimationContainer from "@/components/animation/animation-container";
 
-const Products = () => {
+interface Category {
+  id: number;
+  category: string;
+  description: string;
+}
+
+const Products: React.FC = () => {
   const { openModal } = useAdminContext();
   const { cart, addToCart, removeFromCart } = useCart();
   const router = useRouter();
@@ -23,9 +29,9 @@ const Products = () => {
   const currentCategory = searchParams.get("category") || "All";
   const page = searchParams.get("page") || "1";
   const pageSize = "10";
-  const [allCategories, setAllCategories] = useState([]);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
   const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
-  const [searchQuery, setSearchQuery] = useState(""); // State for search input
+  const [searchQuery, setSearchQuery] = useState<string>(""); // State for search input
 
   const {
     data: categories,
@@ -41,7 +47,7 @@ const Products = () => {
     if (categories.length > 0)
       setAllCategories([
         { id: 0, category: "All", description: "All Categories" },
-        ...categories,
+        ...(categories as Category[]),
       ]);
   }, [categories]);
 
@@ -70,8 +76,7 @@ const Products = () => {
   // -----------------------------------------
   // Handle page change
   // -----------------------------------------
-  /**  @param {string} newPage */
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     router.push(
       `?category=${currentCategory}&page=${newPage}&page_size=${pageSize}`,
       {
@@ -83,8 +88,7 @@ const Products = () => {
   // -------------------------------
   // Handle category change
   // -------------------------------
-  /**  @param {string} category */
-  const handleCategoryChange = (category) => {
+  const handleCategoryChange = (category: string) => {
     router.push(`?category=${category}&page=${page}&page_size=${pageSize}`, {
       scroll: false,
     });
@@ -96,7 +100,7 @@ const Products = () => {
     if (!searchQuery) return products.results;
 
     return products.results.filter((product) =>
-      product.name.toLowerCase().includes(searchQuery.toLowerCase())
+      product.name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [products, searchQuery]);
 
@@ -106,7 +110,7 @@ const Products = () => {
         <div>
           <h3 className="me-2">{currentCategory} Products</h3>
           <p className="mb-0 text-primary">
-            {products?.count} Product{products?.count > 1 ? "s" : ""}
+            {products?.count || 0} Product{(products?.count || 0) > 1 ? "s" : ""}
           </p>
         </div>
         <CartButton />
@@ -166,10 +170,10 @@ const Products = () => {
                 className="col-12 col-md-4"
               >
                 <ProductCard
-                  product={product}
-                  addToCart={addToCart}
-                  removeFromCart={removeFromCart}
-                  cart={cart}
+                  product={product as any}
+                  addToCart={addToCart as any}
+                  removeFromCart={removeFromCart as any}
+                  cart={cart as any}
                   openModal={openModal}
                 />
               </AnimationContainer>
@@ -191,17 +195,17 @@ const Products = () => {
 
         {!loadingProducts &&
           products &&
-          Math.ceil(products.count / parseInt(pageSize)) > 1 && (
+          Math.ceil((products.count || 0) / parseInt(pageSize)) > 1 && (
             <Pagination
               currentPage={page}
-              totalPages={Math.ceil(products.count / parseInt(pageSize))}
+              totalPages={Math.ceil((products.count || 0) / parseInt(pageSize))}
               handlePageChange={handlePageChange}
             />
           )}
       </div>
 
       {/* Trending Products */}
-      {!loadingTrendingProducts && trendingproducts?.results.length > 0 && (
+      {!loadingTrendingProducts && (trendingproducts?.results?.length || 0) > 0 && (
         <>
           <hr />
           <div className="mb-3">
@@ -210,14 +214,14 @@ const Products = () => {
         </>
       )}
       <div className="row">
-        {!loadingTrendingProducts && trendingproducts?.results.length > 0
+        {!loadingTrendingProducts && (trendingproducts?.results?.length || 0) > 0
           ? trendingproducts?.results.map((product) => (
               <div key={product.id} className="col-12 col-md-4">
                 <ProductCard
-                  product={product}
-                  addToCart={addToCart}
-                  removeFromCart={removeFromCart}
-                  cart={cart}
+                  product={product as any}
+                  addToCart={addToCart as any}
+                  removeFromCart={removeFromCart as any}
+                  cart={cart as any}
                   openModal={openModal}
                 />
               </div>

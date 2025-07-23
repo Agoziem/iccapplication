@@ -7,11 +7,28 @@ import { ArticleDefault } from "@/constants";
 import { useRouter } from "next/navigation";
 import { useDeleteArticle } from "@/data/articles/articles.hook";
 import toast from "react-hot-toast";
+import { Article, ArticlesResponse } from "@/types/articles";
 
-/**
- * @param {{ articles: ArticlesResponse; article: Article; setArticle: (value:Article) => void; editMode: any; setEditMode: any; loading: any; currentPage: any; pageSize: any; }} param0
- */
-const ArticleList = ({
+type AlertType = "success" | "danger" | "warning" | "info";
+
+interface AlertState {
+  show: boolean;
+  message: string;
+  type: AlertType;
+}
+
+interface ArticleListProps {
+  articles?: ArticlesResponse;
+  article: Article;
+  setArticle: React.Dispatch<React.SetStateAction<Article>>;
+  editMode: boolean;
+  setEditMode: (value: boolean) => void;
+  loading: boolean;
+  currentPage: string | number;
+  pageSize: string | number;
+}
+
+const ArticleList: React.FC<ArticleListProps> = ({
   articles,
   article,
   setArticle,
@@ -21,17 +38,16 @@ const ArticleList = ({
   currentPage,
   pageSize,
 }) => {
-  const [showModal, setShowModal] = useState(false);
-  const [alert, setAlert] = useState({
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [alert, setAlert] = useState<AlertState>({
     show: false,
     message: "",
-    type: "",
+    type: "info",
   });
   const router = useRouter();
 
-  // handle Article Delete
   const { mutateAsync: deleteArticle } = useDeleteArticle();
-  const removeArticle = async (id) => {
+  const removeArticle = async (id: number): Promise<void> => {
     try {
       await deleteArticle(id);
       toast.success("Article deleted successfully");
@@ -42,16 +58,12 @@ const ArticleList = ({
     }
   };
 
-  const closeModal = () => {
+  const closeModal = (): void => {
     setShowModal(false);
     setArticle(ArticleDefault);
   };
 
-  // -----------------------------------------
-  // Handle page change
-  // -----------------------------------------
-  /**  @param {string} newPage */
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number): void => {
     router.push(`?category=All&page=${newPage}&page_size=${pageSize}`, {
       scroll: false,
     });
@@ -60,7 +72,7 @@ const ArticleList = ({
   return (
     <div>
       <h4 className="mb-3">
-        {articles?.count} Article{articles?.results?.length > 1 ? "s" : ""}
+        {articles?.count || 0} Article{(articles?.results?.length || 0) > 1 ? "s" : ""}
       </h4>
       {alert.show && <Alert type={alert.type}>{alert.message}</Alert>}
       {articles && articles.results.length > 0 ? (
@@ -77,11 +89,11 @@ const ArticleList = ({
             )
           }
           {!loading &&
-            articles.results.map((article) => (
+            articles?.results?.map((article) => (
               <div key={article.id} className="card px-4 py-3">
                 <div className="d-flex justify-content-between align-items-center">
                   <div className="me-3">
-                    {article.img ? (
+                    {article.img && article.img_url ? (
                       <img
                         src={article.img_url}
                         className="rounded object-fit-cover "
@@ -126,10 +138,10 @@ const ArticleList = ({
           {/* ServerSide Pagination */}
           {!loading &&
             articles &&
-            Math.ceil(articles.count / parseInt(pageSize)) > 1 && (
+            Math.ceil(articles.count / parseInt(pageSize.toString())) > 1 && (
               <Pagination
                 currentPage={currentPage}
-                totalPages={Math.ceil(articles.count / parseInt(pageSize))}
+                totalPages={Math.ceil(articles.count / parseInt(pageSize.toString()))}
                 handlePageChange={handlePageChange}
               />
             )}
@@ -158,7 +170,11 @@ const ArticleList = ({
             <button
               type="button"
               className="btn btn-danger rounded"
-              onClick={() => removeArticle(article?.id)}
+              onClick={() => {
+                if (article?.id) {
+                  removeArticle(article.id);
+                }
+              }}
             >
               Delete
             </button>

@@ -1,9 +1,28 @@
 import ImageUploader from "@/components/custom/Imageuploader/ImageUploader";
+import React from "react";
 
-/**
- * @param {{ addorupdate: any; testimonial: Testimony;setTestimonial:React.Dispatch<React.SetStateAction<Testimony>>; onSubmit: any; onClose: any;loading:boolean; }} param0
- */
-const TestimonialForm = ({
+interface Testimony {
+  id?: number;
+  name: string;
+  message: string;
+  [key: string]: any;
+}
+
+interface AddOrUpdateMode {
+  type: string;
+  state: boolean;
+}
+
+interface TestimonialFormProps {
+  addorupdate: AddOrUpdateMode;
+  testimonial: Testimony;
+  setTestimonial: (value: Testimony | Record<string, any>) => void;
+  onSubmit: (testimonial: Testimony) => void;
+  onClose: () => void;
+  loading: boolean;
+}
+
+const TestimonialForm: React.FC<TestimonialFormProps> = ({
   addorupdate,
   testimonial,
   setTestimonial,
@@ -11,7 +30,7 @@ const TestimonialForm = ({
   onClose,
   loading
 }) => {
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setTestimonial({
       ...testimonial,
@@ -19,7 +38,7 @@ const TestimonialForm = ({
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(testimonial);
   };

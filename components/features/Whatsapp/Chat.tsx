@@ -5,13 +5,12 @@ import ChatBody from "./ChatBody";
 import { useWhatsappAPIContext } from "@/data/whatsappAPI/WhatsappContext";
 import { BsThreeDotsVertical, BsWhatsapp } from "react-icons/bs";
 
-/**
- * Holds all the
- * @param {{showlist:boolean,
- * setShowlist:(value:boolean)=> void,}} props
- * @returns {JSX.Element}
- */
-const Chat = ({ showlist, setShowlist }) => {
+interface ChatProps {
+  showlist: boolean;
+  setShowlist: (value: boolean) => void;
+}
+
+const Chat: React.FC<ChatProps> = ({ showlist, setShowlist }) => {
   const { selectedContact } = useWhatsappAPIContext();
 
   return (
@@ -67,7 +66,7 @@ const Chat = ({ showlist, setShowlist }) => {
 
         {/* the reply */}
         <div className="mt-3">
-          <ChatInput contact={selectedContact} />
+          <ChatInput contact={selectedContact as any} />
         </div>
       </div>
     </div>

@@ -5,27 +5,46 @@ import "./ServiceUsersTable.css";
 import { useUpdateServiceUser } from "@/data/services/service.hook";
 import toast from "react-hot-toast";
 import { useQueryClient } from "react-query";
+import React from "react";
+import { Service, ServiceUser } from "@/types/items";
 
-/**
- * @param {{ users: ServiceUser[], service: Service, category: string }} props
- */
 
-const ServiceUsers = ({ users, service, category }) => {
+interface ServiceUsersProps {
+  users: ServiceUser[];
+  service: Service;
+  category: string;
+}
+
+const ServiceUsers: React.FC<ServiceUsersProps> = ({ users, service, category }) => {
   const [isPending, startTransition] = useTransition();
   const { mutateAsync: updateStatus } = useUpdateServiceUser();
+
+  // Helper function to convert user ID to number
+  const getUserIdAsNumber = (id: string | number): number => {
+    return typeof id === 'string' ? parseInt(id) : id;
+  };
 
   // -----------------------------------------
   // Update User Service Status
   // -----------------------------------------
 
   const queryClient = useQueryClient();
-  const updateUserServiceStatus = async (userId, serviceId, action) => {
+  const updateUserServiceStatus = async (
+    userId: string | number, 
+    serviceId: string | number, 
+    action: "add-to-progress" | "add-to-completed" | "remove-from-progress" | "remove-from-completed"
+  ): Promise<void> => {
     try {
       // Perform the API call
-      await updateStatus({ userId, serviceId, action, category });
+      await updateStatus({ 
+        userId: getUserIdAsNumber(userId), 
+        serviceId: getUserIdAsNumber(serviceId), 
+        action, 
+        category: category as "all" | "progress" | "completed" 
+      });
       toast.success("User status updated successfully");
-    } catch (error) {
-      toast.error(error.message);
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'An error occurred');
     }
   };
 
@@ -34,7 +53,7 @@ const ServiceUsers = ({ users, service, category }) => {
   // Determine Action Buttons
   // -----------------------------------------
 
-  const renderActionButtons = (user) => {
+  const renderActionButtons = (user: ServiceUser) => {
     if (category === "all") {
       return (
         <button
@@ -46,22 +65,22 @@ const ServiceUsers = ({ users, service, category }) => {
           }
           disabled={
             isPending ||
-            service?.userIDs_whose_services_is_in_progress.includes(
-              parseInt(user.id)
+            service?.userIDs_whose_services_is_in_progress?.includes(
+              getUserIdAsNumber(user.id)
             ) ||
-            service?.userIDs_whose_services_have_been_completed.includes(
-              parseInt(user.id)
+            service?.userIDs_whose_services_have_been_completed?.includes(
+              getUserIdAsNumber(user.id)
             )
           }
         >
           {isPending ? (
             <PulseLoader color="#fff" size={8} margin={2} />
-          ) : service?.userIDs_whose_services_is_in_progress.includes(
-              parseInt(user.id)
+          ) : service?.userIDs_whose_services_is_in_progress?.includes(
+              getUserIdAsNumber(user.id)
             ) ? (
             "Service in Progress"
-          ) : service?.userIDs_whose_services_have_been_completed.includes(
-              parseInt(user.id)
+          ) : service?.userIDs_whose_services_have_been_completed?.includes(
+              getUserIdAsNumber(user.id)
             ) ? (
             "Service Completed"
           ) : (

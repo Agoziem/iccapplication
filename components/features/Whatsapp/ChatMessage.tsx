@@ -3,19 +3,29 @@ import Link from "next/link";
 import { BiCheckDouble } from "react-icons/bi";
 import { FaRegFileImage } from "react-icons/fa6";
 
-/**
- * Description placeholder
- *
- * @param {{ message: WAMessage; }} props
- * @returns {JSX.Element}
- */
-const ChatMessage = ({ message }) => {
+interface WAMessage {
+  id: string | number;
+  message_mode: 'sent' | 'received';
+  message_type: 'text' | 'image' | 'video' | 'audio' | 'document' | 'sticker';
+  body?: string;
+  media_id?: string;
+  caption?: string;
+  filename?: string;
+  status?: string;
+  timestamp: string;
+}
+
+interface ChatMessageProps {
+  message: WAMessage;
+}
+
+const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   const {
     data: mediaUrl,
     isLoading,
     error,
   } = useFetchMedia(
-    message?.media_id,
+    message?.media_id || "",
   )
 
   const messageTime = new Date(message.timestamp);

@@ -5,25 +5,56 @@ import { TiTimesOutline } from "react-icons/ti";
 import QuestionsGrid from "./QuestionsGrid";
 import Alert from "@/components/custom/Alert/Alert";
 
-const QuestionForm = ({ test, setTest, currentSubject, setCurrentSubject }) => {
-  const [alert, setAlert] = useState({ show: false, message: "", type: "" });
-  const [editMode, setEditMode] = useState(false);
-  const [correctAnswer, setCorrectAnswer] = useState("");
-  const [question, setQuestion] = useState({
-    id: "",
-    questiontext: "",
-    questionMark: "",
-    answers: [
-      {
-        answertext: "",
-        isCorrect: false,
-      },
-    ],
-    correctAnswerdescription: "",
-  });
-  const [showModal, setShowModal] = useState(false);
+type AlertType = "success" | "danger" | "warning" | "info";
 
-  const closeModal = () => {
+interface AlertState {
+  show: boolean;
+  message: string;
+  type: AlertType;
+}
+
+interface Answer {
+  answertext: string;
+  isCorrect: boolean;
+}
+
+interface Question {
+  id: string;
+  questiontext: string;
+  questionMark: string;
+  answers: Answer[];
+  correctAnswerdescription: string;
+}
+
+interface Subject {
+  id: string;
+  name: string;
+  subjectname?: string;
+  questions?: Question[];
+  [key: string]: any;
+}
+
+interface Test {
+  id: string;
+  testSubject: Subject[];
+  [key: string]: any;
+}
+
+interface QuestionFormProps {
+  test: Test;
+  setTest: (value: Test) => void;
+  currentSubject: Subject;
+  setCurrentSubject: (value: Subject) => void;
+}
+
+const QuestionForm: React.FC<QuestionFormProps> = ({ test, setTest, currentSubject, setCurrentSubject }) => {
+  const [alert, setAlert] = useState<AlertState>({ show: false, message: "", type: "info" });
+  const [editMode, setEditMode] = useState<boolean>(false);
+  const [correctAnswer, setCorrectAnswer] = useState<string>("");
+  const [question, setQuestion] = useState<Question|null>(null);
+  const [showModal, setShowModal] = useState<boolean>(false);
+
+  const closeModal = (): void => {
     setEditMode(false);
     setShowModal(false);
     setQuestion({
@@ -41,7 +72,9 @@ const QuestionForm = ({ test, setTest, currentSubject, setCurrentSubject }) => {
     setCorrectAnswer("");
   };
 
-  const handleCheckboxChange = (index) => {
+  const handleCheckboxChange = (index: number): void => {
+    if (!question) return;
+    
     const updatedAnswers = question.answers.map((answer, i) => ({
       ...answer,
       isCorrect: i === index,
@@ -54,7 +87,7 @@ const QuestionForm = ({ test, setTest, currentSubject, setCurrentSubject }) => {
     setCorrectAnswer(updatedAnswers[index].answertext);
   };
 
-  const handleSubmit = async (e, url) => {
+  const handleSubmit = async (e: React.FormEvent, url: string): Promise<void> => {
     e.preventDefault();
     try {
       const response = await fetch(url, {
@@ -76,34 +109,34 @@ const QuestionForm = ({ test, setTest, currentSubject, setCurrentSubject }) => {
       setCurrentSubject({
         ...currentSubject,
         questions: editMode
-          ? currentSubject.questions.map((q) => (q.id === data.id ? data : q))
-          : [...currentSubject.questions, data],
+          ? currentSubject.questions?.map((q: Question) => (q.id === data.id ? data : q)) || []
+          : [...(currentSubject.questions || []), data],
       });
       setTest({
         ...test,
-        testSubject: test.testSubject.map((subject) =>
+        testSubject: test.testSubject.map((subject: Subject) =>
           subject.id === currentSubject.id
             ? {
                 ...subject,
                 questions: editMode
-                  ? subject.questions.map((q) =>
+                  ? subject.questions?.map((q: Question) =>
                       q.id === data.id ? data : q
-                    )
-                  : [...subject.questions, data],
+                    ) || []
+                  : [...(subject.questions || []), data],
             }
             : subject
         ),
       });
-    } catch (error) {
+    } catch (error: unknown) {
       setAlert({
         show: true,
-        message: error.message || "An error occurred while saving the question",
+        message: error instanceof Error ? error.message : "An error occurred while saving the question",
         type: "danger",
       });
     } finally {
       closeModal();
       setTimeout(() => {
-        setAlert({ show: false, message: "", type: "" });
+        setAlert({ show: false, message: "", type: "info" });
       }, 3000);
     }
   };
@@ -113,7 +146,7 @@ const QuestionForm = ({ test, setTest, currentSubject, setCurrentSubject }) => {
       <div className="d-flex justify-content-end align-items-center">
         <h6 className="me-3 mb-0">
           ({currentSubject?.questions?.length} question
-          {currentSubject?.questions?.length > 1 && "s"})
+          {(currentSubject?.questions?.length || 0) > 1 && "s"})
         </h6>
         <button
           className="btn btn-primary border-0 rounded mb-2 mb-md-0 me-3 me-md-5"
@@ -155,7 +188,7 @@ const QuestionForm = ({ test, setTest, currentSubject, setCurrentSubject }) => {
               onSubmit={(e) => {
                 handleSubmit(
                   e,
-                  editMode
+                  editMode && question
                     ? `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/CBTapi/updateQuestion/${question.id}/`
                     : `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/CBTapi/addQuestion/${currentSubject?.id}/`
                 );
@@ -167,9 +200,9 @@ const QuestionForm = ({ test, setTest, currentSubject, setCurrentSubject }) => {
                   type="number"
                   className="form-control"
                   id="questionMark"
-                  value={question.questionMark}
+                  value={question?.questionMark || ""}
                   onChange={(e) =>
-                    setQuestion({ ...question, questionMark: e.target.value })
+                    question && setQuestion({ ...question, questionMark: e.target.value })
                   }
                 />
               </div>
@@ -179,9 +212,9 @@ const QuestionForm = ({ test, setTest, currentSubject, setCurrentSubject }) => {
                   type="text"
                   className="form-control"
                   id="question"
-                  value={question.questiontext}
+                  value={question?.questiontext || ""}
                   onChange={(e) =>
-                    setQuestion({ ...question, questiontext: e.target.value })
+                    question && setQuestion({ ...question, questiontext: e.target.value })
                   }
                 />
               </div>
@@ -234,7 +267,9 @@ const QuestionForm = ({ test, setTest, currentSubject, setCurrentSubject }) => {
                   className="btn btn-accent-primary shadow-none"
                   onClick={(e) => {
                     e.preventDefault();
-                    let answers = question.answers;
+                    if (!question) return;
+                    
+                    const answers = [...question.answers];
                     answers.push({
                       answertext: "",
                       isCorrect: false,
@@ -257,9 +292,9 @@ const QuestionForm = ({ test, setTest, currentSubject, setCurrentSubject }) => {
                 <textarea
                   className="form-control"
                   id="correctAnswerdescription"
-                  value={question.correctAnswerdescription}
+                  value={question?.correctAnswerdescription || ""}
                   onChange={(e) =>
-                    setQuestion({
+                    question && setQuestion({
                       ...question,
                       correctAnswerdescription: e.target.value,
                     })
