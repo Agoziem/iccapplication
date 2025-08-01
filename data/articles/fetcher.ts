@@ -18,9 +18,7 @@ const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
 
 export const articleAPIendpoint = "/blogsapi";
 
-// ------------------------------------------------------
-// Article fetcher and mutation functions
-// ------------------------------------------------------
+
 /**
  * Fetch article categories
  */
