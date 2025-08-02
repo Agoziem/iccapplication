@@ -4,8 +4,8 @@ import React, { useEffect, useState, FC } from "react";
 import { IoMdCheckmarkCircleOutline } from "react-icons/io";
 import BackButton from "@/components/custom/backbutton/BackButton";
 import { dept_icons } from "@/constants";
-import { MainAPIendpoint } from "@/data/organization/fetcher";
-import { useFetchDepartments } from "@/data/organization/organization.hook";
+import { MainAPIendpoint } from "@/data/organization.hook";
+import { useFetchDepartments } from "@/data/organization.hook";
 import { Department as DepartmentType } from "@/types/organizations";
 
 interface DepartmentPageProps {

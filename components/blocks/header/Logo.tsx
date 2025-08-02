@@ -4,7 +4,7 @@ import './logo.css';
 import Link from 'next/link';
 import Image from 'next/image';
 import { RefContext } from '../sidebar/sideBarTogglerContext';
-import { useFetchOrganization } from '@/data/organization/organization.hook';
+import { useFetchOrganization } from '@/data/organization.hook';
 
 interface LogoProps {
   portalname: string;

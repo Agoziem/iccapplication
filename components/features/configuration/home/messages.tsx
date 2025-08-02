@@ -5,7 +5,7 @@ import { MdAlternateEmail } from "react-icons/md";
 import { messageDefault } from "@/constants";
 import { useSearchParams, useRouter } from "next/navigation";
 import Pagination from "@/components/custom/Pagination/Pagination";
-import { useDeleteEmail, useFetchEmails } from "@/data/Emails/emails.hook";
+import { useDeleteEmail, useFetchEmails } from "@/data/emails.hook";
 import toast from "react-hot-toast";
 
 interface Message {

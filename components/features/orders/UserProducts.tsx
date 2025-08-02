@@ -2,13 +2,13 @@ import { useSession } from "next-auth/react";
 import { PiEmptyBold } from "react-icons/pi";
 import ProductPlaceholder from "../../custom/ImagePlaceholders/Productplaceholder";
 import Link from "next/link";
-import { productsAPIendpoint } from "@/data/product/fetcher";
+import { productsAPIendpoint } from "@/data/product.hook";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import Pagination from "@/components/custom/Pagination/Pagination";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
 import { useMemo, useState } from "react";
-import { useFetchProducts } from "@/data/product/product.hook";
+import { useFetchProducts } from "@/data/product.hook";
 
 const UserProducts: React.FC = () => {
   const { data: session } = useSession();

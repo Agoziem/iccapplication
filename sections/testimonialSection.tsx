@@ -3,8 +3,8 @@ import { BiSolidQuoteAltRight } from "react-icons/bi";
 import StarRating from "@/components/custom/StarRating/StarRating";
 import ReusableSwiper from "@/components/custom/Swiper/ReusableSwiper";
 import "./section.css";
-import { MainAPIendpoint } from "@/data/organization/fetcher";
-import { useFetchTestimonials } from "@/data/organization/organization.hook";
+import { MainAPIendpoint } from "@/data/organization.hook";
+import { useFetchTestimonials } from "@/data/organization.hook";
 
 const CustomSwiper = () => {
   const OrganizationID = process.env.NEXT_PUBLIC_ORGANIZATION_ID;

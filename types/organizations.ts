@@ -1,15 +1,17 @@
-export interface Organization {
-  id?: number;
+
+// -------------------------------------
+// Organization
+// -------------------------------------
+export type OrganizationSchema = {
+  id: number;
   name: string;
   description: string;
-  logo?: string | null;
-  Organizationlogoname?: string | null;
-  Organizationlogo?: string | null;
   vision: string;
   mission: string;
   email: string;
   phone: string;
   address: string;
+  logo?: string | null;
   whatsapplink?: string | null;
   facebooklink?: string | null;
   instagramlink?: string | null;
@@ -19,131 +21,117 @@ export interface Organization {
   youtubechannel?: string | null;
   privacy_policy?: string | null;
   terms_of_use?: string | null;
-  created_at: Date;
-  last_updated_date: Date;
-}
+  created_at: string;
+  last_updated_date: string;
+};
 
-export type Organizations = Organization[];
+export type OrganizationMiniSchema = {
+  id: number;
+  name: string;
+};
 
-export interface Staff {
-  id?: number;
-  organization?: number | null;
+// Staff
+export type StaffSchema = {
+  id: number;
   first_name: string;
   last_name: string;
   other_names?: string | null;
+  role?: string | null;
   email?: string | null;
   phone?: string | null;
   address?: string | null;
-  img?: string | null;
-  img_url?: string | null;
-  img_name?: string | null;
-  role?: string | null;
   facebooklink?: string | null;
   instagramlink?: string | null;
   twitterlink?: string | null;
   linkedinlink?: string | null;
-  created_at: Date;
-  last_updated_date: Date;
-}
+  img?: string | null;
+  created_at: string;
+  last_updated_date: string;
+};
 
-export interface Staffpaginated {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: Staff[];
-}
+export type StaffMiniSchema = {
+  id: number;
+  first_name: string;
+  last_name: string;
+  role?: string | null;
+};
 
-export type Staffs = Staff[];
-
-export interface Testimony {
-  id?: number;
-  organization?: number | null;
+// Testimonial
+export type TestimonialSchema = {
+  id: number;
   name: string;
   content: string;
   role?: string | null;
-  img?: string | null;
-  img_url?: string | null;
-  img_name?: string | null;
   rating?: number | null;
-  created_at: Date;
-  last_updated_date: Date;
-}
-
-export interface Testimonypaginated {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: Testimony[];
-}
-
-export type Testimonies = Testimony[];
-
-export interface Subscription {
-  id?: number;
-  email: string;
-  date_added: Date;
-}
-
-export interface Subscriptionpaginated {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: Subscription[];
-}
-
-export type Subscriptions = Subscription[];
-
-export interface Departmentservice {
-  id?: number;
-  name: string;
-}
-
-export interface DepartmentserviceResponse {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: Departmentservice[];
-}
-
-export type Departmentservices = Departmentservice[];
-
-export interface OrganizationMini {
-  id?: number | null;
-  name: string;
-}
-
-export interface StaffInCharge {
-  id?: number | null;
-  name: string;
-  img_url?: string | null;
-}
-
-export interface ServiceMini {
-  id?: number;
-  name: string;
-}
-
-export interface Department {
-  id?: number | null;
-  organization: OrganizationMini | null;
   img?: string | null;
-  img_url?: string | null;
-  img_name?: string | null;
+  created_at: string;
+  last_updated_date: string;
+};
+
+// Subscription
+export type SubscriptionSchema = {
+  id: number;
+  email: string;
+  created_at: string;
+};
+
+// Department Service
+export type DepartmentServiceSchema = {
+  id: number;
   name: string;
+  created_at: string;
+};
+
+// Department
+export type DepartmentSchema = {
+  id: number;
+  name: string;
+  img?: string | null;
   description: string;
-  staff_in_charge?: StaffInCharge | null;
-  services?: ServiceMini[];
-  created_at: Date;
-  last_updated_date: Date;
-}
+  staff_in_charge?: StaffMiniSchema | null;
+  organization?: OrganizationMiniSchema | null;
+  services: DepartmentServiceSchema[];
+  created_at: string;
+  last_updated_date: string;
+};
 
-export interface DepartmentResponse {
+
+// Success/Error
+export type SuccessResponseSchema = {
+  message: string;
+};
+
+export type ErrorResponseSchema = {
+  error: string;
+};
+
+// Paginated
+export type PaginatedOrganizationResponseSchema = {
   count: number;
-  next: string | null;
-  previous: string | null;
-  results: Department[];
-}
+  items: OrganizationSchema[];
+};
 
-export type Departments = Department[];
+export type PaginatedStaffResponseSchema = {
+  count: number;
+  items: StaffSchema[];
+};
 
+export type PaginatedTestimonialResponseSchema = {
+  count: number;
+  items: TestimonialSchema[];
+};
 
+export type PaginatedSubscriptionResponseSchema = {
+  count: number;
+  items: SubscriptionSchema[];
+};
+
+export type PaginatedDepartmentResponseSchema = {
+  count: number;
+  items: DepartmentSchema[];
+};
+
+export type PaginatedDepartmentServiceResponseSchema = {
+  count: number;
+  items: DepartmentServiceSchema[];
+};

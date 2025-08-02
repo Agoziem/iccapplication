@@ -3,7 +3,7 @@ import React from "react";
 import { TbTargetArrow } from "react-icons/tb";
 import { FaEye, FaUserGroup } from "react-icons/fa6";
 import "./section.css";
-import { useFetchOrganization } from "@/data/organization/organization.hook";
+import { useFetchOrganization } from "@/data/organization.hook";
 import ParagraphPlaceholders from "@/components/custom/Placeholders/ParagraphPlaceholders";
 
 interface AboutCardProps {

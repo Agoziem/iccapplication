@@ -1,11 +1,3 @@
-// User mini interface for references
-export interface UserMini {
-  id?: number;
-  username: string;
-  img?: string | null;
-}
-
-// Main user interface with all authentication and profile fields
 export interface User {
   id?: number;
   username?: string;
@@ -31,13 +23,27 @@ export interface User {
   last_login?: Date | null;
 }
 
-// Array of users
-export type Users = User[];
-
-// Response interface for paginated user results
-export interface UsersResponse {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: User[];
+export interface UserListResponse {
+  users: User[];
 }
+
+export interface PaginatedUserResponse {
+  count: number;
+  items: User[];
+}
+
+export interface UserMini {
+  id: number;
+  username: string;
+  img?: string | null;
+}
+
+export interface UserMiniExtension {
+  id: number;
+  username: string;
+  email: string;
+  avatar_url?: string | null;
+  date_joined: string;
+}
+
+

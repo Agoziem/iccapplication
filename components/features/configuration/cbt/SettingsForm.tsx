@@ -4,7 +4,7 @@ import { TiTimes } from "react-icons/ti";
 import Modal from "@/components/custom/Modal/modal";
 import Alert from "@/components/custom/Alert/Alert";
 import { useRouter } from "next/navigation";
-import { useFetchOrganization } from "@/data/organization/organization.hook";
+import { useFetchOrganization } from "@/data/organization.hook";
 
 type AlertType = "success" | "danger" | "warning" | "info";
 

@@ -12,7 +12,7 @@ import Pagination from "../../custom/Pagination/Pagination";
 import CategoryTabs from "../Categories/Categoriestab";
 import {
   articleAPIendpoint,
-} from "@/data/articles/fetcher";
+} from "@/data/article.hook";
 import { useRouter } from "next/navigation";
 import { useFetchArticleCategories, useFetchArticles } from "@/data/articles/articles.hook";
 import { ArticleCategory } from "@/types/articles";

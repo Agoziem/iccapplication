@@ -2,8 +2,8 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAdminContext } from "@/data/payments/Admincontextdata";
-import { useCart } from "@/data/carts/Cartcontext";
-import { servicesAPIendpoint } from "@/data/services/fetcher";
+import { useCart } from "@/data/Cartcontext";
+import { servicesAPIendpoint } from "@/data/services/services.hook";
 import ServiceCard from "@/components/features/Services/ServiceCard";
 import CartButton from "@/components/custom/Offcanvas/CartButton";
 import CategoryTabs from "@/components/features/Categories/Categoriestab";

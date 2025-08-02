@@ -8,7 +8,7 @@ import OrganizationCard from "@/components/features/configuration/home/organizat
 import Staffs from "@/components/features/configuration/home/staffs";
 import Subscriptions from "@/components/features/configuration/home/subscriptions";
 import Testimonials from "@/components/features/configuration/home/testimonials";
-import { useFetchOrganization } from "@/data/organization/organization.hook";
+import { useFetchOrganization } from "@/data/organization.hook";
 import React, { useContext, useState } from "react";
 
 const HomePageConfigPage = () => {

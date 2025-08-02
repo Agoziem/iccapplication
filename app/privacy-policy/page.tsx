@@ -1,7 +1,7 @@
 "use client";
 import BackButton from "@/components/custom/backbutton/BackButton";
 import NextBreadcrumb from "@/components/custom/Breadcrumb/breadcrumb";
-import { useFetchOrganization } from "@/data/organization/organization.hook";
+import { useFetchOrganization } from "@/data/organization.hook";
 import React, { useContext } from "react";
 
 const PrivacyPage = () => {

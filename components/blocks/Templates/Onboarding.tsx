@@ -8,7 +8,7 @@ import {
 } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import { IoLogoWhatsapp } from "react-icons/io5";
-import { useFetchOrganization } from "@/data/organization/organization.hook";
+import { useFetchOrganization } from "@/data/organization.hook";
 import Link from "next/link";
 import { User } from "@/types/users";
 

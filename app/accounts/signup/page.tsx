@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import Alert from "@/components/custom/Alert/Alert";
 import { sendVerificationEmail } from "@/utils/mail";
 import PasswordInput from "@/components/custom/Inputs/PasswordInput";
-import { useFetchOrganization } from "@/data/organization/organization.hook";
+import { useFetchOrganization } from "@/data/organization.hook";
 
 interface SignupFormData {
   organization_id: string;

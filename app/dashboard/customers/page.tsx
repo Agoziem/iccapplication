@@ -6,7 +6,7 @@ import OrganizationCard from "@/components/features/configuration/home/organizat
 import CustomersTable from "@/components/features/orders/CustomersTable";
 import { useGetOrderReport } from "@/data/payments/orders.hook";
 import { authAPIendpoint, fetchUser } from "@/data/users/fetcher";
-import { useFetchUser } from "@/data/users/user.hook";
+import { useFetchUser } from "@/data/user.hook";
 import { Customers, OrderReport } from "@/types/payments";
 import { User } from "@/types/users";
 import Image from "next/image";

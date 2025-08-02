@@ -7,7 +7,7 @@ import { testimonialDefault } from "@/constants";
 import {
   useCreateTestimonial,
   useUpdateTestimonial,
-} from "@/data/organization/organization.hook";
+} from "@/data/organization.hook";
 import { Testimony } from "@/types/organizations";
 
 const FeedbackPage = () => {

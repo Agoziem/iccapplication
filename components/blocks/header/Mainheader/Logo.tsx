@@ -1,4 +1,4 @@
-import { useFetchOrganization } from "@/data/organization/organization.hook";
+import { useFetchOrganization } from "@/data/organization.hook";
 import Link from "next/link";
 
 const MainHeaderLogo = () => {

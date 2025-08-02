@@ -14,6 +14,17 @@ import { PiGearBold, PiGraduationCapBold } from "react-icons/pi";
 import { RiCustomerService2Line } from "react-icons/ri";
 import { TbBooks } from "react-icons/tb";
 
+// Constants for environment variables and default values
+export const COOKIE_NAME = process.env.NEXT_PUBLIC_COOKIE_NAME || "iccauth_token";
+export const API_URL = process.env.DJANGO_API_URL || "http://localhost:8000/api";
+export const WEBSOCKET_URL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || "ws://localhost:8000";
+export const SITE_URL = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
+export const RESEND_API_KEY = process.env.NEXT_PUBLIC_RESEND_API_KEY || "your-resend-api-key";
+export const ORGANIZATION_ID = process.env.NEXT_PUBLIC_ORGANIZATION_ID || "1";
+export const WHATSAPPAPI_ACCESS_TOKEN = process.env.NEXT_PUBLIC_WHATSAPPAPI_ACCESS_TOKEN || "your-whatsapp-api-access-token";
+export const PAYSTACK_PUBLIC_KEY = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "pk_test_your_paystack_public_key";
+
+
 export const WAMessageDefault: WAMessage = {
   id: null,
   message_id: "", 

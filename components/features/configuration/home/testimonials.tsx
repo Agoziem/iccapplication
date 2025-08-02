@@ -4,7 +4,7 @@ import Modal from "@/components/custom/Modal/modal";
 import { BiSolidQuoteAltRight } from "react-icons/bi";
 import TestimonialForm from "./TestimonialForm";
 
-import { MainAPIendpoint } from "@/data/organization/fetcher";
+import { MainAPIendpoint } from "@/data/organization.hook";
 import { testimonialDefault } from "@/constants";
 import { useSearchParams, useRouter } from "next/navigation";
 import Pagination from "@/components/custom/Pagination/Pagination";
@@ -13,7 +13,7 @@ import {
   useDeleteTestimonial,
   useFetchTestimonials,
   useUpdateTestimonial,
-} from "@/data/organization/organization.hook";
+} from "@/data/organization.hook";
 import toast from "react-hot-toast";
 import { Testimony } from "@/types/organizations";
 

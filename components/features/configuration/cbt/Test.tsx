@@ -3,7 +3,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { FaQuestionCircle } from "react-icons/fa";
 import SubjectDetails from "./SubjectDetails";
 import QuestionForm from "./QuestionForm";
-import { useFetchOrganization } from "@/data/organization/organization.hook";
+import { useFetchOrganization } from "@/data/organization.hook";
 
 interface Subject {
   id: string;

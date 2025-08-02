@@ -1,10 +1,10 @@
-import { createEmail, emailAPIendpoint } from "@/data/Emails/fetcher";
+import { createEmail, emailAPIendpoint } from "@/data/emails.hook";
 import { emailMessageSchema } from "@/schemas/emails";
 import { zodResolver } from "@hookform/resolvers/zod";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import Alert from "../../custom/Alert/Alert";
-import { useCreateEmail } from "@/data/Emails/emails.hook";
+import { useCreateEmail } from "@/data/emails.hook";
 
 const EmailForm: React.FC = () => {
   const [error, setError] = useState<string>("");

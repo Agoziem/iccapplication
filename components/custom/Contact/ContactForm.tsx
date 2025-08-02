@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Alert from "@/components/custom/Alert/Alert";
-import { useCreateEmail, useSendMessage } from "@/data/Emails/emails.hook";
+import { useCreateEmail, useSendMessage } from "@/data/emails.hook";
 import { Organization } from "@/types/items";
 
 interface ContactFormProps {

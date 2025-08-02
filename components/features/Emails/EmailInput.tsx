@@ -4,7 +4,7 @@ import { sendReplyEmail } from "@/utils/mail";
 import { emailResponseSchema } from "@/schemas/emails";
 import { useState } from "react";
 import Alert from "../../custom/Alert/Alert";
-import { emailAPIendpoint, submitResponse } from "@/data/Emails/fetcher";
+import { emailAPIendpoint, submitResponse } from "@/data/emails.hook";
 import { useQueryClient } from "react-query";
 import React from "react";
 

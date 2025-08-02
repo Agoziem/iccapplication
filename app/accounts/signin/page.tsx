@@ -1,7 +1,6 @@
 "use client";
 import FormWrapper from "@/components/features/auth/FormWrapper";
 import React, { useState, useTransition, ChangeEvent, FC } from "react";
-import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DEFAULT_LOGIN_REDIRECT } from "@/routes";
 import Image from "next/image";
@@ -10,6 +9,7 @@ import Link from "next/link";
 import Alert from "@/components/custom/Alert/Alert";
 import { sendVerificationEmail } from "@/utils/mail";
 import PasswordInput from "@/components/custom/Inputs/PasswordInput";
+import { LoginUser } from "@/data/auth.hook";
 
 interface FormData {
   email: string;
@@ -147,7 +147,7 @@ const SigninPage: FC = () => {
         }}
       >
         {/* The Image */}
-        <div className="col-12 col-md-5 p-0 d-none d-md-block">
+        <div className={`col-12 col-md-5 p-0 d-none d-md-block ${currentTodo?.completed ? "d-flex" : ""}`}>
           <div
             className="p-0"
             style={{

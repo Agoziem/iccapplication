@@ -3,7 +3,7 @@ import PageTitle from "@/components/custom/PageTitle/PageTitle";
 import React, { useContext, useEffect, useState } from "react";
 import CbtForm from "@/components/features/cbt/CbtForm";
 import CbtQuiz from "@/components/features/cbt/CbtQuiz";
-import { useFetchOrganization } from "@/data/organization/organization.hook";
+import { useFetchOrganization } from "@/data/organization.hook";
 
 const CbtPage = () => {
   const { data: OrganizationData } = useFetchOrganization();

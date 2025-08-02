@@ -5,10 +5,10 @@ import StaffForm from "./staffform";
 import { staffdefault } from "@/constants";
 import {
   MainAPIendpoint,
-} from "@/data/organization/fetcher";
+} from "@/data/organization.hook";
 import { useSearchParams, useRouter } from "next/navigation";
 import Pagination from "@/components/custom/Pagination/Pagination";
-import { useCreateStaff, useDeleteStaff, useFetchStaffs, useUpdateStaff } from "@/data/organization/organization.hook";
+import { useCreateStaff, useDeleteStaff, useFetchStaffs, useUpdateStaff } from "@/data/organization.hook";
 import toast from "react-hot-toast";
 import { Staff } from "@/types/organizations";
 

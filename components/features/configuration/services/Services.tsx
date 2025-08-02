@@ -20,10 +20,10 @@ import {
   fetchServices,
   servicesAPIendpoint,
   updateService,
-} from "@/data/services/fetcher";
+} from "@/data/services/services.hook";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
 import { PulseLoader } from "react-spinners";
-import { useFetchOrganization } from "@/data/organization/organization.hook";
+import { useFetchOrganization } from "@/data/organization.hook";
 import { useFetchCategories } from "@/data/categories/categories.hook";
 import {
   useCreateService,

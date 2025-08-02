@@ -1,36 +1,68 @@
-import { auth } from "@/auth";
 import {
   authRoutes,
-  apiAuthPrefix,
-  DEFAULT_LOGIN_REDIRECT,
-  isPublicRouteOrIncludes,
+  publicRoutes,
 } from "@/routes";
 
-export default auth((req) => {
-  const { nextUrl } = req;
-  const isLoggedIn = !!req.auth;
-  const isApiAuthRoute = nextUrl.pathname.startsWith(apiAuthPrefix);
-  const isPublicRoute = isPublicRouteOrIncludes(nextUrl.pathname);
-  const isAuthRoute = authRoutes.includes(nextUrl.pathname);
+import { NextRequest, NextResponse } from "next/server";
+import {jwtDecode} from "jwt-decode";
+import { COOKIE_NAME } from "@/constants";
 
-  if (isApiAuthRoute) {
-    return null;
-  }
 
-  if (isAuthRoute) {
-    if (isLoggedIn) {
-      return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
+// fullauth_token
+
+export function middleware(req: NextRequest) {
+  
+  const authToken = req.cookies.get(COOKIE_NAME)?.value;
+  const currentPath = req.nextUrl.pathname;
+
+  // If token exists
+  if (authToken) {
+    let access_token: string;
+
+    try {
+      // Try parsing as JSON first
+      const parsed = JSON.parse(authToken);
+      access_token = parsed.access_token;
+    } catch {
+      // Fallback: maybe it's just the access token string
+      access_token = authToken;
     }
-    return null;
+    try {
+      const decoded: any = jwtDecode(access_token);
+
+      // If token is expired
+      if (decoded.exp * 1000 < Date.now()) {
+        const res = NextResponse.redirect(new URL("/accounts/signin", req.url));
+        res.cookies.delete(COOKIE_NAME); // Delete the cookie if token is expired
+        return res;
+      }
+
+      // If authenticated user tries to access auth routes
+      if (authRoutes.includes(currentPath)) {
+        return NextResponse.redirect(new URL("/", req.url));
+      }
+
+      // Authenticated and accessing other routes
+      return NextResponse.next();
+    } catch (err) {
+      console.error("Invalid token:", err);
+      const res = NextResponse.redirect(new URL("/accounts/signin", req.url));
+      res.cookies.delete(COOKIE_NAME); // Delete the cookie if token is invalid
+      return res;
+    }
   }
 
-  if (!isLoggedIn && !isPublicRoute) {
-    const signInUrl = new URL("/accounts/signin", nextUrl);
-    signInUrl.searchParams.set("next", nextUrl.pathname);
-    return Response.redirect(signInUrl);
+  // Allow unauthenticated access to public or auth routes
+  if (publicRoutes.includes(currentPath) || authRoutes.includes(currentPath)) {
+    return NextResponse.next();
   }
-  return null;
-});
+
+  // If not authenticated and accessing protected routes
+  const loginUrl = new URL("/accounts/signin", req.url);
+  loginUrl.searchParams.set("redirect", currentPath);
+  return NextResponse.redirect(loginUrl);
+}
+
 
 export const config = {
   matcher: ["/((?!.*\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],

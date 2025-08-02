@@ -4,7 +4,7 @@ import ArticleForm from "./ArticleForm";
 import ArticleList from "./ArticleList";
 import ArticleCategoryForm from "./ArticleCategoryForm";
 import { useSearchParams } from "next/navigation";
-import { articleAPIendpoint } from "@/data/articles/fetcher";
+import { articleAPIendpoint } from "@/data/articles/articles.hook";
 import { ArticleDefault } from "@/constants";
 import { useFetchCategories } from "@/data/categories/categories.hook";
 import { useFetchArticles } from "@/data/articles/articles.hook";

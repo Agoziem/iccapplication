@@ -2,7 +2,7 @@ import React from "react";
 import NewsPostItem from "./NewsPostItem";
 import "./news.css";
 import Link from "next/link";
-import { articleAPIendpoint } from "@/data/articles/fetcher";
+import { articleAPIendpoint } from "@/data/article.hook";
 import { useFetchArticles } from "@/data/articles/articles.hook";
 import Loading from "@/components/custom/Loading/Loading";
 

@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import "./footer.css";
-import { useFetchOrganization } from "@/data/organization/organization.hook";
+import { useFetchOrganization } from "@/data/organization.hook";
 
 const Footer: React.FC = () => {
   const organizationID = process.env.NEXT_PUBLIC_ORGANIZATION_ID;

@@ -2,7 +2,7 @@ import Modal from "@/components/custom/Modal/modal";
 import { subscriptionDefault } from "@/constants";
 import {
   MainAPIendpoint,
-} from "@/data/organization/fetcher";
+} from "@/data/organization.hook";
 import React, { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Pagination from "@/components/custom/Pagination/Pagination";
@@ -11,7 +11,7 @@ import {
   useDeleteSubscription,
   useFetchSubscriptions,
   useUpdateSubscription,
-} from "@/data/organization/organization.hook";
+} from "@/data/organization.hook";
 import toast from "react-hot-toast";
 
 interface Subscription {

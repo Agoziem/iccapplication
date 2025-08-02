@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import Modal from "@/components/custom/Modal/modal";
 import FeedbackButton from "./FeedbackBtn";
 import TestimonialForm from "../../features/configuration/home/TestimonialForm";
-import { useCreateTestimonial, useFetchOrganization } from "@/data/organization/organization.hook";
+import { useCreateTestimonial, useFetchOrganization } from "@/data/organization.hook";
 
 interface TestimonialData {
   id: string | null;

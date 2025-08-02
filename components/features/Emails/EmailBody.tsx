@@ -1,10 +1,10 @@
 import ProfileimagePlaceholders from "../../custom/ImagePlaceholders/ProfileimagePlaceholders";
 import EmailInput from "./EmailInput";
 import { MdOutlineMessage } from "react-icons/md";
-import { emailAPIendpoint, getResponses } from "@/data/Emails/fetcher";
+import { emailAPIendpoint, getResponses } from "@/data/emails.hook";
 import { BsThreeDotsVertical } from "react-icons/bs";
-import { useFetchOrganization } from "@/data/organization/organization.hook";
-import { useFetchResponses } from "@/data/Emails/emails.hook";
+import { useFetchOrganization } from "@/data/organization.hook";
+import { useFetchResponses } from "@/data/emails.hook";
 import React from "react";
 
 interface EmailMessage {

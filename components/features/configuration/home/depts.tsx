@@ -6,7 +6,7 @@ import { deptDefault } from "@/constants";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   MainAPIendpoint,
-} from "@/data/organization/fetcher";
+} from "@/data/organization.hook";
 import Pagination from "@/components/custom/Pagination/Pagination";
 import {
   useCreateDepartment,
@@ -14,7 +14,7 @@ import {
   useFetchDepartments,
   useFetchStaffs,
   useUpdateDepartment,
-} from "@/data/organization/organization.hook";
+} from "@/data/organization.hook";
 import toast from "react-hot-toast";
 import { Department } from "@/types/organizations";
 

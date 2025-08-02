@@ -11,7 +11,7 @@ import {
 import { IoLogoWhatsapp } from "react-icons/io5";
 import Alert from "@/components/custom/Alert/Alert";
 import "./section.css";
-import { useFetchOrganization } from "@/data/organization/organization.hook";
+import { useFetchOrganization } from "@/data/organization.hook";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";

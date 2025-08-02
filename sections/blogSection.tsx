@@ -4,7 +4,7 @@ import React from "react";
 import "./section.css";
 import { FaLongArrowAltRight } from "react-icons/fa";
 import { MdOutlineArticle } from "react-icons/md";
-import { articleAPIendpoint } from "@/data/articles/fetcher";
+import { articleAPIendpoint } from "@/data/articles/articles.hook";
 import { useFetchArticles } from "@/data/articles/articles.hook";
 import AnimationContainer from "@/components/animation/animation-container";
 import { Article } from "@/types/articles";

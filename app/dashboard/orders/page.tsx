@@ -2,7 +2,7 @@
 import React, { FC } from "react";
 import { useSession } from "next-auth/react";
 import type { Session } from "next-auth";
-import { useCart } from "@/data/carts/Cartcontext";
+import { useCart } from "@/data/Cartcontext";
 import { PaystackButton } from "react-paystack";
 import { useRouter } from "next/navigation";
 

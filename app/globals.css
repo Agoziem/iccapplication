@@ -7,9 +7,6 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-
   /* Custom */
   --color-primary-600: var(--primary-600);
   --color-primary-500: var(--primary-500);

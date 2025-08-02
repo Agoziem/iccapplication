@@ -2,9 +2,9 @@
 import "./section.css";
 import { PiGearBold } from "react-icons/pi";
 import Link from "next/link";
-import { fetchDepartments, MainAPIendpoint } from "@/data/organization/fetcher";
+import { fetchDepartments, MainAPIendpoint } from "@/data/organization.hook";
 import { dept_icons } from "@/constants";
-import { useFetchDepartments } from "@/data/organization/organization.hook";
+import { useFetchDepartments } from "@/data/organization.hook";
 import AnimationContainer from "@/components/animation/animation-container";
 
 const StaffSection = () => {

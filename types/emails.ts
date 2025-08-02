@@ -1,48 +1,62 @@
-export type MessageStatus = "pending" | "sent" | "failed";
-
-export interface Message {
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-}
-
-export interface Email {
+// Email
+export type EmailSchema = {
   id: number;
-  organization: number | null;
   name: string;
   email: string;
   subject: string;
   message: string;
   created_at: string;
-  read: boolean;
-}
+  updated_at: string;
+};
 
-export type EmailArrays = Email[];
-
-export interface EmailResponse {
-  message: number;
+// Email Response
+export type EmailResponseSchema = {
+  id: number;
+  message: number; // FK to Email
   recipient_email: string;
   response_subject: string;
   response_message: string;
-  created_at?: string;
-}
+  created_at: string;
+  updated_at: string;
+};
 
-export type EmailResponseArray = EmailResponse[];
-
-export interface EmailMessage {
-  id?: number;
+// Email Message
+export type EmailMessageSchema = {
+  id: number;
   subject: string;
   body: string;
   template?: string | null;
-  created_at?: string;
-  status: MessageStatus;
-}
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
 
-export type EmailMessageArray = EmailMessage[];
+// Lists
+export type EmailMessageListSchema = {
+  messages: EmailMessageSchema[];
+};
 
-export interface EmailWebsocket {
-  operation: string;
-  message: Email;
-}
+// Generic Success/Error
+export type SuccessResponseSchema = {
+  message: string;
+};
 
+export type ErrorResponseSchema = {
+  error: string;
+};
+
+// Paginated Responses
+export type PaginatedEmailSchema = {
+  count: number;
+  items: EmailSchema[];
+};
+
+export type PaginatedEmailResponseSchema = {
+  count: number;
+  items: EmailResponseSchema[];
+};
+
+export type PaginatedEmailMessageResponseSchema = {
+  count: number;
+  items: EmailMessageSchema[];
+};

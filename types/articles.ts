@@ -1,61 +1,103 @@
 export interface Tag {
-  id?: number | null;
-  tag?: string | null;
+  id: number;
+  tag: string;
 }
 
-export type Tags = Tag[];
-
-export interface ArticleCategory {
-  id?: number | null;
+export interface BlogCategory {
+  id: number;
   category: string;
-  description?: string | null;
+  description?: string;
 }
-
-export type ArticleCategories = ArticleCategory[];
 
 export interface UserMini {
-  id?: number;
+  id: number;
   username: string;
   img?: string | null;
 }
 
-export interface Article {
-  id?: number | null;
-  organization?: number | null;
-  author: UserMini;
-  img?: File | string | null;
-  img_url?: string | null;
-  img_name?: string | null;
+export interface Comment {
+  id: number;
+  comment: string;
+  blog_id?: number | null;
+  user: UserMini;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Blog {
+  id: number;
   title: string;
-  subtitle: string;
+  subtitle?: string;
   body: string;
-  tags?: Tag[];
-  slug?: string | null;
-  category?: ArticleCategory | null;
+  slug: string;
+  category?: BlogCategory;
+  tags: Tag[];
+  author?: UserMini;
+  organization: number | null;
+  img?: string | null;
   readTime: number;
   views: number;
-  likes?: number[];
-  date: Date;
-  updated_at: Date;
+  date: string;
+  updated_at: string;
+  likes: number[];
+  likes_count: number;
 }
 
-export interface ArticlesResponse {
+
+// --- Response Types ---
+export interface BlogListResponse {
+  blogs: Blog[];
+}
+
+export interface BlogCategoryListResponse {
+  categories: BlogCategory[];
+}
+
+export interface CommentListResponse {
+  comments: Comment[];
+}
+
+export interface TagListResponse {
+  tags: Tag[];
+}
+
+export interface BlogStats {
+  total_blogs: number;
+  total_views: number;
+  total_likes: number;
+  total_comments: number;
+}
+
+export interface BlogResponse {
+  id: number;
+  title: string;
+  subtitle?: string;
+  slug?: string;
+  author?: UserMini;
+  category?: BlogCategory;
+  img_url?: string | null;
+  views: number[];
+  likes_count: number;
+  date: string;
+  readTime: number;
+}
+
+export interface LikeResponse {
+  liked: boolean;
+  likes_count: number;
+}
+
+export interface PaginatedBlogResponse {
   count: number;
-  next: string | null;
-  previous: string | null;
-  results: Article[];
+  items: Blog[];
 }
 
-export type Articles = Article[];
-
-export interface ArticleComment {
-  id?: number;
-  user: UserMini;
-  blog: number;
-  comment: string;
-  date: Date;
-  updated_at?: Date;
+export interface PaginatedBlogSummaryResponse {
+  count: number;
+  items: BlogResponse[];
 }
 
-export type ArticleComments = ArticleComment[];
-
+export interface PaginatedCommentResponse {
+  count: number;
+  items: Comment[];
+}

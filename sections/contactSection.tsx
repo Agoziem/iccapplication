@@ -4,7 +4,7 @@ import { IoLocationSharp } from "react-icons/io5";
 import { IoIosMailOpen } from "react-icons/io";
 import { FaPhoneVolume } from "react-icons/fa6";
 import ContactForm from "@/components/custom/Contact/ContactForm";
-import { useFetchOrganization } from "@/data/organization/organization.hook";
+import { useFetchOrganization } from "@/data/organization.hook";
 import { Organization } from "@/types/organizations";
 
 interface ContactItemProps {

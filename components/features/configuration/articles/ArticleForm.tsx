@@ -7,7 +7,7 @@ import { ArticleDefault } from "@/constants";
 import { Controller, useForm, FieldErrors } from "react-hook-form";
 import { ArticleSchema } from "@/schemas/articles";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createArticle, updateArticle } from "@/data/articles/fetcher";
+import { createArticle, updateArticle } from "@/data/article.hook";
 import { useSession } from "next-auth/react";
 import {
   useCreateArticle,

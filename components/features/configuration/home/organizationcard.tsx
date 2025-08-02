@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { converttoformData } from "@/utils/formutils";
 import OrganizationalForm from "./organizationalform";
 import { OrganizationDefault } from "@/constants";
-import { useUpdateOrganization } from "@/data/organization/organization.hook";
+import { useUpdateOrganization } from "@/data/organization.hook";
 import toast from "react-hot-toast";
 import { Organization } from "@/types/organizations";
 

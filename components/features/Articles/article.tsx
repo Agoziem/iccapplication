@@ -12,7 +12,7 @@ import NextBreadcrumb from "../../custom/Breadcrumb/breadcrumb";
 import BackButton from "../../custom/backbutton/BackButton";
 import Pagination from "../../custom/Pagination/Pagination";
 import { useSearchParams } from "next/navigation";
-import { articleAPIendpoint } from "@/data/articles/fetcher";
+import { articleAPIendpoint } from "@/data/article.hook";
 import {
   useFetchArticleBySlug,
   useFetchArticles,

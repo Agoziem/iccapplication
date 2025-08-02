@@ -1,8 +1,8 @@
-import { emailAPIendpoint, getSentEmail } from "@/data/Emails/fetcher";
+import { emailAPIendpoint, getSentEmail } from "@/data/emails.hook";
 import EmailForm from "./EmailForm";
 import { TbMessageCancel } from "react-icons/tb";
 import { PulseLoader } from "react-spinners";
-import { useFetchSentEmails } from "@/data/Emails/emails.hook";
+import { useFetchSentEmails } from "@/data/emails.hook";
 import React from "react";
 
 interface SentEmail {

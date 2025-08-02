@@ -26,11 +26,11 @@ import {
   fetchProducts,
   productsAPIendpoint,
   updateProduct,
-} from "@/data/product/fetcher";
+} from "@/data/product.hook";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
 import { PulseLoader } from "react-spinners";
 import { useFetchCategories } from "@/data/categories/categories.hook";
-import { useCreateProduct, useDeleteProduct, useFetchProducts, useUpdateProduct } from "@/data/product/product.hook";
+import { useCreateProduct, useDeleteProduct, useFetchProducts, useUpdateProduct } from "@/data/product.hook";
 import { Product } from "@/types/items";
 
 interface AddOrUpdateMode {

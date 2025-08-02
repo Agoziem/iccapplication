@@ -1,5 +1,5 @@
 "use client";
-import { useCart } from "@/data/carts/Cartcontext";
+import { useCart } from "@/data/Cartcontext";
 import React, { useCallback, useEffect, useRef, useState, FC } from "react";
 import { useAdminContext } from "@/data/payments/Admincontextdata";
 import { BsFillCartCheckFill } from "react-icons/bs";

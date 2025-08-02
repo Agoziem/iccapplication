@@ -8,7 +8,7 @@ import { MessageWebsocketSchema } from "@/schemas/emails";
 import { MdOutlineContacts } from "react-icons/md";
 import Pagination from "@/components/custom/Pagination/Pagination";
 import { useSearchParams, useRouter } from "next/navigation";
-import {  useFetchEmails } from "@/data/Emails/emails.hook";
+import {  useFetchEmails } from "@/data/emails.hook";
 import { useQueryClient } from "react-query";
 import toast from "react-hot-toast";
 

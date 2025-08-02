@@ -2,7 +2,7 @@
 import PageTitle from "@/components/custom/PageTitle/PageTitle";
 import Link from "next/link";
 import { IoChatbubbleEllipsesOutline, IoLogoWhatsapp } from "react-icons/io5";
-import { useFetchOrganization } from "@/data/organization/organization.hook";
+import { useFetchOrganization } from "@/data/organization.hook";
 
 const ChatRoom = () => {
   const { data: OrganizationData } = useFetchOrganization();
