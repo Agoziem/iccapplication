@@ -11,7 +11,7 @@ import Pagination from "@/components/custom/Pagination/Pagination";
 import { useRouter } from "next/navigation";
 import { productsAPIendpoint } from "@/data/product.hook";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
-import { useFetchCategories } from "@/data/categories/categories.hook";
+import { useFetchCategories } from "@/data/categories.hook";
 import { useFetchProducts } from "@/data/product.hook";
 import AnimationContainer from "@/components/animation/animation-container";
 

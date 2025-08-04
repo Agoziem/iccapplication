@@ -9,7 +9,7 @@ import { FaCheck, FaRegClipboard } from "react-icons/fa6";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import type { Session } from "next-auth";
-import { paymentsAPIendpoint, verifyPayment } from "@/data/payments/fetcher";
+import { paymentsAPIendpoint, verifyPayment } from "@/data/payments.hooks";
 import { BeatLoader } from "react-spinners";
 import { sendPaymentSuccessfulEmail } from "@/utils/mail";
 import { useQueryClient } from "react-query";

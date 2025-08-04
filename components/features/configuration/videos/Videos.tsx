@@ -19,11 +19,11 @@ import {
   fetchVideos,
   updateVideo,
   vidoesapiAPIendpoint,
-} from "@/data/videos/fetcher";
+} from "@/data/video.hook";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
 import { PulseLoader } from "react-spinners";
-import { useFetchCategories } from "@/data/categories/categories.hook";
-import { useCreateVideo, useDeleteVideo, useFetchVideos, useUpdateVideo } from "@/data/videos/video.hook";
+import { useFetchCategories } from "@/data/categories.hook";
+import { useCreateVideo, useDeleteVideo, useFetchVideos, useUpdateVideo } from "@/data/video.hook";
 
 interface AlertState {
   show: boolean;

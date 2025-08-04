@@ -10,13 +10,13 @@ import { useFetchServices } from "@/data/services/service.hook";
 import { servicesAPIendpoint } from "@/data/services/services.hook";
 import { productsAPIendpoint } from "@/data/product.hook";
 import { useFetchProducts } from "@/data/product.hook";
-import { useFetchVideos } from "@/data/videos/video.hook";
+import { useFetchVideos } from "@/data/video.hook";
 import {
   useFetchPayments,
   useFetchPaymentsByUser,
   useGetOrderReport,
 } from "@/data/payments/orders.hook";
-import { vidoesapiAPIendpoint } from "@/data/videos/fetcher";
+import { vidoesapiAPIendpoint } from "@/data/video.hook";
 
 const DashboardBody: React.FC = () => {
   const { data: session } = useSession();

@@ -3,11 +3,11 @@ import { PiEmptyBold } from "react-icons/pi";
 import VideosPlaceholder from "../../custom/ImagePlaceholders/Videosplaceholder";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { vidoesapiAPIendpoint } from "@/data/videos/fetcher";
+import { vidoesapiAPIendpoint } from "@/data/video.hook";
 import Pagination from "@/components/custom/Pagination/Pagination";
 import { useMemo, useState } from "react";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
-import { useFetchVideos } from "@/data/videos/video.hook";
+import { useFetchVideos } from "@/data/video.hook";
 
 const UserVideos: React.FC = () => {
   const { data: session } = useSession();

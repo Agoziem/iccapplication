@@ -1,15 +1,8 @@
 import { UserMini } from "./articles";
 import { OrganizationMiniSchema } from "./organizations";
 
-// Mini Types
-export type ProductMini = {
-  id: number;
-  name: string;
-  price: number;
-};
-
 // Models
-export type Category = {
+export type ProductCategory = {
   id: number;
   category: string;
   description?: string;
@@ -17,13 +10,21 @@ export type Category = {
   updated_at: string;
 };
 
-export type SubCategory = {
+export type ProductSubCategory = {
   id: number;
   subcategory: string;
-  category?: Category;
+  category?: ProductCategory;
   created_at: string;
   updated_at: string;
 };
+
+// Mini Types
+export type ProductMini = {
+  id: number;
+  name: string;
+  price: number;
+};
+
 
 export type Product = {
   id: number;
@@ -36,10 +37,10 @@ export type Product = {
   product?: string | null; // URL to downloadable file
   product_token: string;
   userIDs_that_bought_this_product: UserMini[]; // list of users
-  subcategory?: SubCategory | null;
+  subcategory?: ProductSubCategory | null;
   number_of_times_bought?: number | null;
   digital: boolean;
-  category?: Category | null;
+  category?: ProductCategory | null;
   created_at: string; // ISO date
   last_updated_date: string; // ISO date
   free: boolean;
@@ -48,11 +49,11 @@ export type Product = {
 
 // Response Types
 export type CategoryListResponse = {
-  categories: Category[];
+  categories: ProductCategory[];
 };
 
 export type SubCategoryListResponse = {
-  subcategories: SubCategory[];
+  subcategories: ProductSubCategory[];
 };
 
 

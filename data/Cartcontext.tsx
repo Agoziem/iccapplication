@@ -10,10 +10,12 @@ import React, {
   FC,
 } from "react";
 import { useRouter } from "next/navigation";
-import { addPayment } from "./payments/fetcher";
+import { useAddPayment } from "./payments.hooks";
 import { useQueryClient } from "react-query";
-import { Product, Service, Video } from "@/types/items";
 import { useGetUserProfile } from "./user.hook";
+import { Service } from "@/types/services";
+import { Product } from "@/types/products";
+import { Video } from "@/types/videos";
 
 // Cart item types
 type CartType = "service" | "product" | "video";
@@ -71,6 +73,7 @@ const CartProvider: FC<CartProviderProps> = ({ children }) => {
   const [reference, setReference] = useState<string>("");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const { mutateAsync: addPayment } = useAddPayment();
 
   // ----------------------------------------------------
   // Set Cart from local storage
@@ -85,13 +88,11 @@ const CartProvider: FC<CartProviderProps> = ({ children }) => {
       const calculatedTotal = storedCart.reduce(
         (acc: number, item: CartItem) =>
           acc +
-          parseFloat(
-            item.cartType === "service"
-              ? item.service.price
-              : item.cartType === "product"
-              ? item.product.price
-              : item.video.price
-          ),
+          (item.cartType === "service"
+            ? item.service.price
+            : item.cartType === "product"
+            ? item.product.price
+            : item.video.price),
         0
       );
       setTotal(calculatedTotal);
@@ -109,13 +110,11 @@ const CartProvider: FC<CartProviderProps> = ({ children }) => {
     setStoredCart(newCart);
     setTotal(
       total +
-        parseFloat(
-          item.cartType === "service"
-            ? item.service.price
-            : item.cartType === "product"
-            ? item.product.price
-            : item.video.price
-        )
+        (item.cartType === "service"
+          ? item.service.price
+          : item.cartType === "product"
+          ? item.product.price
+          : item.video.price)
     );
   };
 
@@ -154,7 +153,7 @@ const CartProvider: FC<CartProviderProps> = ({ children }) => {
         ? itemToRemove.product.price
         : itemToRemove.video.price;
 
-    setTotal(total - parseFloat(priceToSubtract));
+    setTotal((prevTotal) => prevTotal - priceToSubtract);
   };
 
   // ----------------------------------------------------
@@ -169,39 +168,30 @@ const CartProvider: FC<CartProviderProps> = ({ children }) => {
   // ----------------------------------------------------
   // Checkout
   // ----------------------------------------------------
-  const queryClient = useQueryClient();
   const checkout = (): void => {
-    if (!user?.id) {
-      setError("User session not found");
-      return;
-    }
-
     startTransition(async () => {
       // Create a simplified order with just the essential information
+      if (!user?.id) {
+        setError("User session not found");
+        return;
+      }
       const orderData = {
-        customer: {
-          id: user.id,
-          name: user?.first_name || undefined,
-          email: user?.email || undefined,
-        },
+        customerid: user.id,
         services: cart
           .filter((item) => item.cartType === "service")
-          .map((item) => item.service),
+          .map((item) => item.service.id),
         products: cart
           .filter((item) => item.cartType === "product")
-          .map((item) => item.product),
+          .map((item) => item.product.id),
         videos: cart
           .filter((item) => item.cartType === "video")
-          .map((item) => item.video),
-        amount: total.toString(),
-        status: "Pending" as const,
-        service_delivered: false,
+          .map((item) => item.video.id),
+        total: parseFloat(total.toFixed(2)),
       };
 
       try {
         // Type assertion needed because the API expects IDs but TypeScript interface expects objects
-        const data = (await addPayment(orderData)) as PaymentResponse;
-        queryClient.invalidateQueries("payments");
+        const data = await addPayment(orderData);
         if (data?.reference) {
           setReference(data.reference);
         }

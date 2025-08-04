@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import Alert from "../../custom/Alert/Alert";
-import { useCreateNotification, useUpdateNotification } from "@/data/notificationsAPI/notifications.hook";
+import { useCreateNotification, useUpdateNotification } from "@/data/notifications.hook";
 
 interface NotificationMessage {
   id?: number;

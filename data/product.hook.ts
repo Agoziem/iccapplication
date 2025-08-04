@@ -108,7 +108,7 @@ export const useRateProduct = (): UseMutationResult<
   const queryClient = useQueryClient();
   return useMutation(
     async ({ productId, rating }: { productId: number; rating: number }) => {
-      const response = await AxiosinstanceAuth.post(`/api/products/product/${productId}/rate`, { rating });
+      const response = await AxiosinstanceAuth.post(`/products/product/${productId}/rate`, { rating });
       return response.data;
     },
     {

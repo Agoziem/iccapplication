@@ -1,17 +1,40 @@
-export interface NotificationMessage {
+import { NotificationType } from "@/schemas/notifications";
+import { UserMini } from "./users";
+
+
+// ✅ Notification Type
+export type Notification = {
   id: number;
   title: string;
   message: string;
-  viewed: boolean;
-  updated_at?: string;
-  created_at?: string;
-}
+  type: NotificationType;
+  users_viewed: UserMini[];
+  users_viewed_count: number;
+  is_viewed_by_user?: boolean;
+  created_at: string; // ISO date string
+  updated_at: string;
+};
 
-export type NotificationMessages = NotificationMessage[];
+// ✅ Paginated Response
+export type PaginatedNotificationResponse = {
+  count: number;
+  items: Notification[];
+};
 
-export type NotificationActionType = "add" | "update" | "delete" | "mark_viewed";
+// ✅ List Response (non-paginated)
+export type NotificationListResponse = {
+  notifications: Notification[];
+};
 
-export interface NotificationAction {
-  action: NotificationActionType;
-  notification: NotificationMessage;
-}
+export type UnreadCountResponse = {
+  unread_count: number;
+};
+
+// ✅ Success and Error
+export type SuccessResponse = {
+  message: string;
+};
+
+export type ErrorResponse = {
+  error: string;
+};

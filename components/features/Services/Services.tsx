@@ -10,7 +10,7 @@ import CategoryTabs from "@/components/features/Categories/Categoriestab";
 import Pagination from "@/components/custom/Pagination/Pagination";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
 import { BsPersonFillGear } from "react-icons/bs";
-import { useFetchCategories } from "@/data/categories/categories.hook";
+import { useFetchCategories } from "@/data/categories.hook";
 import {
   useFetchServices,
 } from "@/data/services/service.hook";

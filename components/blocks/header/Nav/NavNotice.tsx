@@ -3,7 +3,7 @@ import useWebSocket from "@/hooks/useWebSocket";
 import Modal from "@/components/custom/Modal/modal";
 import { shortenMessage, timeSince } from "@/utils/utilities";
 import { notificationActionSchema } from "@/schemas/notifications";
-import { useFetchNotifications } from "@/data/notificationsAPI/notifications.hook";
+import { useFetchNotifications } from "@/data/notifications.hook";
 import { useQueryClient } from "react-query";
 import toast from "react-hot-toast";
 import { NotificationMessage, NotificationAction } from "@/types/notifications";

@@ -8,7 +8,7 @@ import {
   useDeleteSubCategory,
   useFetchSubCategories,
   useUpdateSubCategory,
-} from "@/data/categories/categories.hook";
+} from "@/data/categories.hook";
 
 interface Category {
   id: number;

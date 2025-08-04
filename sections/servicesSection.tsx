@@ -8,7 +8,7 @@ import ReusableSwiper from "@/components/custom/Swiper/ReusableSwiper";
 import { useCart } from "@/data/Cartcontext";
 import { useSession } from "next-auth/react";
 import { servicesAPIendpoint } from "@/data/services/services.hook";
-import { useFetchCategories } from "@/data/categories/categories.hook";
+import { useFetchCategories } from "@/data/categories.hook";
 import { useFetchServices } from "@/data/services/service.hook";
 import AnimationContainer from "@/components/animation/animation-container";
 import { Service } from "@/types/items";

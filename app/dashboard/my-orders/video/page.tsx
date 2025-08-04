@@ -1,9 +1,9 @@
 "use client";
 import { useSearchParams } from "next/navigation";
 import PageTitle from "@/components/custom/PageTitle/PageTitle";
-import { vidoesapiAPIendpoint } from "@/data/videos/fetcher";
+import { vidoesapiAPIendpoint } from "@/data/video.hook";
 import { PulseLoader } from "react-spinners";
-import { useFetchVideoByToken } from "@/data/videos/video.hook";
+import { useFetchVideoByToken } from "@/data/video.hook";
 
 const VideoPage = () => {
   const searchParams = useSearchParams();

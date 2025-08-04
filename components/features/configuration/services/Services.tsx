@@ -24,7 +24,7 @@ import {
 import SearchInput from "@/components/custom/Inputs/SearchInput";
 import { PulseLoader } from "react-spinners";
 import { useFetchOrganization } from "@/data/organization.hook";
-import { useFetchCategories } from "@/data/categories/categories.hook";
+import { useFetchCategories } from "@/data/categories.hook";
 import {
   useCreateService,
   useDeleteService,

@@ -1,28 +1,28 @@
+// zod/notification.ts
 import { z } from "zod";
 
-// ---------------------------------------------------------------------
-// Validations for Notification data
-// ---------------------------------------------------------------------
-export const notificationSchema = z.object({
-  id: z.number(),
-  title: z.string().min(1, { message: "Title is required" }),
-  message: z.string().min(1, { message: "Message is required" }),
-  viewed: z.boolean(),
-  updated_at: z.string().optional(), // ISO string date format validation can be added if needed
-  created_at: z.string().optional(), // Optional but expect ISO string format
-});
+// Reusable notification type enum
+export const NotificationTypeEnum = z.enum(["info", "success", "warning", "error"]);
+export type NotificationType = z.infer<typeof NotificationTypeEnum>;
 
-export const notificationArraySchema = z.array(notificationSchema);
-
-export const notificationResponseSchema = z.object({
-  count: z.number(),
-  next: z.string().nullable(), // next can be null
-  previous: z.string().nullable(), // previous can be null
-  results: z.array(notificationSchema),
+// ✅ Create Notification
+export const CreateNotificationSchema = z.object({
+  title: z.string().min(1),
+  message: z.string().min(1),
+  type: NotificationTypeEnum.default("info"),
 });
+export type CreateNotificationType = z.infer<typeof CreateNotificationSchema>;
 
-// Define the full schema with action and notification
-export const notificationActionSchema = z.object({
-  action: z.enum(["add", "update", "delete", "mark_viewed"]),
-  notification: notificationSchema,
+// ✅ Update Notification
+export const UpdateNotificationSchema = z.object({
+  title: z.string().optional(),
+  message: z.string().optional(),
+  type: NotificationTypeEnum.optional(),
 });
+export type UpdateNotificationType = z.infer<typeof UpdateNotificationSchema>;
+
+// ✅ Mark as Viewed
+export const MarkAsViewedSchema = z.object({
+  notification_id: z.number(),
+});
+export type MarkAsViewedType = z.infer<typeof MarkAsViewedSchema>;

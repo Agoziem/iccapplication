@@ -2,7 +2,7 @@ import ImageUploader from "@/components/custom/Imageuploader/ImageUploader";
 import FileUploader from "@/components/custom/Fileuploader/FileUploader";
 import { productsAPIendpoint } from "@/data/product.hook";
 import { PulseLoader } from "react-spinners";
-import { useFetchSubCategories } from "@/data/categories/categories.hook";
+import { useFetchSubCategories } from "@/data/categories.hook";
 import React from "react";
 
 interface Product {

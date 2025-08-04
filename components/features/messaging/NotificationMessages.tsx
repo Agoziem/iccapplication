@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import Modal from "../../custom/Modal/modal";
 import Alert from "../../custom/Alert/Alert";
 import { shortenMessage } from "@/utils/utilities";
-import { useDeleteNotification, useFetchNotifications } from "@/data/notificationsAPI/notifications.hook";
+import { useDeleteNotification, useFetchNotifications } from "@/data/notifications.hook";
 import React from "react";
 
 interface NotificationMessage {

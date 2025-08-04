@@ -7,7 +7,7 @@ import {
   deleteCategory,
   updateCategory,
 } from "@/data/categories/fetcher";
-import { useCreateCategory, useDeleteCategory, useUpdateCategory } from "@/data/categories/categories.hook";
+import { useCreateCategory, useDeleteCategory, useUpdateCategory } from "@/data/categories.hook";
 import { useUpdateComment } from "@/data/articles/articles.hook";
 
 interface Category {

@@ -8,10 +8,10 @@ import CategoryTabs from "@/components/features/Categories/Categoriestab";
 import VideoCard from "@/components/features/Videos/VideoCard";
 import { FaVideo } from "react-icons/fa6";
 import Pagination from "@/components/custom/Pagination/Pagination";
-import { vidoesapiAPIendpoint } from "@/data/videos/fetcher";
+import { vidoesapiAPIendpoint } from "@/data/video.hook";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
-import { useFetchCategories } from "@/data/categories/categories.hook";
-import { useFetchVideos } from "@/data/videos/video.hook";
+import { useFetchCategories } from "@/data/categories.hook";
+import { useFetchVideos } from "@/data/video.hook";
 import AnimationContainer from "@/components/animation/animation-container";
 
 interface Category {
