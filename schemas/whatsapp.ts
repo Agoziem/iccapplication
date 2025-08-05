@@ -1,118 +1,117 @@
+// zod/waMessage.ts
 import { z } from "zod";
 
-export const MESSAGE_TYPES = [
+// Enums
+export const MessageTypeEnum = z.enum([
   "text",
   "image",
   "video",
   "audio",
   "document",
   "sticker",
-] as const;
+]);
+export type MessageType = z.infer<typeof MessageTypeEnum>;
 
-export const MESSAGE_MODES = ["received", "sent"] as const;
+export const MessageModeEnum = z.enum(["received", "sent"]);
+export type MessageMode = z.infer<typeof MessageModeEnum>;
 
-export const MESSAGE_STATUS = ["pending", "sent", "failed"] as const;
+export const MessageStatusEnum = z.enum(["pending", "sent", "failed"]);
+export type MessageStatus = z.infer<typeof MessageStatusEnum>;
 
-// ---------------------------------------------------------------------
-// Validations for WA API
-// ---------------------------------------------------------------------
-
-// Create the Zod schema for the Message model ..
-export const WAMessageSchema = z.object({
-  id: z.number().optional().nullable(),
-  message_id: z.string().optional(),
-  contact: z
-    .number()
-    .positive("Contact ID must be a positive number")
-    .nullable(),
-  message_type: z.enum(MESSAGE_TYPES),
-  body: z.string().optional(), // Text message body
-  media_id: z.string().optional(), // Media message ID
-  mime_type: z.string().optional(), // MIME type for media messages
-  filename: z.string().optional(), // Filename forideos/documents
-  animated: z.boolean().optional(), // For stickers
-  caption: z.string().optional(), // Caption for media
-  timestamp: z.string().optional(), // ISO date string
-  message_mode: z.enum(MESSAGE_MODES),
-  seen: z.boolean().optional(), // Seen status for received messages
-  link: z.string().url().optional(),
-  status: z.enum(MESSAGE_STATUS).optional(), // Status for sent messages
-});
-
-export const WAMessageArraySchema = z.array(WAMessageSchema);
-
-export const LastMessageSchema = z.object({
-  id: z.number().optional(),
-  message_id: z.string().min(1, "Message ID is required"),
-  message_type: z.enum(MESSAGE_TYPES),
-  body: z.string().optional(),
-  timestamp: z.string().optional(),
-});
-
-export const WAContactSchema = z.object({
-  id: z.number().optional(),
-  wa_id: z.string(),
-  profile_name: z.string().optional(),
-  last_message: LastMessageSchema.optional(),
-  unread_message_count: z.number(),
-});
-
-export const WAContactArraySchema = z.array(WAContactSchema);
-
-export const WAContactResponseSchema = z.object({
-  count: z.number(),
-  next: z.string().nullable(), // next can be null
-  previous: z.string().nullable(), // previous can be null
-  results: z.array(WAContactSchema),
-});
-
-// Whatsapp Websocket types
-export const WAContactWebsocketSchema = z.object({
-  operation: z.string(),
-  contact: WAContactSchema,
-});
-
-export const WAMessageWebsocketSchema = z.object({
-  operation: z.string(),
-  contact: WAContactSchema,
-  message: WAMessageSchema,
-});
-
-// ---------------------------------------------------------------------
-// Validations for Whatsapp Template
-// ---------------------------------------------------------------------
-
-export const TEMPLATE_NAMES = [
-  "hello_world",
+export const TemplateTypeEnum = z.enum([
   "textonly",
   "textwithimage",
   "textwithvideo",
   "textwithaudio",
   "textwithdocument",
   "textwithCTA",
-] as const;
+]);
+export type TemplateType = z.infer<typeof TemplateTypeEnum>;
 
-// Template names
-export const WATemplateSchema = z.object({
-  id: z.number().optional(),
+// ✅ Create WAMessage
+export const CreateWAMessageSchema = z.object({
+  message_id: z.string(),
+  contact: z.number(),
+  message_type: MessageTypeEnum.default("text"),
+  body: z.string().default(""),
+  media_id: z.string().default(""),
+  mime_type: z.string().default(""),
+  filename: z.string().default(""),
+  animated: z.boolean().default(false),
+  caption: z.string().default(""),
+  link: z.string().url().default("https://www.example.com"),
+  message_mode: MessageModeEnum.default("received"),
+  seen: z.boolean().default(false),
+  status: MessageStatusEnum.default("pending"),
+});
+export type CreateWAMessageType = z.infer<typeof CreateWAMessageSchema>;
 
-  template: z
-    .enum(TEMPLATE_NAMES)
-    .refine((value) => TEMPLATE_NAMES.includes(value), {
-      message: "You must select a valid Template",
-    }),
-  title: z.string(),
+// ✅ Update WAMessage
+export const UpdateWAMessageSchema = z.object({
+  message_type: MessageTypeEnum.optional(),
+  body: z.string().optional(),
+  media_id: z.string().optional(),
+  mime_type: z.string().optional(),
+  filename: z.string().optional(),
+  animated: z.boolean().optional(),
+  caption: z.string().optional(),
+  link: z.string().url().optional(),
+  message_mode: MessageModeEnum.optional(),
+  seen: z.boolean().optional(),
+  status: MessageStatusEnum.optional(),
+});
+
+export type UpdateWAMessageType = z.infer<typeof UpdateWAMessageSchema>;
+
+
+// ✅ Create Contact 
+export const CreateContactSchema = z.object({
+  wa_id: z.string(),
+  profile_name: z.string().optional(),
+});
+export type CreateContactType = z.infer<typeof CreateContactSchema>;
+
+// ✅ Update Contact Schema
+export const UpdateContactSchema = z.object({
+  wa_id: z.string().optional(),
+  profile_name: z.string().optional(),
+});
+export type UpdateContactType = z.infer<typeof UpdateContactSchema>;
+
+
+// ✅ Create Status
+export const CreateStatusSchema = z.object({
+  message: z.number(),
+  status: z.string(),
+});
+export type CreateStatusType = z.infer<typeof CreateStatusSchema>;
+
+
+// create a zod schema for WATemplateSchema
+export const CreateWATemplateSchema = z.object({
+  title: z.string().optional(),
+  template: TemplateTypeEnum,
   text: z.string().optional(),
-  link: z.string().optional().nullable(),
-  status: z.enum(MESSAGE_STATUS),
-  created_at: z.string().optional(),
+  link: z.string().url().optional(),
 });
 
-export const WATemplateArraySchema = z.array(WATemplateSchema);
+export type CreateWATemplateSchemaType = z.infer<typeof CreateWATemplateSchema>;
 
-export const WATemplateResponseSchema = z.object({
-  count: z.number(),
-  next: z.string().nullable(), // next can be null
-  previous: z.string().nullable(), // previous can be null
-  results: z.array(WATemplateSchema),
+// Update WATemplateSchema
+export const UpdateWATemplateSchema = z.object({
+  title: z.string().optional(),
+  template: TemplateTypeEnum.optional(),
+  text: z.string().optional(),
+  link: z.string().url().optional(),
+  status: MessageStatusEnum.optional(),
 });
+
+export type UpdateWATemplateSchemaType = z.infer<typeof UpdateWATemplateSchema>;
+
+// Create WebhookEvent Schema
+export const CreateWebhookEventSchema = z.object({
+  event_id: z.string(),
+  payload: z.record(z.any()),
+});
+
+export type CreateWebhookEventType = z.infer<typeof CreateWebhookEventSchema>;

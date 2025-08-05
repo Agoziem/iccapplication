@@ -2,7 +2,7 @@
 import { TbBrandWhatsapp } from "react-icons/tb";
 import WATemplateForm from "./WhatsappForm";
 import { PulseLoader } from "react-spinners";
-import { useGetSentTemplates } from "@/data/whatsappAPI/whatsapp.hook";
+import { useGetSentTemplates } from "@/data/whatsapp.hook";
 import React from "react";
 
 interface SentMessage {

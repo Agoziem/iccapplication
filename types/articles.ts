@@ -1,3 +1,5 @@
+import { UserMini } from "./users";
+
 export interface Tag {
   id: number;
   tag: string;
@@ -7,12 +9,6 @@ export interface BlogCategory {
   id: number;
   category: string;
   description?: string;
-}
-
-export interface UserMini {
-  id: number;
-  username: string;
-  img?: string | null;
 }
 
 export interface Comment {

@@ -1,93 +1,113 @@
-// Type definitions for WhatsApp integration
+// types/waMessage.ts
+import {
+  MessageMode,
+  MessageStatus,
+  MessageType,
+  TemplateType,
+} from "@/schemas/whatsapp";
 
-// Union types for message configuration
-export type MessageType = "text" | "image" | "video" | "audio" | "document" | "sticker";
-export type MessageMode = "received" | "sent";
-export type MessageStatus = "pending" | "sent" | "failed";
-export type TemplateName = "hello_world" | "textonly" | "textwithimage" | "textwithvideo" | "textwithaudio" | "textwithdocument" | "textwithCTA";
-
-// Last message interface for contact references
-export interface LastMessage {
-  id?: number;
+export type WAMessageMini = {
+  id: number;
   message_id: string;
   message_type: MessageType;
   body?: string;
-  timestamp?: string;
-}
+  timestamp: string;
+};
 
-// WhatsApp contact interface
-export interface WAContact {
-  id?: number;
-  wa_id: string;
-  profile_name?: string;
-  last_message?: LastMessage;
-  unread_message_count: number;
-}
-
-// Array of WhatsApp contacts
-export type WAContacts = WAContact[];
-
-// WhatsApp message interface with media support
-export interface WAMessage {
-  id?: number | null;
-  message_id?: string;
-  contact: number | null;
+export type WAMessage = {
+  id: number;
+  message_id: string;
+  contact: number | Contact; // Adjust based on how you're embedding
   message_type: MessageType;
-  body?: string;
-  media_id?: string;
-  mime_type?: string;
-  filename?: string;
-  animated?: boolean;
-  caption?: string;
-  timestamp?: string;
+  body: string;
+  media_id: string;
+  mime_type: string;
+  filename: string;
+  animated: boolean;
+  caption: string;
+  link: string;
   message_mode: MessageMode;
-  seen?: boolean;
-  link?: string;
-  status?: MessageStatus;
-}
-
-// Array of WhatsApp messages
-export type WAMessages = WAMessage[];
-
-// WebSocket contact data interface
-export interface WAContactSocket {
-  operation: string;
-  contact: WAContact;
-}
-
-// WebSocket message data interface
-export interface WAMessagesSocket {
-  operation: string;
-  contact: WAContact;
-  message: WAMessage;
-}
-
-// WhatsApp template interface for broadcast messages
-export interface WATemplate {
-  id?: number;
-  template: TemplateName;
-  title: string;
-  text?: string;
-  link?: string | null;
+  seen: boolean;
   status: MessageStatus;
-  created_at?: string;
-}
+  timestamp: string;
+};
 
-// Array of WhatsApp templates
-export type WATemplateArray = WATemplate[];
+export type Contact = {
+  id: number;
+  wa_id: string;
+  profile_name: string;
+  last_message?: WAMessageMini;
+  unread_message_count: number;
+};
 
-// Response interface for paginated contact results
-export interface WAContactResponse {
+export type Status = {
+  id: number;
+  message: number;
+  status: string;
+  timestamp: string;
+};
+
+
+export type WebhookEvent = {
+  id: number;
+  event_id: string;
+  payload: Record<string, any>;
+  received_at: string;
+};
+
+export type WATemplateSchema = {
+  id: number;
+  title: string;
+  template: TemplateType;
+  text?: string;
+  link?: string;
+  status: MessageStatus;
+  created_at: string;
+};
+
+
+// Reusable response wrappers
+export type PaginatedResponse<T> = {
   count: number;
-  next: string | null;
-  previous: string | null;
-  results: WAContact[];
-}
+  items: T[];
+};
 
-// Response interface for paginated template results
-export interface WATemplateResponse {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: WATemplate[];
-}
+export type ListResponse<T> = {
+  results: T[];
+};
+
+export type SuccessResponse = {
+  message: string;
+};
+
+export type ErrorResponse = {
+  error: string;
+};
+
+export type MediaResponse = {
+  media_url: string;
+  mime_type: string;
+  success: boolean;
+};
+
+export type WebSocketMessage = {
+  operation: string;
+  contact?: Contact;
+  message?: WAMessage;
+};
+
+// ✅ SendMessage type
+export type SendMessage = {
+  message_type?: MessageType; // defaults to "text"
+  body?: string;              // optional for text messages
+  media_id?: string;          // required for media messages
+  link?: string;              // optional, for sent media URLs
+};
+
+// ✅ TemplateMessage type
+export type TemplateMessage = {
+  to_phone_number: string;
+  template_name: string;
+  language_code?: string; // defaults to "en_US"
+};
+

@@ -2,7 +2,7 @@
 
 import { CartProvider } from "@/data/Cartcontext";
 import { AdminContextProvider } from "@/data/payments/Admincontextdata";
-import { WhatsappAPIProvider } from "@/data/whatsappAPI/WhatsappContext";
+import { WhatsappAPIProvider } from "@/data/WhatsappContext";
 
 const ContextProviders = ({ children }: { children: React.ReactNode }) => (
   <AdminContextProvider>

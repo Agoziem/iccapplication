@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import ProfileimagePlaceholders from "../../custom/ImagePlaceholders/ProfileimagePlaceholders";
 import "./whatsapp.css";
-import { useWhatsappAPIContext } from "@/data/whatsappAPI/WhatsappContext";
+import { useWhatsappAPIContext } from "@/data/WhatsappContext";
 
 interface Contact {
   id: number;

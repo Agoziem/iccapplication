@@ -5,8 +5,8 @@ import { WAMessageDefault } from "@/constants";
 import ChatAttachments from "../../features/Whatsapp/ChatAttachments";
 import AttachmentInput from "./AttachmentInput";
 import ExtendableTextarea from "./ExtendableTextarea";
-import { useWhatsappAPIContext } from "@/data/whatsappAPI/WhatsappContext";
-import { useSendWAMessage } from "@/data/whatsappAPI/whatsapp.hook";
+import { useWhatsappAPIContext } from "@/data/WhatsappContext";
+import { useSendWAMessage } from "@/data/whatsapp.hook";
 
 interface ChatInputProps {
   contact: {

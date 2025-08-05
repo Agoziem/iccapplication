@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import Alert from "../../custom/Alert/Alert";
-import { useCreateTemplateMessage } from "@/data/whatsappAPI/whatsapp.hook";
+import { useCreateTemplateMessage } from "@/data/whatsapp.hook";
 
 const WATemplateForm: React.FC = () => {
   const [error, setError] = useState<string>("");
