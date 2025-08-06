@@ -1,7 +1,7 @@
 import React, { ReactNode, FC } from "react";
 import BackToTop from "@/components/custom/backtotopbutton/BackToTop";
 import MainHeader from "@/components/blocks/header/Mainheader/MainHeader";
-import FooterSection from "@/sections/footerSection";
+import FooterSection from "@/components/sections/footerSection";
 import "./department.css";
 
 interface DepartmentLayoutProps {

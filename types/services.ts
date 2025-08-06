@@ -86,3 +86,59 @@ export type PaginatedServiceUserResponse = {
   count: number;
   items: ServiceUserDetails[];
 };
+
+
+// FormFieldSchema
+export type FormField = {
+  id: number;
+  field_type: string;
+  label: string;
+  placeholder?: string;
+  help_text?: string;
+  is_required: boolean;
+  order: number;
+  options?: string[];
+  min_value?: number;
+  max_value?: number;
+  min_length?: number;
+  max_length?: number;
+  created_at: string;
+  updated_at: string;
+};
+
+// ServiceFormSchema
+export type ServiceForm = {
+  id: number;
+  title: string;
+  description?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  fields: FormField[];
+};
+
+// FormSubmissionSchema
+export type FormSubmission = {
+  id: number;
+  submission_data: Record<string, any>;
+  submitted_at: string;
+  updated_at: string;
+  user_id: number;
+  username: string;
+};
+
+// Paginated Responses
+export type PaginatedServiceFormResponse = {
+  count: number;
+  items: ServiceForm[];
+};
+
+export type PaginatedFormFieldResponse = {
+  count: number;
+  items: FormField[];
+};
+
+export type PaginatedFormSubmissionResponse = {
+  count: number;
+  items: FormSubmission[];
+};

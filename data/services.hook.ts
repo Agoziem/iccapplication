@@ -1,8 +1,18 @@
 import { ORGANIZATION_ID } from "@/constants";
-import { PaginatedServiceResponse, PaginatedServiceUserResponse, Service, ServiceCategory, ServiceSubCategory } from "@/types/services";
+import {
+  PaginatedServiceResponse,
+  PaginatedServiceUserResponse,
+  Service,
+} from "@/types/services";
 import { AxiosinstanceAuth, AxiosinstanceFormDataAuth } from "./instance";
-import { CreateServicesCategoryType, CreateServicesSubCategoryType, CreateServiceType, UpdateServicesSubCategoryType, UpdateServiceType } from "@/schemas/services";
-import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from "react-query";
+import { CreateServiceType, UpdateServiceType } from "@/schemas/services";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  UseQueryResult,
+  UseMutationResult,
+} from "react-query";
 
 const Organizationid = ORGANIZATION_ID;
 
@@ -23,22 +33,28 @@ export const useGetServices = (): UseQueryResult<PaginatedServiceResponse> => {
 /**
  * Hook to fetch trending services
  */
-export const useGetTrendingServices = (): UseQueryResult<PaginatedServiceResponse> => {
-  return useQuery("trendingServices", async () => {
-    const response = await AxiosinstanceAuth.get(`/services/trending/${Organizationid}`);
-    return response.data;
-  });
-};
+export const useGetTrendingServices =
+  (): UseQueryResult<PaginatedServiceResponse> => {
+    return useQuery("trendingServices", async () => {
+      const response = await AxiosinstanceAuth.get(
+        `/services/trending/${Organizationid}`
+      );
+      return response.data;
+    });
+  };
 
 /**
  * Hook to fetch user services
  */
-export const useGetUserServices = (): UseQueryResult<PaginatedServiceResponse> => {
-  return useQuery("userServices", async () => {
-    const response = await AxiosinstanceAuth.get(`/services/user/${Organizationid}`);
-    return response.data;
-  });
-};
+export const useGetUserServices =
+  (): UseQueryResult<PaginatedServiceResponse> => {
+    return useQuery("userServices", async () => {
+      const response = await AxiosinstanceAuth.get(
+        `/services/user/${Organizationid}`
+      );
+      return response.data;
+    });
+  };
 
 /**
  * Hook to fetch single service by ID
@@ -59,7 +75,9 @@ export const useGetService = (id: number): UseQueryResult<Service> => {
 /**
  * Hook to fetch service by token
  */
-export const useGetServiceByToken = (token: string): UseQueryResult<Service> => {
+export const useGetServiceByToken = (
+  token: string
+): UseQueryResult<Service> => {
   return useQuery(
     ["serviceByToken", token],
     async () => {
@@ -83,7 +101,10 @@ export const useCreateService = (): UseMutationResult<
   const queryClient = useQueryClient();
   return useMutation(
     async (data: { service: CreateServiceType; preview: File | null }) => {
-      const response = await AxiosinstanceFormDataAuth.post(`/services/${Organizationid}/`, data);
+      const response = await AxiosinstanceFormDataAuth.post(
+        `/services/${Organizationid}/`,
+        data
+      );
       return response.data;
     },
     {
@@ -109,7 +130,11 @@ export const useUpdateService = (): UseMutationResult<
 > => {
   const queryClient = useQueryClient();
   return useMutation(
-    async (data: { id: number; service: UpdateServiceType; preview?: File | null }) => {
+    async (data: {
+      id: number;
+      service: UpdateServiceType;
+      preview?: File | null;
+    }) => {
       const response = await AxiosinstanceFormDataAuth.put(
         `/services/service/${data.id}`,
         {
@@ -197,7 +222,11 @@ export const useUpdateUserServiceStatus = (): UseMutationResult<
   {
     userId: number;
     serviceId: number;
-    action: "add-to-progress" | "add-to-completed" | "remove-from-progress" | "remove-from-completed";
+    action:
+      | "add-to-progress"
+      | "add-to-completed"
+      | "remove-from-progress"
+      | "remove-from-completed";
   }
 > => {
   const queryClient = useQueryClient();
@@ -206,13 +235,21 @@ export const useUpdateUserServiceStatus = (): UseMutationResult<
       try {
         const actions = {
           "add-to-progress": () =>
-            AxiosinstanceAuth.post(`/services/${serviceId}/${userId}/add-to-progress/`),
+            AxiosinstanceAuth.post(
+              `/services/${serviceId}/${userId}/add-to-progress/`
+            ),
           "add-to-completed": () =>
-            AxiosinstanceAuth.post(`/services/${serviceId}/${userId}/add-to-completed/`),
+            AxiosinstanceAuth.post(
+              `/services/${serviceId}/${userId}/add-to-completed/`
+            ),
           "remove-from-progress": () =>
-            AxiosinstanceAuth.post(`/services/${serviceId}/${userId}/remove-from-progress/`),
+            AxiosinstanceAuth.post(
+              `/services/${serviceId}/${userId}/remove-from-progress/`
+            ),
           "remove-from-completed": () =>
-            AxiosinstanceAuth.post(`/services/${serviceId}/${userId}/remove-from-completed/`),
+            AxiosinstanceAuth.post(
+              `/services/${serviceId}/${userId}/remove-from-completed/`
+            ),
         };
 
         if (!actions[action]) {
@@ -239,4 +276,3 @@ export const useUpdateUserServiceStatus = (): UseMutationResult<
     }
   );
 };
-
