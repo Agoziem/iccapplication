@@ -1,12 +1,10 @@
-import { Article, ArticleComment } from "@/types/articles";
-import { Product, Service, Video } from "@/types/items";
-import {
-  Department,
-  Organization,
-  Staff,
-  Testimony,
-} from "@/types/organizations";
+import { Blog, Comment } from "@/types/articles";
+import { DepartmentSchema, OrganizationSchema, StaffSchema, TestimonialSchema } from "@/types/organizations";
+import { OrderReportSchema, OrderSchema } from "@/types/payments";
+import { Product } from "@/types/products";
+import { Service } from "@/types/services";
 import { User } from "@/types/users";
+import { Video } from "@/types/videos";
 import { WAMessage } from "@/types/whatsapp";
 import { ComponentType } from "react";
 import { MdOutlineQuestionAnswer } from "react-icons/md";
@@ -26,9 +24,9 @@ export const PAYSTACK_PUBLIC_KEY = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY |
 
 
 export const WAMessageDefault: WAMessage = {
-  id: null,
+  id: 0,
   message_id: "", 
-  contact: null,
+  contact: 0,
   message_type: "text",
   body: "", 
   media_id: "", 
@@ -43,11 +41,9 @@ export const WAMessageDefault: WAMessage = {
   status: "pending",
 };
 
-export const OrganizationDefault: Organization = {
-  id: undefined,
+export const OrganizationDefault: OrganizationSchema = {
+  id: 0,
   logo: null,
-  Organizationlogoname: null,
-  Organizationlogo: null,
   name: "",
   description: "",
   vision: "",
@@ -64,25 +60,23 @@ export const OrganizationDefault: Organization = {
   youtubechannel: null,
   privacy_policy: "",
   terms_of_use: "",
-  created_at: new Date(),
-  last_updated_date: new Date(),
+  created_at: new Date().toLocaleDateString(),
+  last_updated_date: new Date().toLocaleDateString(),
 };
 
-export const testimonialDefault: Testimony = {
-  id: undefined,
+export const testimonialDefault: TestimonialSchema = {
+  id: 0,
   name: "",
   content: "",
   role: "",
   rating: 0,
   img: null,
-  img_url: null,
-  img_name: null,
-  created_at: new Date(),
-  last_updated_date: new Date(),
+  created_at: new Date().toLocaleDateString(),
+  last_updated_date: new Date().toLocaleDateString(),
 };
 
-export const staffdefault: Staff = {
-  id: undefined,
+export const staffdefault: StaffSchema = {
+  id: 0,
   first_name: "",
   last_name: "",
   other_names: "",
@@ -90,153 +84,114 @@ export const staffdefault: Staff = {
   phone: "",
   address: "",
   img: null,
-  img_url: null,
-  img_name: "",
   role: "",
   facebooklink: "",
   instagramlink: "",
   twitterlink: "",
   linkedinlink: "",
-  created_at: new Date(),
-  last_updated_date: new Date(),
+  created_at: new Date().toLocaleDateString(),
+  last_updated_date: new Date().toLocaleDateString(),
 };
 
-export const deptDefault: Department = {
+export const deptDefault: DepartmentSchema = {
   id: 1,
   img: null,
-  img_url: null,
-  img_name: null,
-  staff_in_charge: {
-    id: null,
-    name: "",
-    img_url: "",
-  },
-  organization: {
-    id: undefined,
-    name: "",
-  },
+  staff_in_charge: null,
+  organization: null,
   services: [],
   name: "",
   description: "",
-  created_at: new Date(),
-  last_updated_date: new Date(),
+  created_at: new Date().toLocaleDateString(),
+  last_updated_date: new Date().toLocaleDateString(),
 };
 
-export const ArticleDefault: Article = {
-  id: undefined,
+export const ArticleDefault: Blog = {
+  id: 0,
   img: null,
-  img_url: null,
-  img_name: null,
   title: "",
   subtitle: "",
   body: "",
   readTime: 0,
-  author: {
-    id: undefined,
-    username: "",
-    img: null,
-  },
+  author: undefined,
   tags: [],
-  slug: null,
-  category: {
-    id: undefined,
-    category: "",
-    description: null,
-  },
-  date: new Date(),
-  updated_at: new Date(),
+  slug: "",
+  category: undefined,
   views: 0,
+  organization: null,
+  likes: [],
+  likes_count: 0,
+  date: new Date().toDateString(),
+  updated_at: new Date().toDateString(),
 };
 
-export const ArticleCommentDefault: ArticleComment = {
-  id: undefined,
+export const ArticleCommentDefault: Comment = {
+  id: 0,
   user: {
-    id: undefined,
+    id: 0,
     username: "",
     img: null,
   },
-  blog: 1, // Assuming blog is a number ID
+  blog_id: 0,
   comment: "",
-  date: new Date(),
-  updated_at: new Date(),
+  created_at: new Date().toDateString(),
+  updated_at: new Date().toDateString(),
 };
 
 export const VideoDefault: Video = {
-  id: undefined,
+  id: 0,
   organization: null,
   thumbnail: null,
   video: null,
-  video_url: null,
-  video_name: null,
-  img_url: null,
-  img_name: null,
-  category: {
-    id: undefined,
-    category: "",
-    description: null,
-  },
-  subcategory: {
-    id: undefined,
-    category: {
-      id: undefined,
-      category: "",
-      description: null,
-    },
-    subcategory: "",
-  },
+  category: null,
+  subcategory: null,
   title: "",
   description: "",
-  price: "",
+  price: 0,
   video_token: "",
-  created_at: new Date(),
-  updated_at: new Date(),
+  created_at: new Date().toDateString(),
+  updated_at: new Date().toDateString(),
   free: false,
   userIDs_that_bought_this_video: [],
+  number_of_times_bought: 0,
 };
 
 export const serviceDefault: Service = {
-  id: undefined,
+  id: 0,
   organization: null,
   preview: null,
-  img_url: null,
-  img_name: null,
   category: null,
   subcategory: null,
   name: "",
   description: null,
   service_flow: null,
-  price: "",
+  price: 0,
   number_of_times_bought: 0,
   userIDs_that_bought_this_service: [],
   userIDs_whose_services_is_in_progress: [],
   userIDs_whose_services_have_been_completed: [],
   details_form_link: null,
-  created_at: new Date(),
-  updated_at: new Date(),
+  created_at: new Date().toDateString(),
+  updated_at: new Date().toDateString(),
 };
 
 /**
  * Default for a Product
  */
 export const defaultProduct: Product = {
-  id: undefined,
+  id: 0,
   organization: null,
   preview: null,
-  img_url: null,
-  img_name: null,
   product: null,
-  product_url: null,
-  product_name: null,
   category: null,
   subcategory: null,
-  name: null,
+  name: "",
   description: "No description available",
-  price: "",
+  price: 0,
   rating: 0,
   product_token: "",
   digital: true,
-  created_at: new Date(),
-  last_updated_date: new Date(),
+  created_at: new Date().toDateString(),
+  last_updated_date: new Date().toDateString(),
   free: false,
   userIDs_that_bought_this_product: [],
 };
@@ -290,27 +245,27 @@ export const dept_icons: Array<{ id: number; icon: ComponentType }> = [
 /**
  * Default for Order
  */
-export const orderDefault = {
-  id: undefined,
+export const orderDefault: OrderSchema = {
+  id: 0,
   organization: null,
   customer: null,
   services: [],
   products: [],
   videos: [],
-  amount: null,
-  status: null,
+  amount: 0,
+  status: "pending",
   reference: null,
-  created_at: new Date(),
+  created_at: new Date().toLocaleDateString(),
   service_delivered: false,
-  last_updated_date: new Date(),
+  last_updated_date: new Date().toLocaleDateString(),
 };
 
 /**
  * Default for Order Report to Admin
  */
-export const orderReportDefault = {
-  totalorders: null,
-  totalcustomers: null,
+export const orderReportDefault: OrderReportSchema = {
+  totalorders: 0,
+  totalcustomers: 0,
   customers: [],
 };
 

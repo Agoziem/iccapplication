@@ -34,7 +34,7 @@ export type CustomerStatsSchema = {
   amount__avg?: number | null;
 };
 
-export type PaymentStatsSchema = {
+export type OrderReportSchema = {
   totalorders: number;
   totalcustomers: number;
   customers: CustomerStatsSchema[]; 

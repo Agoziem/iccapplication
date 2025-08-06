@@ -1,4 +1,4 @@
-import { sendMultipleEmails } from "@/utils/mail";
+// import { sendMultipleEmails } from "@/utils/mail";
 import { ORGANIZATION_ID } from "@/constants";
 import { AxiosinstanceAuth } from "./instance";
 import { EmailSchema, PaginatedEmailMessageResponseSchema, PaginatedEmailResponseSchema, PaginatedEmailSchema } from "@/types/emails";
@@ -129,11 +129,11 @@ export const useCreateEmailMessage = (): UseMutationResult<any, Error, CreateEma
       if (!allsubscriptions?.length) return;
 
       // Send emails to all subscribers
-      await Promise.all(
-        allsubscriptions.map((subscription) =>
-          sendMultipleEmails(subscription.email, data.body, data.subject)
-        )
-      );
+      // await Promise.all(
+      //   allsubscriptions.map((subscription) =>
+      //     sendMultipleEmails(subscription.email, data.body, data.subject)
+      //   )
+      // );
 
       // Save to database
       const response = await AxiosinstanceAuth.post(`/email-messages/`, data);
