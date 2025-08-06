@@ -1,62 +1,79 @@
-export interface Year {
-  id?: number;
-  year: number;
+export interface Answer {
+  id: number;
+  answertext: string;
+  isCorrect: boolean;
 }
 
-export type Years = Year[];
+export interface Question {
+  id: number;
+  questiontext: string;
+  questionMark: number;
+  required: boolean;
+  correctAnswerdescription?: string | null;
+  answers: Answer[];
+}
 
-export interface Testtype {
-  id?: number;
+export interface Subject {
+  id: number;
+  subjectname: string;
+  subjectduration: number;
+  questions: Question[];
+}
+
+export interface TestType {
+  id: number;
   testtype: string;
 }
 
-export type Testtypes = Testtype[];
-
-export interface Answer {
-  id?: number;
-  answertext: string;
+export interface Year {
+  id: number;
+  year: number;
 }
-
-export type Answers = Answer[];
-
-export interface Question {
-  id?: number;
-  questiontext: string;
-  questionMark?: number;
-  required?: boolean;
-  answers: number[];
-  correctAnswer: number | null;
-  correctAnswerdescription?: string | null;
-}
-
-export type Questions = Question[];
-
-export interface Subject {
-  id?: number;
-  subjectduration?: number;
-  subjectname: string;
-  questions: number[];
-}
-
-export type Subjects = Subject[];
 
 export interface Test {
-  id?: number;
-  testorganization: number | null;
-  texttype: number | null;
-  testSubject: number[];
-  testYear: number | null;
+  id: number;
+  testYear: Year | null;
+  texttype: TestType | null;
+  testSubject: Subject[];
 }
 
-export type Tests = Test[];
-
-export interface Testresult {
-  id?: number;
-  organization: number | null;
-  tests: number[];
-  user: number | null;
-  mark?: number;
-  date?: Date;
+export interface TestSummary {
+  id: number;
+  testYear: Year | null;
+  texttype: TestType | null;
+  subjects_count: number;
 }
 
-export type Testresulls = Testresult[];
+export interface TestSubmissionDetail {
+  subject_name: string;
+  selected_answers: number[];
+  subject_score: number;
+}
+
+export interface TestResult {
+  id: number;
+  test: Test;
+  user: number;
+  mark: number;
+  date: string;
+  test_submission_details: TestSubmissionDetail[];
+}
+
+// SubjectSummarySchema
+export type SubjectSummary = {
+  id: number;
+  subjectname: string;
+  subjectduration: number;
+  questions_count: number;
+  questions: Question[];
+};
+
+// StudentsTestListing
+export type StudentsTestListing = {
+  test_id: number;
+  test_name: string;
+  subjects: SubjectSummary[];
+  total_questions: number;
+  total_marks: number;
+  duration: number;
+};
