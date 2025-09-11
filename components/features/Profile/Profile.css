@@ -1,0 +1,18 @@
+.profilelinks{
+    cursor: pointer;
+    transition: 0.3s ease-in-out;
+    font-weight: 500;
+    color: var(--primary);
+}
+.activeprofilelink{
+    background-color: var(--secondary-300);
+    color: var(--secondary);
+    border-left: 4px solid var(--secondary);
+    transition: 0.3s;
+}
+
+.profilelinks:hover{
+    background-color: var(--bgDarkColor);
+    color: var(--primary);
+    border-left: 4px solid var(--primary-500);
+}

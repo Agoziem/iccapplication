@@ -1,0 +1,7 @@
+.breadcrumb-item.active a{
+    color: var(--secondary)!important;
+}
+
+.breadcrumb-item a{
+    font-weight: bold;
+}

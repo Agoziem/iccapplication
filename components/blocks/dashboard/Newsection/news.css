@@ -1,0 +1,32 @@
+/* News & Updates */
+.dashboard .news .post-item + .post-item {
+  margin-top: 15px;
+}
+
+.dashboard .news img {
+  width: 80px;
+  float: left;
+  border-radius: 5px;
+}
+
+.dashboard .news h6 {
+  font-size: 13px;
+  /* margin-left: 95px; */
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.dashboard .news h6 a {
+  color: var(--primary);
+  transition: 0.3s;
+}
+
+.dashboard .news h6 a:hover {
+  color: var(--secondary);
+}
+
+.dashboard .news p {
+  font-size: 14px;
+  color: var(--primary);
+  /* margin-left: 95px; */
+}

@@ -1,0 +1,36 @@
+/*--------------------------------------------------------------*/
+/* Feedback button it will be at the center  */
+/*--------------------------------------------------------------*/
+.feedback-button {
+  position: fixed;
+  visibility: hidden;
+  opacity: 0;
+  right: 0;
+  bottom: 50%;
+  transform: translateY(50%);
+  z-index: 99999;
+  width: 15px ;
+  height: 88px;
+  background: var(--bgDarkerColor);
+  color: var(--light);
+  transition: all 0.4s;
+  cursor: pointer;
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  border-radius: 5px;
+ 
+}
+
+.feedback-button .feedback-button-text {
+  font-size: 10px;
+  transform: rotate(270deg);
+  transform-origin: center; 
+  display: block;
+}
+
+.feedback-button.active {
+    visibility: visible;
+    opacity: 1;
+    padding: 20px 13px;
+  }

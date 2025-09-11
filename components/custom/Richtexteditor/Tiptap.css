@@ -1,0 +1,24 @@
+.tiptapinput {
+  border: 1px solid var(--bgDarkColor);
+  min-height: 300px;
+  overflow: auto;
+  font-size: 15px;
+  max-width: 100%;
+}
+
+.body .tiptapinput:focus {
+    border: 1px solid var(--bgDarkerColor);
+}
+
+.custom-image-class{
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.custom-link-class{
+  color: var(--secondary) !important;
+  text-decoration: underline;
+}

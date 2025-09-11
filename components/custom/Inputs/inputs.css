@@ -1,0 +1,7 @@
+.body .chatinput{
+    color: white !important;
+}
+
+.body .chatinput::placeholder{
+    color: white !important;
+}

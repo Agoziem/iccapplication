@@ -1,0 +1,64 @@
+.datatableCard {
+  max-width: 100%;
+}
+
+.datatableCard .table th {
+  color: var(--primary);
+}
+
+.body .datatableCard .table tr:hover {
+  color: var(--primary);
+  background: var(--bgColor);
+}
+
+.body .datatableCard .sorting-icon {
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.body .pagination .page-item {
+  box-shadow: 0px 0 30px rgba(1, 41, 112, 0.1);
+}
+
+.body .pagination .page-item .page-link {
+  border: none;
+  cursor: pointer;
+  background: var(--bgColor) !important;
+  border-color: var(--bgColor) !important;
+  color: var(--primary) !important;
+  font-weight: 600;
+}
+
+.body .pagination .page-item.active .page-link {
+  background: var(--secondary) !important;
+  border-color: var(--secondary) !important;
+  color: var(--white) !important;
+}
+
+.body .pagination .page-item.active .page-link:hover {
+  color: var(--primary);
+  background: var(--bgColor);
+}
+
+.datatableCard::-webkit-scrollbar {
+  width: 3px;
+  height: 5px;
+  background-color: #fff;
+}
+
+.datatableCard::-webkit-scrollbar-thumb {
+  background-color: #aab7cf;
+}
+
+.icon-rotate {
+  animation: rotateIcon 1s linear infinite;
+}
+
+@keyframes rotateIcon {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

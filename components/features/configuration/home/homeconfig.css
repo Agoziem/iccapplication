@@ -1,0 +1,17 @@
+.myaccordion-content {
+  margin-bottom: 30px;
+  border: none;
+  border-radius: 5px;
+  box-shadow: 0px 0 30px rgba(1, 41, 112, 0.1);
+  background-color: var(--bgLightColor);
+  height: 0;
+  overflow: hidden;
+  transition: height 0.3s ease, opacity 0.3s ease;
+  opacity: 0;
+}
+
+.myaccordion-content.open {
+  height: auto;
+  opacity: 1;
+  padding: 20px;
+}

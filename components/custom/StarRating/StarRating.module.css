@@ -1,0 +1,12 @@
+.starRating {
+    display: flex;
+  }
+  
+  .filled {
+    color: #E88504;
+  }
+  
+  .empty {
+    color: #ccc;
+  }
+  

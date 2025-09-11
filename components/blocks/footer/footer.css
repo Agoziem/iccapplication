@@ -1,0 +1,20 @@
+/*--------------------------------------------------------------
+# Footer
+--------------------------------------------------------------*/
+.dashboardfooter {
+  padding: 20px 0;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.dashboardfooter .copyright {
+  text-align: center;
+  color: var(--primary);
+}
+
+.dashboardfooter .credits {
+  padding-top: 5px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--primary);
+}
