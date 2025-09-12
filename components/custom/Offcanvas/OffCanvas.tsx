@@ -1,16 +1,16 @@
 "use client";
 import { useCart } from "@/providers/context/Cartcontext";
-import React, { useContext, useRef } from "react";
-import { useSession } from "next-auth/react";
+import React, { useRef } from "react";
 import Link from "next/link";
 import Alert from "../Alert/Alert";
 import { PulseLoader } from "react-spinners";
+import { useMyProfile } from "@/data/hooks/user.hooks";
 
-const OffCanvas = () => {
-  const { cart, removeFromCart, resertCart, checkout, isPending, error } =
+const OffCanvas: React.FC = () => {
+  const { cart, removeFromCart, resetCart, checkout, isPending, error } =
     useCart();
-  const { data: session } = useSession();
-  const offCanvasbuttonRef = useRef(null); // Ref for the off-canvas
+  const { data: session } = useMyProfile();
+  const offCanvasbuttonRef = useRef<HTMLButtonElement>(null);
 
   // Function to close the off-canvas using native Bootstrap event
   const closeOffCanvas = () => {
@@ -21,8 +21,30 @@ const OffCanvas = () => {
   };
 
   const handleCheckout = async () => {
-    await checkout(); // Perform the checkout logic
-    closeOffCanvas(); // Close the off-canvas after successful checkout
+    try {
+      await checkout(); // Perform the checkout logic
+      closeOffCanvas(); // Close the off-canvas after successful checkout
+    } catch (error) {
+      console.error("Checkout error:", error);
+    }
+  };
+
+  const handleClearCart = () => {
+    resetCart();
+    closeOffCanvas();
+  };
+
+  const getItemDisplayName = (item: any): string => {
+    return item.name || item.title || 'Item';
+  };
+
+  const getItemPrice = (item: any): number => {
+    const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+    return isNaN(price) ? 0 : price;
+  };
+
+  const getTotalPrice = (): number => {
+    return cart.reduce((acc, item) => acc + getItemPrice(item), 0);
   };
 
   return (
@@ -44,7 +66,7 @@ const OffCanvas = () => {
           className="btn-close"
           data-bs-dismiss="offcanvas"
           aria-label="Close"
-        ></button>
+        />
       </div>
 
       {/* Off-Canvas Body */}
@@ -62,17 +84,17 @@ const OffCanvas = () => {
                   }}
                 >
                   <div className="d-flex justify-content-between">
-                    <div className="flex-fill">{item.name || item.title}</div>
-                    <div className="fw-bold">&#8358;{item.price}</div>
+                    <div className="flex-fill">{getItemDisplayName(item)}</div>
+                    <div className="fw-bold">&#8358;{getItemPrice(item)}</div>
                   </div>
                   <div className="d-flex justify-content-between mt-2">
                     <div className="fw-bold small text-secondary">
-                      {item.category.category !== "application" ? (
-                        <i className="bi bi-person-fill-gear me-2 h5"></i>
+                      {item.category && item.category.category !== "application" ? (
+                        <i className="bi bi-person-fill-gear me-2 h5" />
                       ) : (
-                        <i className="bi bi-google-play me-2"></i>
+                        <i className="bi bi-google-play me-2" />
                       )}
-                      {item.category.category}{" "}
+                      {item.category?.category || 'Unknown'}{" "}
                       <span className="ms-2 badge bg-primary-light text-primary">
                         {item.cartType}
                       </span>
@@ -80,7 +102,7 @@ const OffCanvas = () => {
                     <div
                       className="badge bg-secondary-light text-secondary ms-2"
                       style={{ cursor: "pointer" }}
-                      onClick={() => removeFromCart(item.id, item.cartType)}
+                      onClick={() => item.cartType && removeFromCart(item.id!, item.cartType)}
                     >
                       Remove
                     </div>
@@ -92,8 +114,7 @@ const OffCanvas = () => {
               <h4 className="mb-3">
                 Total:{" "}
                 <span className="fw-bold">
-                  &#8358;
-                  {cart.reduce((acc, item) => acc + parseFloat(item.price), 0)}
+                  &#8358;{getTotalPrice()}
                 </span>
               </h4>
 
@@ -104,16 +125,15 @@ const OffCanvas = () => {
               <div className="d-flex flex-md-row flex-column flex-md-fill">
                 <button
                   className="btn btn-outline-danger me-0 me-md-3 mb-3 mb-md-0"
-                  onClick={() => resertCart()}
-                  data-bs-dismiss="offcanvas"
-                  aria-label="Close"
+                  onClick={handleClearCart}
+                  disabled={isPending}
                 >
                   Clear Cart
                 </button>
                 {session ? (
                   <button
                     className="btn btn-primary"
-                    onClick={handleCheckout} // Use the handler to checkout and close
+                    onClick={handleCheckout}
                     disabled={isPending}
                   >
                     {isPending ? (

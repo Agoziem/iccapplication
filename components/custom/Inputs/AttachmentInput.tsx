@@ -1,25 +1,55 @@
 import Image from "next/image";
 import React, { useState } from "react";
 import { AiOutlineSend } from "react-icons/ai";
-import ExtendableTextarea from "./ExtendableTextarea"; // Reuse the extendable textarea component
+import ExtendableTextarea from "./ExtendableTextarea";
 import { FaRegTrashCan } from "react-icons/fa6";
 import { FaRegFileVideo } from "react-icons/fa";
 import { getFileIcon } from "@/utils/selectFileIcon";
 
-const AttachmentInput = ({
+interface AttachmentInputProps {
+  video?: string | null;
+  image?: string | null;
+  file?: string | null;
+  type?: string | null;
+  fileName?: string;
+  resetinput: () => void;
+  onSubmit?: (caption: string) => Promise<void>;
+  disabled?: boolean;
+  placeholder?: string;
+}
+
+const AttachmentInput: React.FC<AttachmentInputProps> = ({
   video,
   image,
   file,
   type,
-  fileName,
+  fileName = "No Selected file",
   resetinput,
+  onSubmit,
+  disabled = false,
+  placeholder = "Add a Caption (Optional)"
 }) => {
-  const [captionBody, setCaptionBody] = useState(""); // Manage input with useState
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [captionBody, setCaptionBody] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // handle input Change
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setCaptionBody(e.target.value);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmitting || disabled) return;
+
+    setIsSubmitting(true);
+    try {
+      await onSubmit?.(captionBody);
+      setCaptionBody("");
+    } catch (error) {
+      console.error("Error submitting attachment:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -34,18 +64,19 @@ const AttachmentInput = ({
         <FaRegTrashCan
           style={{
             fontSize: "1.3rem",
-            cursor: "pointer",
+            cursor: disabled ? "not-allowed" : "pointer",
           }}
-          onClick={resetinput}
+          onClick={disabled ? undefined : resetinput}
         />
       </div>
+      
       {/* The File Preview */}
       <div className="flex-fill d-flex justify-content-center align-items-center">
         {image && (
           <div className="d-flex flex-column align-items-center gap-3">
             <img
               src={image}
-              alt="sign up.png"
+              alt={fileName}
               height={150}
               width={300}
               style={{
@@ -75,7 +106,7 @@ const AttachmentInput = ({
               className="text-light"
               style={{ height: "120px", width: "auto" }}
             >
-              {getFileIcon(type)}
+              {getFileIcon(type || '')}
             </div>
             <div className="text-light small">{fileName}</div>
           </div>
@@ -84,7 +115,7 @@ const AttachmentInput = ({
 
       {/* The Caption Optional */}
       <div>
-        <form>
+        <form onSubmit={handleSubmit}>
           <div
             className="d-flex rounded p-2 align-items-center"
             style={{
@@ -95,8 +126,9 @@ const AttachmentInput = ({
             <ExtendableTextarea
               value={captionBody}
               onChange={handleInputChange}
-              placeholder="Add a Caption (Optional)"
+              placeholder={placeholder}
               className="chatinput form-control"
+              disabled={disabled}
               style={{
                 color: "white",
                 backgroundColor: "var(--bgDarkerColor)",
@@ -104,11 +136,11 @@ const AttachmentInput = ({
               }}
             />
 
-            {/* Conditionally show the submit button if there is text in the input */}
+            {/* Submit button */}
             <button
               className="btn btn-sm btn-primary rounded"
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || disabled}
             >
               {!isSubmitting ? (
                 <AiOutlineSend

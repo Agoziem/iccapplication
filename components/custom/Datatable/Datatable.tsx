@@ -1,42 +1,54 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, ReactNode, ReactElement } from "react";
 import DatatablePagination from "./DatatablePagination";
 import DatatableinputFilter from "./DatatableInputFilter";
 import Datatableselect from "./DatatableSelect";
 import useJsonToExcel from "@/hooks/useJsonToExcel";
-import { SiMicrosoftexcel } from "react-icons/si";
-import "./Datatable.css"
+import "./Datatable.css";
 
-const Datatable = ({ items, setItems, children, label, filteritemlabel }) => {
-  const [filterInput, setfilterInput] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+interface DatatableProps<T> {
+  items: T[];
+  setItems: (items: T[]) => void;
+  children: ReactNode;
+  label: string;
+  filteritemlabel: keyof T;
+}
 
-  // Filter Items
-  const filteredItems = items?.filter((item) => {
+const Datatable = <T extends Record<string, any>>({ 
+  items, 
+  setItems, 
+  children, 
+  label, 
+  filteritemlabel 
+}: DatatableProps<T>) => {
+  const [filterInput, setfilterInput] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
+
+  const filteredItems = items?.filter((item: T) => {
     const filtertarget = item && item[filteritemlabel];
     return filterInput.toLowerCase() === ""
       ? item
-      : filtertarget?.toLowerCase().includes(filterInput.toLowerCase());
+      : String(filtertarget)?.toLowerCase().includes(filterInput.toLowerCase());
   });
 
-  // Get Current Items for the Page
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredItems?.slice(indexOfFirstItem, indexOfLastItem);
 
-  // Clone the children and pass the currentItems and setItems as props
   const tableItems = React.Children.map(children, (child) => {
-    return React.cloneElement(child, {
-      ...child.props,
-      currentItems: currentItems,
-      setItems: setItems,
-    });
+    if (React.isValidElement(child)) {
+      return React.cloneElement(child, {
+        ...(child.props as any),
+        currentItems: currentItems,
+        setItems: setItems,
+      } as any);
+    }
+    return child;
   });
 
-  // implement saving to Excel for both the results & Student side
-
   const { loadingexcel, handleExport } = useJsonToExcel();
+  
   const handleSaveToExcel = () => {
     handleExport(items);
   };
@@ -57,7 +69,7 @@ const Datatable = ({ items, setItems, children, label, filteritemlabel }) => {
               <DatatableinputFilter
                 filterInput={filterInput}
                 setfilterInput={setfilterInput}
-                filteritemlabel={filteritemlabel}
+                filteritemlabel={String(filteritemlabel)}
               />
             </div>
 
@@ -68,7 +80,7 @@ const Datatable = ({ items, setItems, children, label, filteritemlabel }) => {
                 className="btn btn-success w-100"
                 onClick={handleSaveToExcel}
               >
-                <SiMicrosoftexcel className="me-2 mb-1" />
+                <i className="bi bi-file-earmark-excel me-2"></i>
                 Save to Excel
               </button>
             </div>

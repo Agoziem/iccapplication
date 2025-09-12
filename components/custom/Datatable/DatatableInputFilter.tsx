@@ -1,12 +1,18 @@
 "use client";
-import React, { useState } from "react";
+import React, { ChangeEvent } from "react";
 
-const DatatableinputFilter = ({
+interface DatatableInputFilterProps {
+  filterInput: string;
+  setfilterInput: (value: string) => void;
+  filteritemlabel: string;
+}
+
+const DatatableinputFilter: React.FC<DatatableInputFilterProps> = ({
   filterInput,
   setfilterInput,
   filteritemlabel,
 }) => {
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     setfilterInput(e.target.value);
   };
 

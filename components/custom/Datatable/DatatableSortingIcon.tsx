@@ -1,8 +1,20 @@
 import React, { useState } from 'react';
 import { TiArrowSortedUp, TiArrowSortedDown } from "react-icons/ti";
 
-const Datatablesortingicon = ({ itemstosort, setItems, headername }) => {
-    const [sortOrder, setSortOrder] = useState(null);
+type SortOrder = 'asc' | 'desc' | null;
+
+interface DatatableSortingIconProps<T> {
+    itemstosort: T[];
+    setItems: (items: T[]) => void;
+    headername: keyof T;
+}
+
+const Datatablesortingicon = <T extends Record<string, any>>({ 
+    itemstosort, 
+    setItems, 
+    headername 
+}: DatatableSortingIconProps<T>) => {
+    const [sortOrder, setSortOrder] = useState<SortOrder>(null);
 
     const toggleSortOrder = () => {
         if (sortOrder === 'asc') {
@@ -10,16 +22,19 @@ const Datatablesortingicon = ({ itemstosort, setItems, headername }) => {
         } else {
             setSortOrder('asc');
         }
-        sortItems(sortOrder, headername); // Pass headername here
+        sortItems(sortOrder, headername);
     };
 
-    const sortItems = (order, headername) => {
-        console.log(headername)
+    const sortItems = (order: SortOrder, headername: keyof T) => {
+        console.log(headername);
         const sortedItems = [...itemstosort].sort((a, b) => {
+            const aValue = String(a[headername]);
+            const bValue = String(b[headername]);
+            
             if (order === 'asc') {
-                return a[headername].localeCompare(b[headername]);
+                return aValue.localeCompare(bValue);
             } else {
-                return b[headername].localeCompare(a[headername]);
+                return bValue.localeCompare(aValue);
             }
         });
         setItems(sortedItems);
@@ -27,8 +42,11 @@ const Datatablesortingicon = ({ itemstosort, setItems, headername }) => {
 
     return (
         <>
-            <span className='sorting-icon ms-2' onClick={toggleSortOrder} >
-                {sortOrder === 'asc' ? <i className="bi bi-sort-alpha-up h5"></i> : <i className="bi bi-sort-alpha-down h5 "></i>}
+            <span className='sorting-icon ms-2' onClick={toggleSortOrder}>
+                {sortOrder === 'asc' ? 
+                    <i className="bi bi-sort-alpha-up h5"></i> : 
+                    <i className="bi bi-sort-alpha-down h5"></i>
+                }
             </span>
         </>
     );

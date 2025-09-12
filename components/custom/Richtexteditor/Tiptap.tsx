@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Toolbar from "./Toolbar";
 import Underline from "@tiptap/extension-underline";
@@ -7,10 +7,25 @@ import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import "./Tiptap.css";
 
-/**
- * @param {{ item: string; setItem: (value:string) => void; setHasStartedEditing?: (value: any) => void; }} param0
- */
-const Tiptap = ({ item, setItem, setHasStartedEditing = (value) => {} }) => {
+interface TiptapProps {
+  item: string;
+  setItem: (value: string) => void;
+  setHasStartedEditing?: (value: boolean) => void;
+  className?: string;
+  style?: React.CSSProperties;
+  placeholder?: string;
+  editable?: boolean;
+}
+
+const Tiptap: React.FC<TiptapProps> = ({ 
+  item, 
+  setItem, 
+  setHasStartedEditing,
+  className = "",
+  style = {},
+  placeholder = "Enter your content...",
+  editable = true
+}) => {
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -30,12 +45,15 @@ const Tiptap = ({ item, setItem, setHasStartedEditing = (value) => {} }) => {
     ],
     editorProps: {
       attributes: {
-        class:
-          "tiptapinput d-flex flex-column px-2 py-2 justify-content-start  align-items-start w-100 gap-3 rounded",
+        class: `tiptapinput d-flex flex-column px-2 py-2 justify-content-start align-items-start w-100 gap-3 rounded ${className}`,
       },
     },
-    onUpdate: ({ editor }) => {
-      setHasStartedEditing && setHasStartedEditing(true);
+    editable,
+    content: item || "",
+    onUpdate: ({ editor }: { editor: Editor }) => {
+      if (setHasStartedEditing) {
+        setHasStartedEditing(true);
+      }
       setItem(editor.getHTML());
     },
   });
@@ -43,23 +61,24 @@ const Tiptap = ({ item, setItem, setHasStartedEditing = (value) => {} }) => {
   useEffect(() => {
     if (editor) {
       const currentContent = editor.getHTML();
-      const newContent = item;
+      const newContent = item || "";
 
       // Set the content only if it's different
       if (currentContent !== newContent) {
         editor.commands.setContent(newContent);
       }
     }
-  }, [item, editor]); // Ensure keylabel is included in dependencies
+  }, [item, editor]);
 
   return (
-    <div className="w-100">
+    <div className={`w-100 ${className}`} style={style}>
       <Toolbar editor={editor} content={item || ""} />
       <EditorContent
         style={{
           whiteSpace: "pre-line",
         }}
         editor={editor}
+        placeholder={placeholder}
       />
     </div>
   );

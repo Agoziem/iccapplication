@@ -1,30 +1,23 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 
-/**
- * Custom WebSocket hook for managing connection lifecycle.
- *
- *
- * @param {string} url - The WebSocket URL.
- * @param {boolean} [autoReconnect=true] - Whether to automatically reconnect on disconnect.
- * @param {number} [reconnectInterval=5000] - The interval (in ms) between reconnection attempts.
- *
- * @returns {{
- *   ws: WebSocket | null; // WebSocket instance, or null if not connected.
- *   isConnected: boolean; // True if the WebSocket is connected.
- *   error: string | null; // Error message, or null if no error occurred.
- *   closeWebSocket: () => void; // Function to manually close the WebSocket connection.
- * }}
- */
+interface UseWebSocketReturn {
+  ws: WebSocket | null;
+  isConnected: boolean;
+  error: Event | null;
+  closeWebSocket: () => void;
+}
 
 const useWebSocket = (
-  url, // WebSocket URL
-  autoReconnect = true, // Automatically try to reconnect
-  reconnectInterval = 5000 // Interval between reconnection attempts
-) => {
-  const [isConnected, setIsConnected] = useState(false);
-  const [ws, setWs] = useState(null); // Store WebSocket instance
-  const [error, setError] = useState(null);
+  url: string | null, // WebSocket URL
+  autoReconnect: boolean = true, // Automatically try to reconnect
+  reconnectInterval: number = 5000 // Interval between reconnection attempts
+): UseWebSocketReturn => {
+  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [ws, setWs] = useState<WebSocket | null>(null); // Store WebSocket instance
+  const [error, setError] = useState<Event | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
 
   // ---------------------------------------------
   // Function to initialize WebSocket connection
@@ -32,29 +25,45 @@ const useWebSocket = (
   const connectWebSocket = useCallback(() => {
     if (!url) return;
 
+    // Clear any existing timeout
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+
+    // Close existing connection if any
+    if (wsRef.current && wsRef.current.readyState !== WebSocket.CLOSED) {
+      wsRef.current.close();
+    }
+
     const wsInstance = new WebSocket(url);
+    wsRef.current = wsInstance;
     setWs(wsInstance); // Store WebSocket instance
 
     // When WebSocket is opened
     wsInstance.onopen = () => {
-      console.log(`websocket for ${url} connected `);
+      console.log(`WebSocket for ${url} connected`);
       setIsConnected(true);
+      setError(null);
     };
 
     // When WebSocket is closed
-    wsInstance.onclose = () => {
-      console.log(`websocket for ${url} disconnected `);
+    wsInstance.onclose = (event: CloseEvent) => {
+      console.log(`WebSocket for ${url} disconnected`, event.reason);
       setIsConnected(false);
+      
       // Attempt to reconnect if autoReconnect is enabled
-      if (autoReconnect) {
-        setTimeout(() => connectWebSocket(), reconnectInterval);
+      if (autoReconnect && !event.wasClean) {
+        reconnectTimeoutRef.current = setTimeout(() => {
+          connectWebSocket();
+        }, reconnectInterval);
       }
     };
 
     // Handle connection error
-    wsInstance.onerror = (e) => {
-      console.error("WebSocket error", e);
-      setError(e);
+    wsInstance.onerror = (event: Event) => {
+      console.error("WebSocket error", event);
+      setError(event);
     };
   }, [url, autoReconnect, reconnectInterval]);
 
@@ -66,18 +75,26 @@ const useWebSocket = (
 
     // Clean up WebSocket connection on unmount
     return () => {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.close();
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+      if (wsRef.current && wsRef.current.readyState !== WebSocket.CLOSED) {
+        wsRef.current.close();
       }
     };
-  }, [url]);
+  }, [connectWebSocket]);
 
   // Function to close the WebSocket connection
   const closeWebSocket = useCallback(() => {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.close();
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
     }
-  }, [ws]);
+    if (wsRef.current && wsRef.current.readyState !== WebSocket.CLOSED) {
+      wsRef.current.close();
+    }
+  }, []);
 
   return {
     ws,

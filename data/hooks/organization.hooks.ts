@@ -11,12 +11,15 @@ import {
   PaginatedStaff,
   Department,
   CreateDepartment,
+  UpdateDepartment,
   PaginatedDepartment,
   Testimonial,
   CreateTestimonial,
+  UpdateTestimonial,
   PaginatedTestimonial,
   Subscription,
   CreateSubscription,
+  UpdateSubscription,
   PaginatedSubscription,
   OrganizationArray
 } from "@/types/organizations";
@@ -133,7 +136,7 @@ export const createDepartment = async (organizationId: number, departmentData: C
   return response.data;
 };
 
-export const updateDepartment = async (departmentId: number, updateData: Partial<CreateDepartment>): Promise<Department> => {
+export const updateDepartment = async (departmentId: number, updateData: UpdateDepartment): Promise<Department> => {
   const response = await AxiosInstanceWithToken.put(
     `${organizationApiendpoint}/department/update/${departmentId}/`,
     updateData
@@ -165,7 +168,7 @@ export const createTestimonial = async (organizationId: number, testimonialData:
   return response.data;
 };
 
-export const updateTestimonial = async (testimonialId: number, updateData: Partial<CreateTestimonial>): Promise<Testimonial> => {
+export const updateTestimonial = async (testimonialId: number, updateData: UpdateTestimonial): Promise<Testimonial> => {
   const formData = converttoformData(updateData);
   const response = await AxiosInstancemultipartWithToken.put(
     `${organizationApiendpoint}/testimonial/update/${testimonialId}/`,
@@ -197,7 +200,7 @@ export const createSubscription = async (organizationId: number, subscriptionDat
   return response.data;
 };
 
-export const updateSubscription = async (subscriptionId: number, updateData: Partial<CreateSubscription>): Promise<Subscription> => {
+export const updateSubscription = async (subscriptionId: number, updateData: UpdateSubscription): Promise<Subscription> => {
   const response = await AxiosInstanceWithToken.put(
     `${organizationApiendpoint}/subscription/update/${subscriptionId}/`,
     updateData
@@ -417,7 +420,7 @@ export const useCreateDepartment = (): UseMutationResult<Department, Error, { or
   });
 };
 
-export const useUpdateDepartment = (): UseMutationResult<Department, Error, { departmentId: number; updateData: Partial<CreateDepartment>; organizationId: number }> => {
+export const useUpdateDepartment = (): UseMutationResult<Department, Error, { departmentId: number; updateData: UpdateDepartment; organizationId: number }> => {
   const queryClient = useQueryClient();
   
   return useMutation({
@@ -488,7 +491,7 @@ export const useCreateTestimonial = (): UseMutationResult<Testimonial, Error, { 
   });
 };
 
-export const useUpdateTestimonial = (): UseMutationResult<Testimonial, Error, { testimonialId: number; updateData: Partial<CreateTestimonial>; organizationId: number }> => {
+export const useUpdateTestimonial = (): UseMutationResult<Testimonial, Error, { testimonialId: number; updateData: UpdateTestimonial; organizationId: number }> => {
   const queryClient = useQueryClient();
   
   return useMutation({
@@ -561,7 +564,7 @@ export const useCreateSubscription = (): UseMutationResult<Subscription, Error, 
   });
 };
 
-export const useUpdateSubscription = (): UseMutationResult<Subscription, Error, { subscriptionId: number; updateData: Partial<CreateSubscription>; organizationId: number }> => {
+export const useUpdateSubscription = (): UseMutationResult<Subscription, Error, { subscriptionId: number; updateData: UpdateSubscription; organizationId: number }> => {
   const queryClient = useQueryClient();
   
   return useMutation({

@@ -1,10 +1,11 @@
 "use client";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { useAdminContext } from "@/providers/context/Admincontextdata";
+import { User } from "@/types/users";
+import { useMyProfile } from "@/data/hooks/user.hooks";
 
 const useCurrentUser = () => {
-  const [currentUser, setCurrentUser] = useState({});
+  const { data: currentUser } = useMyProfile();
   const [currentRoot, setCurrentRoot] = useState("");
   const paths = usePathname();
   const currentPortal = paths;

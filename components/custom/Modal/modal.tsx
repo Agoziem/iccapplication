@@ -3,7 +3,14 @@ import React from "react";
 import { FaTimes } from "react-icons/fa";
 import "./modal.css";
 
-const Modal = ({ children, showmodal, toggleModal, overlayclose = true }) => {
+interface ModalProps {
+  children: React.ReactNode;
+  showmodal: boolean;
+  toggleModal: () => void;
+  overlayclose?: boolean;
+}
+
+const Modal: React.FC<ModalProps> = ({ children, showmodal, toggleModal, overlayclose = true }) => {
   if (typeof document !== "undefined") {
     if (showmodal) {
       document.body.classList.add("active-modal");

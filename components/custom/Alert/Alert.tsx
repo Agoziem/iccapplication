@@ -1,10 +1,12 @@
 import React from "react";
 
+interface AlertProps {
+  type: "info" | "success" | "warning" | "danger";
+  children: React.ReactNode;
+  className?: string;
+}
 
-/**
- * @param {{ type: string; children: React.ReactNode; className?: string }} param0
- */
-const Alert = ({ type, children, className="" }) => {
+const Alert = ({ type, children, className="" }: AlertProps) => {
   let icon = "";
   let alertType = "";
 

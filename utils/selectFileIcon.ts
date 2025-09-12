@@ -17,11 +17,7 @@ export type SupportedFileType =
   | "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
   | "text/csv";
 
-/**
- * Returns the appropriate file icon based on MIME type
- * @param type - The MIME type of the file
- * @returns React element representing the file icon
- */
+
 export const getFileIcon = (type: string): ReactElement => {
   const normalizedType = type.toLowerCase();
   
@@ -50,11 +46,6 @@ export const getFileIcon = (type: string): ReactElement => {
   }
 };
 
-/**
- * Checks if a file type is supported
- * @param type - The MIME type to check
- * @returns boolean indicating if the type is supported
- */
 export const isSupportedFileType = (type: string): type is SupportedFileType => {
   const supportedTypes: SupportedFileType[] = [
     "application/pdf",
@@ -73,11 +64,7 @@ export const isSupportedFileType = (type: string): type is SupportedFileType => 
   return supportedTypes.includes(type.toLowerCase() as SupportedFileType);
 };
 
-/**
- * Gets file category based on MIME type
- * @param type - The MIME type of the file
- * @returns File category as string
- */
+
 export const getFileCategory = (type: string): string => {
   const normalizedType = type.toLowerCase();
   

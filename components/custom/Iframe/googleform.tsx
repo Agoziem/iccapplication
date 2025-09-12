@@ -1,6 +1,6 @@
 import "./iframe.css"
 
-const GoogleForm = ({ src }) => {
+const GoogleForm = ({ src } : { src: string }) => {
   return (
     <div className="d-flex justify-content-center align-items-center">
       <iframe

@@ -1,114 +1,184 @@
-import React, { useEffect, useRef, useState } from "react";
+'use client';
+
+import React, { useState, useRef, forwardRef } from "react";
+import Alert from "../Alert/Alert";
 import { FaTimes } from "react-icons/fa";
 import { LuUpload } from "react-icons/lu";
-import Alert from "../Alert/Alert";
-import {getFileIcon} from "@/utils/selectFileIcon"
+import { getFileIcon } from "@/utils/selectFileIcon";
 
+interface FileUploaderProps {
+  name?: string;
+  value?: File | string | null;
+  onChange?: (file: File | null) => void;
+  onBlur?: () => void;
+  error?: string;
+  disabled?: boolean;
+  maxSize?: number; // in bytes
+  allowedFileTypes?: string[];
+  placeholder?: string;
+}
 
+interface AlertState {
+  show: boolean;
+  message: string;
+}
 
-const FileUploader = ({
-  filekey,
-  fileurlkey,
-  filename,
-  formData,
-  setFormData,
-}) => {
-  const fileInput = useRef(null);
-  const [fileName, setFileName] = useState(null);
-  const [fileType, setFileType] = useState(null);
-  const [erroralert, setErrorAlert] = useState({
+const FileUploader = forwardRef<HTMLInputElement, FileUploaderProps>(
+  ({ 
+    name = "file",
+    value,
+    onChange,
+    onBlur,
+    error,
+    disabled = false,
+    maxSize = 64 * 1024 * 1024, // 64MB default
+    allowedFileTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "image/jpeg",
+      "image/png",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ],
+    placeholder = "Upload your Product file"
+  }, ref) => {
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [fileType, setFileType] = useState<string | null>(null);
+  const [errorAlert, setErrorAlert] = useState<AlertState>({
     show: false,
-    message: "",
+    message: ""
   });
 
-  const allowedFileTypes = [
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "image/jpeg",
-    "image/png",
-    "application/vnd.ms-excel",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  ];
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (formData[fileurlkey]) {
-      setFileName(formData[filename]);
-      setFileType(formData[filekey].type);
-    }
-  }, [formData[fileurlkey]]);
-
-  const handleFileChange = ({ target: { files } }) => {
-    const file = files[0];
-    if (file) {
-      if (!allowedFileTypes.includes(file.type)) {
-        setErrorAlert({
-          show: true,
-          message: "Only PDF, Word, Excel, and Image files are allowed",
-        });
-        setTimeout(() => {
-          setErrorAlert({
-            show: false,
-            message: "",
-          });
-        }, 3000);
-        return;
-      }
-      setFileName(file.name);
-      setFileType(file.type);
-      setFormData({
-        ...formData,
-        [filekey]: file,
-      });
-    }
+  const showError = (message: string) => {
+    setErrorAlert({ show: true, message });
+    setTimeout(() => {
+      setErrorAlert({ show: false, message: "" });
+    }, 3000);
   };
 
-  
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+
+    if (!selectedFile) return;
+
+    // File type validation
+    if (!allowedFileTypes.includes(selectedFile.type)) {
+      showError("Only PDF, Word, Excel, and Image files are allowed");
+      return;
+    }
+
+    // File size validation
+    if (selectedFile.size > maxSize) {
+      showError(`File size should not exceed ${Math.round(maxSize / (1024 * 1024))}MB`);
+      return;
+    }
+
+    setFileName(selectedFile.name);
+    setFileType(selectedFile.type);
+    
+    // Call onChange with the file
+    onChange?.(selectedFile);
+  };
+
+  const handleUploadClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (disabled) return;
+    
+    if (ref && 'current' in ref) {
+      ref.current?.click();
+    } else {
+      fileInputRef.current?.click();
+    }
+  };
 
   const handleRemoveFile = () => {
+    if (disabled) return;
+    
     setFileName(null);
     setFileType(null);
-    setFormData({
-      ...formData,
-      [filekey]: null,
-    });
-    if (fileInput.current) {
-      fileInput.current.value = null; // Reset file input value
+    onChange?.(null);
+    
+    // Clear the input
+    if (ref && 'current' in ref && ref.current) {
+      ref.current.value = '';
+    } else if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
+
+  // Initialize from value prop
+  React.useEffect(() => {
+    if (value) {
+      if (typeof value === 'string') {
+        // If it's a URL, try to extract filename
+        const urlFileName = value.split('/').pop() || 'Selected file';
+        setFileName(urlFileName);
+        // Try to determine file type from extension
+        const extension = urlFileName.split('.').pop()?.toLowerCase();
+        const typeMap: Record<string, string> = {
+          pdf: 'application/pdf',
+          doc: 'application/msword',
+          docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          jpg: 'image/jpeg',
+          jpeg: 'image/jpeg',
+          png: 'image/png',
+          xls: 'application/vnd.ms-excel',
+          xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        };
+        setFileType(extension ? typeMap[extension] || 'application/octet-stream' : null);
+      } else if (value instanceof File) {
+        setFileName(value.name);
+        setFileType(value.type);
+      }
+    } else {
+      setFileName(null);
+      setFileType(null);
+    }
+  }, [value]);
 
   return (
     <div>
       <div className="mt-2">
         <input
-          ref={fileInput}
+          ref={ref || fileInputRef}
           type="file"
+          accept={allowedFileTypes.join(',')}
           id="file"
+          name={name}
           onChange={handleFileChange}
+          onBlur={onBlur}
           hidden
+          disabled={disabled}
         />
 
-        {/* where to click and select a file */}
-        {erroralert.show && <Alert type={"danger"}>{erroralert.message}</Alert>}
+        {/* Error display */}
+        {(errorAlert.show || error) && (
+          <Alert type="danger">
+            {errorAlert.message || error}
+          </Alert>
+        )}
+
+        {/* File upload UI */}
         {!fileName ? (
-          <div className="">
+          <div>
             <div
               className="mb-2 small"
               style={{
                 color: "var(--bgDarkerColor)",
               }}
             >
-              only PDF, Word, Excel, and Image files are allowed
+              Only PDF, Word, Excel, and Image files are allowed. Max size: {Math.round(maxSize / (1024 * 1024))}MB
             </div>
             <button
-              className="btn btn-accent-secondary shadow-none mt-2 w-100 rounded py-3 text-center"
-              onClick={(e) => {
-                e.preventDefault();
-                fileInput.current.click();
-              }}
+              className={`btn btn-accent-secondary shadow-none mt-2 w-100 rounded py-3 text-center ${disabled ? 'disabled' : ''}`}
+              onClick={handleUploadClick}
+              disabled={disabled}
             >
               <LuUpload className="h5 me-2" />
-              Upload your Product file
+              {placeholder}
             </button>
           </div>
         ) : (
@@ -127,18 +197,21 @@ const FileUploader = ({
                     flexShrink: 0,
                   }}
                 >
-                  {getFileIcon(fileType)}
+                  {getFileIcon(fileType || '')}
                 </div>
                 <p className="font-medium text-sm mt-2 mx-3 mb-2 text-break">
                   {fileName}
                 </p>
               </div>
-              {formData[filekey] && (
+              {value && (
                 <div>
                   <FaTimes
                     className="text-danger ms-2"
                     onClick={handleRemoveFile}
-                    style={{ cursor: "pointer", fontSize: 25 }}
+                    style={{ 
+                      cursor: disabled ? "not-allowed" : "pointer", 
+                      fontSize: 25 
+                    }}
                   />
                 </div>
               )}
@@ -148,6 +221,8 @@ const FileUploader = ({
       </div>
     </div>
   );
-};
+});
+
+FileUploader.displayName = "FileUploader";
 
 export default FileUploader;

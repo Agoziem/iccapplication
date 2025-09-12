@@ -1,21 +1,28 @@
 "use client";
 import "./Datatable.css";
 
-const DatatablePagination = ({
+interface DatatablePaginationProps {
+  itemsPerPage: number;
+  totalItems: number;
+  setCurrentPage: (page: number) => void;
+  footerlabel: string;
+  currentPage: number;
+}
+
+const DatatablePagination: React.FC<DatatablePaginationProps> = ({
   itemsPerPage,
   totalItems,
   setCurrentPage,
   footerlabel,
   currentPage,
 }) => {
-  const pageNumbers = [];
+  const pageNumbers: number[] = [];
 
   for (let i = 1; i <= Math.ceil(totalItems / itemsPerPage); i++) {
     pageNumbers.push(i);
   }
 
-  // function to paginate the items
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   return (
     <div className="d-flex align-items-center justify-content-between">

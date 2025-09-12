@@ -2,9 +2,35 @@ import React, { useState, useEffect, useRef } from "react";
 import "react-quill/dist/quill.snow.css";
 import "./custom-quill.css"; // Your custom CSS for Quill
 
-const ReactQuillEditor = ({ item, setItem, keylabel, setHasStartedEditing = "" }) => {
-  const [Editor, setEditor] = useState(null);
-  const quillRef = useRef(null);
+interface ReactQuillEditorProps {
+  item: Record<string, any>;
+  setItem: (item: Record<string, any>) => void;
+  keylabel: string;
+  setHasStartedEditing?: (hasStarted: boolean) => void;
+  className?: string;
+  style?: React.CSSProperties;
+  placeholder?: string;
+  readOnly?: boolean;
+  theme?: 'snow' | 'bubble';
+}
+
+interface QuillRef {
+  getEditor: () => any;
+}
+
+const ReactQuillEditor: React.FC<ReactQuillEditorProps> = ({ 
+  item, 
+  setItem, 
+  keylabel, 
+  setHasStartedEditing,
+  className = "",
+  style = {},
+  placeholder = "Enter text...",
+  readOnly = false,
+  theme = 'snow'
+}) => {
+  const [Editor, setEditor] = useState<React.ComponentType<any> | null>(null);
+  const quillRef = useRef<QuillRef | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -23,18 +49,22 @@ const ReactQuillEditor = ({ item, setItem, keylabel, setHasStartedEditing = "" }
 
       const handleAddImage = () => {
         const url = window.prompt("Enter the image URL:");
-        if (url) {
+        if (url && quillRef.current) {
           const quill = quillRef.current.getEditor();
           const range = quill.getSelection();
-          quill.insertEmbed(range.index, "image", url);
+          if (range) {
+            quill.insertEmbed(range.index, "image", url);
+          }
         }
       };
 
       const handleDeleteImage = async () => {
+        if (!quillRef.current) return;
+        
         const quill = quillRef.current.getEditor();
         const range = quill.getSelection();
         if (range) {
-          const [leaf, offset] = quill.getLeaf(range.index);
+          const [leaf] = quill.getLeaf(range.index);
           if (leaf && leaf.domNode && leaf.domNode.tagName === "IMG") {
             const imageUrl = leaf.domNode.src;
 
@@ -129,15 +159,17 @@ const ReactQuillEditor = ({ item, setItem, keylabel, setHasStartedEditing = "" }
   ];
 
   return (
-    <div>
+    <div className={className} style={style}>
       {Editor && (
         <Editor
           ref={quillRef}
-          theme="snow"
+          theme={theme}
           modules={modules}
           formats={formats}
-          value={item[keylabel]}
-          onChange={(content) => {
+          value={item[keylabel] || ""}
+          placeholder={placeholder}
+          readOnly={readOnly}
+          onChange={(content: string) => {
             setItem({ ...item, [keylabel]: content });
           }}
         />

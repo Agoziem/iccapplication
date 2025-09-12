@@ -1,20 +1,37 @@
 "use client";
 import { useState, useEffect } from 'react';
 
-const useWindowResize = () => {
-  const [windowSize, setWindowSize] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight,
+interface WindowSize {
+  width: number;
+  height: number;
+}
+
+/**
+ * Custom hook to track window resize events and return current window dimensions
+ * @returns Object containing current window width and height
+ */
+const useWindowResize = (): WindowSize => {
+  // Initialize with undefined dimensions to handle SSR
+  const [windowSize, setWindowSize] = useState<WindowSize>({
+    width: 0,
+    height: 0,
   });
 
   useEffect(() => {
-    const handleResize = () => {
+    // Function to update window dimensions
+    const handleResize = (): void => {
       setWindowSize({
         width: window.innerWidth,
         height: window.innerHeight,
       });
     };
 
+    // Set initial window size on client side
+    if (typeof window !== 'undefined') {
+      handleResize();
+    }
+
+    // Add event listener
     window.addEventListener('resize', handleResize);
 
     // Cleanup function to remove the event listener

@@ -1,6 +1,6 @@
 import React from "react";
 
-const Loading = ({ item }) => {
+const Loading = ({ item } : { item: string }) => {
   return (
     <div className="text-center">
       <div className="d-flex justify-content-center align-items-center">
