@@ -1,15 +1,15 @@
 "use client";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useAdminContext } from "@/data/payments/Admincontextdata";
-import { useCart } from "@/data/carts/Cartcontext";
+import { useAdminContext } from "@/providers/context/Admincontextdata";
+import { useCart } from "@/providers/context/Cartcontext";
 import CartButton from "@/components/custom/Offcanvas/CartButton";
 import CategoryTabs from "@/components/features/Categories/Categoriestab";
 import ProductCard from "@/components/features/Products/ProductCard";
 import { RiShoppingBasketFill } from "react-icons/ri";
 import Pagination from "@/components/custom/Pagination/Pagination";
 import { useRouter } from "next/navigation";
-import { productsAPIendpoint } from "@/data/product/fetcher";
+import { productsAPIendpoint } from "@/data/hooks/product.hooks";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
 import { useFetchCategories } from "@/data/categories/categories.hook";
 import { useFetchProducts } from "@/data/product/product.hook";

@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import ImageUploader from "../../custom/Imageuploader/ImageUploader";
 import { converttoformData } from "@/utils/formutils";
-import { userDefault } from "@/constants";
-import { authAPIendpoint, updateUser } from "@/data/users/fetcher";
+import { userDefault } from "@/data/constants";
+import { authAPIendpoint, updateUser } from "@/data/hooks/user.hooks";
 
 const ProfileForm = ({ setAlert, setEditMode }) => {
   const { data: session } = useSession();

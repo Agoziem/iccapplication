@@ -13,13 +13,13 @@ import NextBreadcrumb from "../../custom/Breadcrumb/breadcrumb";
 import BackButton from "../../custom/backbutton/BackButton";
 import Pagination from "../../custom/Pagination/Pagination";
 import { useSearchParams } from "next/navigation";
-import { articleAPIendpoint } from "@/data/articles/fetcher";
+import { articleAPIendpoint } from "@/data/hooks/articles.hooks";
 import {
   useFetchArticleBySlug,
   useFetchArticles,
   useFetchComments,
   useIncrementView,
-} from "@/data/articles/articles.hook";
+} from "@/data/hooks/articles.hooks";
 
 const Article = ({ params }) => {
   const { slug } = params;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { useAddLike, useDeleteLike } from "@/data/articles/articles.hook";
+import { useAddLike, useDeleteLike } from "@/data/hooks/articles.hooks";
 import toast from "react-hot-toast";
 
 /**

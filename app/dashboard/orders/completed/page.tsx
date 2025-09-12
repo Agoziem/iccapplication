@@ -1,14 +1,14 @@
 "use client";
-import { useCart } from "@/data/carts/Cartcontext";
+import { useCart } from "@/providers/context/Cartcontext";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useAdminContext } from "@/data/payments/Admincontextdata";
+import { useAdminContext } from "@/providers/context/Admincontextdata";
 import { BsFillCartCheckFill } from "react-icons/bs";
 import { useRouter, useSearchParams } from "next/navigation";
 import useJsxToPdf from "@/hooks/useJSXtoPDF";
 import { FaCheck, FaRegClipboard } from "react-icons/fa6";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { paymentsAPIendpoint, verifyPayment } from "@/data/payments/fetcher";
+import { paymentsAPIendpoint, verifyPayment } from "@/data/hooks/payment.hooks";
 import { BeatLoader } from "react-spinners";
 import { sendPaymentSuccessfulEmail } from "@/utils/mail";
 import { useQueryClient } from "react-query";

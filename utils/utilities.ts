@@ -4,9 +4,9 @@
  * @param {Date | string | number} date - The date to compare with the current time.
  * @returns {string} - A string representing how long ago the date was.
  */
-export const timeSince = (date) => {
+export const timeSince = (date: Date | string | number): string => {
   // Ensure the 'date' is converted to a valid number (timestamp) before performing any operations
-  const timeStamp = new Date(date).getTime();
+  const timeStamp: number = new Date(date).getTime();
 
   // If the date is invalid, handle the error
   if (isNaN(timeStamp)) {
@@ -14,9 +14,9 @@ export const timeSince = (date) => {
   }
 
   // Calculate the time difference in seconds
-  const seconds = Math.floor((Date.now() - timeStamp) / 1000);
+  const seconds: number = Math.floor((Date.now() - timeStamp) / 1000);
 
-  let interval = seconds / 31536000; // seconds in a year
+  let interval: number = seconds / 31536000; // seconds in a year
   if (interval > 1) {
     return (
       Math.floor(interval) +
@@ -64,13 +64,13 @@ export const timeSince = (date) => {
 };
 
 /**
- * Shortens the message
+ * Shortens the message by truncating it to a specified limit and adding ellipsis
  *
- * @param {string} message
- * @param {number} limit
- * @returns {string}
+ * @param {string} message - The message to shorten
+ * @param {number} limit - The maximum length of the message
+ * @returns {string} - The shortened message with ellipsis if truncated, or original message if within limit
  */
-export const shortenMessage = (message, limit) => {
+export const shortenMessage = (message: string, limit: number): string => {
   if (message.length > limit) {
     return message.substring(0, limit) + "...";
   }

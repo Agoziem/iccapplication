@@ -1,28 +1,45 @@
-const SortContacts = (contacts) => {
-    return contacts.sort((a, b) => {
+// Define interfaces for message and contact structure
+interface Message {
+  timestamp: string | Date;
+  [key: string]: any;
+}
+
+interface Contact {
+  recieved_messages: Message[];
+  sent_messages: Message[];
+  [key: string]: any;
+}
+
+/**
+ * Sorts contacts based on their most recent message timestamp (received or sent)
+ * @param contacts - Array of contact objects to sort
+ * @returns Array of contacts sorted by most recent message timestamp (descending)
+ */
+const SortContacts = (contacts: Contact[]): Contact[] => {
+    return contacts.sort((a: Contact, b: Contact): number => {
         // Get the latest message timestamp for contact 'a'
-        const aLastReceivedMessage = a.recieved_messages.length
+        const aLastReceivedMessage: number = a.recieved_messages.length
         ? new Date(a.recieved_messages[a.recieved_messages.length - 1].timestamp).getTime()
         : new Date(0).getTime();
     
-        const aLastSentMessage = a.sent_messages.length
+        const aLastSentMessage: number = a.sent_messages.length
         ? new Date(a.sent_messages[a.sent_messages.length - 1].timestamp).getTime()
         : new Date(0).getTime();
     
-        const aLastMessageTimestamp = aLastReceivedMessage > aLastSentMessage ? aLastReceivedMessage : aLastSentMessage;
+        const aLastMessageTimestamp: number = aLastReceivedMessage > aLastSentMessage ? aLastReceivedMessage : aLastSentMessage;
     
         // Get the latest message timestamp for contact 'b'
-        const bLastReceivedMessage = b.recieved_messages.length
+        const bLastReceivedMessage: number = b.recieved_messages.length
         ? new Date(b.recieved_messages[b.recieved_messages.length - 1].timestamp).getTime()
         : new Date(0).getTime();
     
-        const bLastSentMessage = b.sent_messages.length
+        const bLastSentMessage: number = b.sent_messages.length
         ? new Date(b.sent_messages[b.sent_messages.length - 1].timestamp).getTime()
         : new Date(0).getTime();
     
-        const bLastMessageTimestamp = bLastReceivedMessage > bLastSentMessage ? bLastReceivedMessage : bLastSentMessage;
+        const bLastMessageTimestamp: number = bLastReceivedMessage > bLastSentMessage ? bLastReceivedMessage : bLastSentMessage;
     
-        // Sort contacts by the most recent message timestamp
+        // Sort contacts by the most recent message timestamp (descending order)
         return bLastMessageTimestamp - aLastMessageTimestamp;
     });
 };

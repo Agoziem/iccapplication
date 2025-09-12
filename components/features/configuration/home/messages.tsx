@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import Alert from "@/components/custom/Alert/Alert";
 import Modal from "@/components/custom/Modal/modal";
 import { MdAlternateEmail } from "react-icons/md";
-import { messageDefault } from "@/constants";
+import { messageDefault } from "@/data/constants";
 import { useSearchParams, useRouter } from "next/navigation";
 import Pagination from "@/components/custom/Pagination/Pagination";
 import { useDeleteEmail, useFetchEmails } from "@/data/Emails/emails.hook";

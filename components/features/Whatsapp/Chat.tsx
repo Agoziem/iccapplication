@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import ChatInput from "../../custom/Inputs/ChatInput";
 import ProfileimagePlaceholders from "../../custom/ImagePlaceholders/ProfileimagePlaceholders";
 import ChatBody from "./ChatBody";
-import { useWhatsappAPIContext } from "@/data/whatsappAPI/WhatsappContext";
+import { useWhatsappAPIContext } from "@/providers/context/WhatsappContext";
 import { BsThreeDotsVertical, BsWhatsapp } from "react-icons/bs";
 
 /**

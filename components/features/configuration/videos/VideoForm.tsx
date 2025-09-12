@@ -2,7 +2,7 @@ import VideoUploader from "@/components/custom/Fileuploader/VideoUploader";
 import ImageUploader from "@/components/custom/Imageuploader/ImageUploader";
 import { useFetchSubCategories } from "@/data/categories/categories.hook";
 import { fetchSubCategories } from "@/data/categories/fetcher";
-import { vidoesapiAPIendpoint } from "@/data/videos/fetcher";
+import { vidoesapiAPIendpoint } from "@/data/hooks/video.hooks";
 import { PulseLoader } from "react-spinners";
 
 /**

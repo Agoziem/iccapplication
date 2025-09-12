@@ -5,7 +5,7 @@ import React, {
   useState,
   useTransition,
 } from "react";
-import { useAdminContext } from "@/data/payments/Admincontextdata";
+import { useAdminContext } from "@/providers/context/Admincontextdata";
 import Modal from "@/components/custom/Modal/modal";
 import Alert from "@/components/custom/Alert/Alert";
 import ServiceCard from "./ServiceCard";
@@ -16,7 +16,7 @@ import SubCategoriesForm from "@/components/features/SubCategories/SubCategories
 import Pagination from "@/components/custom/Pagination/Pagination";
 import { BsPersonFillGear } from "react-icons/bs";
 import { fetchCategories } from "@/data/categories/fetcher";
-import { serviceDefault } from "@/constants";
+import { serviceDefault } from "@/data/constants";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import {
@@ -25,7 +25,7 @@ import {
   fetchServices,
   servicesAPIendpoint,
   updateService,
-} from "@/data/services/fetcher";
+} from "@/data/hooks/service.hooks";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
 import { PulseLoader } from "react-spinners";
 import { useFetchOrganization } from "@/data/organization/organization.hook";

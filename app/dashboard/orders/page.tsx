@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useSession } from "next-auth/react";
-import { useCart } from "@/data/carts/Cartcontext";
+import { useCart } from "@/providers/context/Cartcontext";
 import { PaystackButton } from "react-paystack";
 import { useRouter } from "next/navigation";
 

@@ -2,8 +2,8 @@
 import "./section.css";
 import { PiGearBold } from "react-icons/pi";
 import Link from "next/link";
-import { fetchDepartments, MainAPIendpoint } from "@/data/organization/fetcher";
-import { dept_icons } from "@/constants";
+import { fetchDepartments, MainAPIendpoint } from "@/data/hooks/organization.hooks";
+import { dept_icons } from "@/data/constants";
 import { useFetchDepartments } from "@/data/organization/organization.hook";
 import AnimationContainer from "@/components/animation/animation-container";
 

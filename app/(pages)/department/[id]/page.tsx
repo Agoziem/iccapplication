@@ -3,8 +3,8 @@ import Link from "next/link";
 import React, {useEffect, useState } from "react";
 import { IoMdCheckmarkCircleOutline } from "react-icons/io";
 import BackButton from "@/components/custom/backbutton/BackButton";
-import { dept_icons } from "@/constants";
-import { fetchDepartments, MainAPIendpoint } from "@/data/organization/fetcher";
+import { dept_icons } from "@/data/constants";
+import { fetchDepartments, MainAPIendpoint } from "@/data/hooks/organization.hooks";
 import { useFetchDepartments } from "@/data/organization/organization.hook";
 
 const Department = ({ params }) => {

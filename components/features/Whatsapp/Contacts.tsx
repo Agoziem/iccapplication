@@ -3,12 +3,12 @@ import React, { useCallback, useEffect, useState } from "react";
 import ContactCard from "./ContactCard";
 import SearchInput from "../../custom/Inputs/SearchInput";
 import "./whatsapp.css";
-import { useWhatsappAPIContext } from "@/data/whatsappAPI/WhatsappContext";
+import { useWhatsappAPIContext } from "@/providers/context/WhatsappContext";
 import { MdOutlineContacts } from "react-icons/md";
 import BackButton from "../../custom/backbutton/BackButton";
 import useWebSocket from "@/hooks/useWebSocket";
 import { WAContactWebsocketSchema } from "@/schemas/whatsapp";
-import { useFetchWAContacts } from "@/data/whatsappAPI/whatsapp.hook";
+import { useFetchWAContacts } from "@/data/hooks/whatsapp.hooks";
 import { useQueryClient } from "react-query";
 
 /**

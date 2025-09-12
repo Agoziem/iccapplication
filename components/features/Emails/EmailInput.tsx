@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { sendReplyEmail } from "@/utils/mail";
 import { emailResponseSchema } from "@/schemas/emails";
 import Alert from "../../custom/Alert/Alert";
-import { emailAPIendpoint, submitResponse } from "@/data/Emails/fetcher";
+import { emailAPIendpoint, submitResponse } from "@/data/hooks/email.hooks";
 import { useQueryClient } from "react-query";
 
 /**

@@ -1,12 +1,12 @@
 import React, { useEffect, useRef } from "react";
 import ChatMessage from "./ChatMessage";
-import { useWhatsappAPIContext } from "@/data/whatsappAPI/WhatsappContext";
+import { useWhatsappAPIContext } from "@/providers/context/WhatsappContext";
 import { BsWhatsapp } from "react-icons/bs";
 import "./whatsapp.css";
 import Scrolltobottom from "./Scrolltobottom";
 import useWebSocket from "@/hooks/useWebSocket";
 import { WAMessageWebsocketSchema } from "@/schemas/whatsapp";
-import { useFetchWAMessages } from "@/data/whatsappAPI/whatsapp.hook";
+import { useFetchWAMessages } from "@/data/hooks/whatsapp.hooks";
 import { useQueryClient } from "react-query";
 
 // Component to show when there are no chat messages

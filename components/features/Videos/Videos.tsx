@@ -1,17 +1,17 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useAdminContext } from "@/data/payments/Admincontextdata";
-import { useCart } from "@/data/carts/Cartcontext";
+import { useAdminContext } from "@/providers/context/Admincontextdata";
+import { useCart } from "@/providers/context/Cartcontext";
 import CartButton from "@/components/custom/Offcanvas/CartButton";
 import CategoryTabs from "@/components/features/Categories/Categoriestab";
 import VideoCard from "@/components/features/Videos/VideoCard";
 import { FaVideo } from "react-icons/fa6";
 import Pagination from "@/components/custom/Pagination/Pagination";
-import { vidoesapiAPIendpoint } from "@/data/videos/fetcher";
+import { vidoesapiAPIendpoint } from "@/data/hooks/video.hooks";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
 import { useFetchCategories } from "@/data/categories/categories.hook";
-import { useFetchVideos } from "@/data/videos/video.hook";
+import { useFetchVideos } from "@/data/hooks/video.hooks";
 import AnimationContainer from "@/components/animation/animation-container";
 
 const Videos = () => {

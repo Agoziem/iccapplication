@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import Alert from "@/components/custom/Alert/Alert";
 import Modal from "@/components/custom/Modal/modal";
 import DepartmentForm from "./DepartmentForm";
-import { deptDefault } from "@/constants";
+import { deptDefault } from "@/data/constants";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   MainAPIendpoint,
-} from "@/data/organization/fetcher";
+} from "@/data/hooks/organization.hooks";
 import Pagination from "@/components/custom/Pagination/Pagination";
 import {
   useCreateDepartment,

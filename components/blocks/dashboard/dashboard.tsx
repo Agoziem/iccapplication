@@ -8,16 +8,16 @@ import TopSelling from "./TopsellingSection/TopSelling";
 import { useSession } from "next-auth/react";
 import CartButton from "../../custom/Offcanvas/CartButton";
 import { useFetchServices } from "@/data/services/service.hook";
-import { servicesAPIendpoint } from "@/data/services/fetcher";
-import { productsAPIendpoint } from "@/data/product/fetcher";
+import { servicesAPIendpoint } from "@/data/hooks/service.hooks";
+import { productsAPIendpoint } from "@/data/hooks/product.hooks";
 import { useFetchProducts } from "@/data/product/product.hook";
-import { useFetchVideos } from "@/data/videos/video.hook";
+import { useFetchVideos } from "@/data/hooks/video.hooks";
 import {
   useFetchPayments,
   useFetchPaymentsByUser,
   useGetOrderReport,
 } from "@/data/payments/orders.hook";
-import { vidoesapiAPIendpoint } from "@/data/videos/fetcher";
+import { vidoesapiAPIendpoint } from "@/data/hooks/video.hooks";
 
 const DashboardBody = () => {
   const { data: session } = useSession();

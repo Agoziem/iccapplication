@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { TiTimes } from "react-icons/ti";
 import Alert from "@/components/custom/Alert/Alert";
 import Modal from "@/components/custom/Modal/modal";
-import { SubCategorydefault } from "@/constants";
+import { SubCategorydefault } from "@/data/constants";
 import {
   useCreateSubCategory,
   useDeleteSubCategory,

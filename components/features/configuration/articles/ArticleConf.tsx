@@ -4,10 +4,10 @@ import ArticleForm from "./ArticleForm";
 import ArticleList from "./ArticleList";
 import ArticleCategoryForm from "./ArticleCategoryForm";
 import { useSearchParams } from "next/navigation";
-import { articleAPIendpoint, fetchArticles, fetchArticlesCategories } from "@/data/articles/fetcher";
-import { ArticleDefault } from "@/constants";
+import { articleAPIendpoint, fetchArticles, fetchArticlesCategories } from "@/data/hooks/articles.hooks";
+import { ArticleDefault } from "@/data/constants";
 import { useFetchCategories } from "@/data/categories/categories.hook";
-import { useFetchArticles } from "@/data/articles/articles.hook";
+import { useFetchArticles } from "@/data/hooks/articles.hooks";
 
 const ArticleConf = () => {
   const searchParams = useSearchParams();

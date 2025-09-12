@@ -10,7 +10,7 @@ import navlist from "./navitem";
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import { MdOutlineShoppingCart } from "react-icons/md";
-import { useCart } from "@/data/carts/Cartcontext";
+import { useCart } from "@/providers/context/Cartcontext";
 import Cartbutton from "@/components/custom/Cartbutton/cart-button";
 
 const MainHeader = () => {

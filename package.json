@@ -25,7 +25,9 @@
     "firebase": "^12.2.1",
     "framer-motion": "^11.16.0",
     "html2canvas": "^1.4.1",
+    "js-cookie": "^3.0.5",
     "jspdf": "^2.5.1",
+    "jwt-decode": "^4.0.0",
     "moment": "^2.30.1",
     "next": "15.5.3",
     "quill-image-resize-module": "^3.0.0",
@@ -49,6 +51,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@types/bootstrap": "^5.2.10",
+    "@types/js-cookie": "^3.0.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -56,5 +59,21 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.3",
     "typescript": "^5"
+  },
+  "pnpm": {
+    "peerDependencyRules": {
+      "ignoreMissing": [
+        "react",
+        "react-dom"
+      ],
+      "allowAny": [
+        "react-apexcharts",
+        "react-paystack",
+        "react-query",
+        "react-quill",
+        "react-spinners",
+        "resend"
+      ]
+    }
   }
 }

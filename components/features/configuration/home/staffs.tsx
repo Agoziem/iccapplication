@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import Modal from "@/components/custom/Modal/modal";
 import "./homeconfig.css";
 import StaffForm from "./staffform";
-import { staffdefault } from "@/constants";
+import { staffdefault } from "@/data/constants";
 import {
   MainAPIendpoint,
-} from "@/data/organization/fetcher";
+} from "@/data/hooks/organization.hooks";
 import { useSearchParams, useRouter } from "next/navigation";
 import Pagination from "@/components/custom/Pagination/Pagination";
 import { useCreateStaff, useDeleteStaff, useFetchStaffs, useUpdateStaff } from "@/data/organization/organization.hook";

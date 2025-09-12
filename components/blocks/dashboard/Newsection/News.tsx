@@ -1,8 +1,8 @@
 import NewsPostItem from "./NewsPostItem";
 import "./news.css";
 import Link from "next/link";
-import { articleAPIendpoint, fetchArticles } from "@/data/articles/fetcher";
-import { useFetchArticles } from "@/data/articles/articles.hook";
+import { articleAPIendpoint, fetchArticles } from "@/data/hooks/articles.hooks";
+import { useFetchArticles } from "@/data/hooks/articles.hooks";
 import Loading from "@/components/custom/Loading/Loading";
 
 function News() {

@@ -4,8 +4,8 @@ import React, { useContext, useEffect, useState } from "react";
 import "./section.css";
 import { FaLongArrowAltRight } from "react-icons/fa";
 import { MdOutlineArticle } from "react-icons/md";
-import { articleAPIendpoint, fetchArticles } from "@/data/articles/fetcher";
-import { useFetchArticles } from "@/data/articles/articles.hook";
+import { articleAPIendpoint, fetchArticles } from "@/data/hooks/articles.hooks";
+import { useFetchArticles } from "@/data/hooks/articles.hooks";
 import AnimationContainer from "@/components/animation/animation-container";
 
 const BlogSection = () => {

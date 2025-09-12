@@ -5,7 +5,7 @@ import React, {
   useState,
   useTransition,
 } from "react";
-import { useAdminContext } from "@/data/payments/Admincontextdata";
+import { useAdminContext } from "@/providers/context/Admincontextdata";
 import Modal from "@/components/custom/Modal/modal";
 import Alert from "@/components/custom/Alert/Alert";
 import ProductCard from "./ProductCard";
@@ -17,7 +17,7 @@ import { RiShoppingBasketFill } from "react-icons/ri";
 import SubCategoriesForm from "@/components/features/SubCategories/SubCategoriesForm";
 import { useSubCategoriesContext } from "@/data/categories/Subcategoriescontext";
 import { fetchCategories } from "@/data/categories/fetcher";
-import { defaultProduct } from "@/constants";
+import { defaultProduct } from "@/data/constants";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import {
@@ -26,7 +26,7 @@ import {
   fetchProducts,
   productsAPIendpoint,
   updateProduct,
-} from "@/data/product/fetcher";
+} from "@/data/hooks/product.hooks";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
 import { PulseLoader } from "react-spinners";
 import { useFetchCategories } from "@/data/categories/categories.hook";

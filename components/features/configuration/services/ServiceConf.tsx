@@ -1,5 +1,5 @@
 "use client";
-import { servicesAPIendpoint } from "@/data/services/fetcher";
+import { servicesAPIendpoint } from "@/data/hooks/service.hooks";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import ServiceUsers from "./ServiceUsers";

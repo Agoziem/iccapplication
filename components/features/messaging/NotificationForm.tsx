@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { notificationSchema } from "@/schemas/notifications";
 import Alert from "../../custom/Alert/Alert";
-import { useCreateNotification, useUpdateNotification } from "@/data/notificationsAPI/notifications.hook";
+import { useCreateNotification, useUpdateNotification } from "@/data/notificationsAPI/notification.hook";
 
 /**
  * Enhanced NotificationForm component with comprehensive validation and error handling

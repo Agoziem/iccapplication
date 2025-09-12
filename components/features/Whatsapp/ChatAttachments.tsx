@@ -1,4 +1,4 @@
-import { useWhatsappAPIContext } from "@/data/whatsappAPI/WhatsappContext";
+import { useWhatsappAPIContext } from "@/providers/context/WhatsappContext";
 import React from "react";
 import { FaPhotoVideo } from "react-icons/fa";
 import { HiOutlineDocument } from "react-icons/hi2";

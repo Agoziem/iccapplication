@@ -1,12 +1,12 @@
 import React, { useState, useRef } from "react";
 import { AiOutlineSend } from "react-icons/ai";
 import { ImAttachment } from "react-icons/im";
-import { WAMessageDefault } from "@/constants";
+import { WAMessageDefault } from "@/data/constants";
 import ChatAttachments from "../../features/Whatsapp/ChatAttachments";
 import AttachmentInput from "./AttachmentInput";
 import ExtendableTextarea from "./ExtendableTextarea";
-import { useWhatsappAPIContext } from "@/data/whatsappAPI/WhatsappContext";
-import { useSendWAMessage } from "@/data/whatsappAPI/whatsapp.hook";
+import { useWhatsappAPIContext } from "@/providers/context/WhatsappContext";
+import { useSendWAMessage } from "@/data/hooks/whatsapp.hooks";
 
 /**
  * @param {{contact: WAContact}} props

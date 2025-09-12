@@ -1,17 +1,20 @@
 import { z } from "zod";
-import { ServiceSchema, ProductSchema, VideoSchema } from "./items";
+import { ServiceResponseSchema, ProductResponseSchema, VideoResponseSchema } from "./items";
+import { AmountSchema } from "./custom-validation";
+import { OrganizationMiniSchema } from "./organizations";
+import { AuthUserSchema, UserminiSchema } from "./users";
 
 // ---------------------------------------------------------------------
 // Core Payment Schema (Based on API Payment model)
 // ---------------------------------------------------------------------
 
-export const PaymentSchema = z.object({
+export const PaymentResponseSchema = z.object({
   id: z.number().int().positive().optional(),
-  organization: z.string().optional(),
-  customer: z.string().optional(),
-  services: z.array(ServiceSchema),
-  products: z.array(ProductSchema),
-  videos: z.array(VideoSchema),
+  organization: OrganizationMiniSchema,
+  customer: AuthUserSchema,
+  services: z.array(ServiceResponseSchema),
+  products: z.array(ProductResponseSchema),
+  videos: z.array(VideoResponseSchema),
   amount: z.string().refine((val) => {
     const num = parseFloat(val);
     return !isNaN(num) && isFinite(num);
@@ -26,18 +29,19 @@ export const PaymentSchema = z.object({
 /**
  * Schema for creating payments (omits readonly fields)
  */
-export const CreatePaymentSchema = PaymentSchema.omit({
-  id: true,
-  organization: true,
-  customer: true,
-  created_at: true,
-  last_updated_date: true,
+export const CreatePaymentSchema = z.object({
+  organization: z.string().optional(),
+  customer: z.number().int().positive(),
+  amount: AmountSchema,
+  services: z.array(z.number().int().positive()).optional(),
+  products: z.array(z.number().int().positive()).optional(),
+  videos: z.array(z.number().int().positive()).optional(),
 });
 
 /**
  * Schema for updating payments
  */
-export const UpdatePaymentSchema = PaymentSchema.partial();
+export const UpdatePaymentSchema = CreatePaymentSchema.partial();
 
 // ---------------------------------------------------------------------
 // Payment Verification Schema (Based on API VerifyPayment model)
@@ -80,7 +84,7 @@ export const PaymentCountStatsSchema = z.object({
 /**
  * Schema for arrays of payments
  */
-export const PaymentArraySchema = z.array(PaymentSchema);
+export const PaymentArraySchema = z.array(PaymentResponseSchema);
 
 /**
  * Schema for arrays of customer payment statistics

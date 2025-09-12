@@ -5,7 +5,7 @@ import "./globals.css";
 import BootstrapJs from "@/components/BootstrapJs";
 import { SessionProvider } from "next-auth/react";
 import OffCanvas from "@/components/custom/Offcanvas/OffCanvas";
-import ContextProviders from "@/data/ContextProviders";
+import ContextProviders from "@/providers/context/ContextProviders";
 import Providers from "@/providers";
 import { Toaster } from "react-hot-toast";
 
@@ -21,11 +21,9 @@ export default function RootLayout({ children, session }) {
       <body className="body">
         <SessionProvider session={session}>
           <Providers>
-            <ContextProviders>
               {children}
               <OffCanvas />
               <Toaster />
-            </ContextProviders>
           </Providers>
         </SessionProvider>
         <BootstrapJs />

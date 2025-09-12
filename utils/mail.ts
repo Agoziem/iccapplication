@@ -10,12 +10,51 @@ import ServiceCompleted from "@/components/blocks/Templates/ServiceCompleted";
 import ServiceStarted from "@/components/blocks/Templates/ServiceStarted";
 import VerificationEmail from "@/components/blocks/Templates/VerificationEmail";
 import { Resend } from "resend";
+import { User } from "@/types/users";
+import { PaymentResponse } from "@/types/payments";
+import { Service, ServiceUser } from "@/types/items";
+import React from "react";
+import { EmailResponse as EmailResponseType } from "@/types/emails";
+
 const resend = new Resend(process.env.NEXT_PUBLIC_RESEND_API_KEY);
+
+// Types for email functions
+export interface EmailResponse {
+  success: boolean;
+  message: string;
+  error?: string;
+}
+
+// export interface EmailReplyData {
+//   response_message: string;
+//   response_subject: string;
+//   recipient_email: string;
+// }
+
+// export interface ServiceUser {
+//   email: string;
+//   username?: string;
+//   first_name?: string;
+//   [key: string]: any;
+// }
+
+// // Extended PaymentResponse interface for email functions
+// interface PaymentWithCustomerEmail extends Omit<PaymentResponse, 'customer'> {
+//   customer: {
+//     email: string;
+//     username?: string;
+//     first_name?: string;
+//     last_name?: string;
+//   } | undefined;
+// }
 
 // ----------------------------------------
 // Send email Verification
 // ----------------------------------------
-export const sendVerificationEmail = async (email, token) => {
+export const sendVerificationEmail = async (
+  email: string,
+  token: string
+): Promise<EmailResponse> => {
   const confirmLink = `${process.env.NEXT_PUBLIC_URL}/accounts/new-verification?token=${token}`;
 
   try {
@@ -23,7 +62,7 @@ export const sendVerificationEmail = async (email, token) => {
       from: "ICCapp <onboarding@innovationscybercafe.com>", // Set your "from" email address
       to: email,
       subject: "Verify your email",
-      react: <VerificationEmail confirmLink={confirmLink} />,
+      react: React.createElement(VerificationEmail, { confirmLink }),
       reply_to: "innovationscybercafe@gmail.com",
     });
     return {
@@ -31,7 +70,7 @@ export const sendVerificationEmail = async (email, token) => {
       message:
         "We have sent you a verification email. Please check your inbox and click on the link to verify your email address.",
     };
-  } catch (error) {
+  } catch (error: any) {
     return {
       success: false,
       message: "Failed to send verification email",
@@ -43,7 +82,10 @@ export const sendVerificationEmail = async (email, token) => {
 // ----------------------------------------
 // Send Password Reset Email
 // ----------------------------------------
-export const sendPasswordResetEmail = async (email, token) => {
+export const sendPasswordResetEmail = async (
+  email: string,
+  token: string
+): Promise<EmailResponse> => {
   const resetLink = `${process.env.NEXT_PUBLIC_URL}/accounts/new-password?token=${token}`;
 
   try {
@@ -51,7 +93,7 @@ export const sendPasswordResetEmail = async (email, token) => {
       from: "ICCapp <onboarding@innovationscybercafe.com>",
       to: email,
       subject: "Reset your password",
-      react: <PasswordReset resetLink={resetLink} />,
+      react: React.createElement(PasswordReset, { resetLink }),
       reply_to: "innovationscybercafe@gmail.com",
     });
     return {
@@ -59,7 +101,7 @@ export const sendPasswordResetEmail = async (email, token) => {
       message:
         "We have sent you a password reset email. Please check your inbox and click on the link to reset your password.",
     };
-  } catch (error) {
+  } catch (error: any) {
     return {
       success: false,
       message: "Failed to send password reset email",
@@ -71,28 +113,27 @@ export const sendPasswordResetEmail = async (email, token) => {
 // ------------------------------------------------
 // Send Email Response
 // ------------------------------------------------
-/**
- * @async
- * @param {EmailResponse} response
- */
-export const sendReplyEmail = async (response) => {
+export const sendReplyEmail = async (
+  response: EmailResponseType
+): Promise<EmailResponse> => {
   const { response_message, response_subject, recipient_email } = response;
   try {
     await resend.emails.send({
       from: "ICCapp <admin@innovationscybercafe.com>",
       to: recipient_email,
       subject: response_subject,
-      react: <EmailResponse message={response_message} />,
+      react: React.createElement(EmailResponse, { message: response_message }),
       reply_to: "innovationscybercafe@gmail.com",
     });
     return {
       success: true,
       message: "We have sent your message successfully.",
     };
-  } catch (error) {
+  } catch (error: any) {
     return {
-      error: true,
+      success: false,
       message: "Failed to send message",
+      error: error.message,
     };
   }
 };
@@ -101,24 +142,24 @@ export const sendReplyEmail = async (response) => {
 // Send Bulk Emails to subscribers
 // ------------------------------------------------
 export const sendMultipleEmails = async (
-  email,
-  message,
-  subject,
-  group = "admin"
-) => {
+  email: string | string[],
+  message: string,
+  subject: string,
+  group: string = "admin"
+): Promise<EmailResponse> => {
   try {
     await resend.emails.send({
       from: `ICCapp <${group}@innovationscybercafe.com>`,
       to: email,
       subject: subject,
-      react: <BulkEmail message={message} />,
+      react: React.createElement(BulkEmail, { message }),
       reply_to: "innovationscybercafe@gmail.com",
     });
     return {
       success: true,
       message: "We have sent your message successfully.",
     };
-  } catch (error) {
+  } catch (error: any) {
     return {
       success: false,
       message: "Failed to send message",
@@ -130,25 +171,20 @@ export const sendMultipleEmails = async (
 // ------------------------------------------------
 // Send Template Message for Onboarding User
 // ------------------------------------------------
-
-/**
- * @async
- * @param {User} user
- */
-export const sendOnboardingMessage = async (user) => {
+export const sendOnboardingMessage = async (user: User): Promise<EmailResponse> => {
   try {
     await resend.emails.send({
       from: `ICCapp <onboarding@innovationscybercafe.com>`,
       to: user.email,
       subject: `Welcome onboard ${user.username || user.first_name}`,
-      react: <Onboarding user={user} />,
+      react: React.createElement(Onboarding, { user }),
       reply_to: "innovationscybercafe@gmail.com",
     });
     return {
       success: true,
       message: "We have sent your message successfully.",
     };
-  } catch (error) {
+  } catch (error: any) {
     return {
       success: false,
       message: "Failed to send message",
@@ -160,25 +196,27 @@ export const sendOnboardingMessage = async (user) => {
 // ------------------------------------------------
 // Send Template Message for Payment Successful
 // ------------------------------------------------
-
-/**
- * @async
- * @param {Order} order
- */
-export const sendPaymentSuccessfulEmail = async (order) => {
+export const sendPaymentSuccessfulEmail = async (order: PaymentResponse): Promise<EmailResponse> => {
   try {
+    if (!order.customer || !order.customer.email) {
+      return {
+        success: false,
+        message: "Customer email is required for payment confirmation",
+      };
+    }
+
     await resend.emails.send({
       from: `ICCapp <customer@innovationscybercafe.com>`,
       to: order.customer.email,
       subject: "thank you for your Order",
-      react: <PaymentSuccesful order={order} />,
+      react: React.createElement(PaymentSuccesful, { order }),
       reply_to: "innovationscybercafe@gmail.com",
     });
     return {
       success: true,
       message: "We have sent your message successfully.",
     };
-  } catch (error) {
+  } catch (error: any) {
     return {
       success: false,
       message: "Failed to send message",
@@ -188,27 +226,29 @@ export const sendPaymentSuccessfulEmail = async (order) => {
 };
 
 // ------------------------------------------------
-// Send Template Message for Payment Successful
+// Send Template Message for Payment Rejection
 // ------------------------------------------------
-
-/**
- * @async
- * @param {Order} order
- */
-export const sendPaymentRejectionMessage = async (order) => {
+export const sendPaymentRejectionMessage = async (order: PaymentResponse): Promise<EmailResponse> => {
   try {
+    if (!order.customer?.email) {
+      return {
+        success: false,
+        message: "Customer email is required for payment rejection notification",
+      };
+    }
+
     await resend.emails.send({
       from: `ICCapp <customer@innovationscybercafe.com>`,
       to: order.customer.email,
       subject: "Order Cancellation",
-      react: <PaymentRejection />,
+      react: React.createElement(PaymentRejection),
       reply_to: "innovationscybercafe@gmail.com",
     });
     return {
       success: true,
       message: "We have sent your message successfully.",
     };
-  } catch (error) {
+  } catch (error: any) {
     return {
       success: false,
       message: "Failed to send message",
@@ -220,28 +260,22 @@ export const sendPaymentRejectionMessage = async (order) => {
 
 
 // ------------------------------------------------
-// Send Template Message for Service Completed
+// Send Template Message for Service Started
 // ------------------------------------------------
-
-/**
- * @async
- * @param {Service} service
- * @param {ServiceUser} user
- */
-export const sendServiceStartedEmail = async (service, user) => {
+export const sendServiceStartedEmail = async (service: Service, user: ServiceUser): Promise<EmailResponse> => {
   try {
     await resend.emails.send({
       from: `ICCapp <admin@innovationscybercafe.com>`,
       to: user.email,
       subject: "Service Started",
-      react: <ServiceStarted service={service} user={user} />,
+      react: React.createElement(ServiceStarted, { service, user }),
       reply_to: "innovationscybercafe@gmail.com",
     });
     return {
       success: true,
       message: "We have sent your message successfully.",
     };
-  } catch (error) {
+  } catch (error: any) {
     return {
       success: false,
       message: "Failed to send message",
@@ -250,30 +284,23 @@ export const sendServiceStartedEmail = async (service, user) => {
   }
 };
 
-
 // ------------------------------------------------
 // Send Template Message for Service Completed
 // ------------------------------------------------
-
-/**
- * @async
- * @param {Service} service
- * @param {ServiceUser} user
- */
-export const sendServiceCompletedEmail = async (service, user) => {
+export const sendServiceCompletedEmail = async (service: Service, user: ServiceUser): Promise<EmailResponse> => {
   try {
     await resend.emails.send({
       from: `ICCapp <admin@innovationscybercafe.com>`,
       to: user.email,
       subject: "Service Completed",
-      react: <ServiceCompleted service={service} user={user} />,
+      react: React.createElement(ServiceCompleted, { service, user }),
       reply_to: "innovationscybercafe@gmail.com",
     });
     return {
       success: true,
       message: "We have sent your message successfully.",
     };
-  } catch (error) {
+  } catch (error: any) {
     return {
       success: false,
       message: "Failed to send message",

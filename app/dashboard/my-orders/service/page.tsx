@@ -2,7 +2,7 @@
 import { useSearchParams } from "next/navigation";
 import PageTitle from "@/components/custom/PageTitle/PageTitle";
 import ServicesPlaceholder from "@/components/custom/ImagePlaceholders/ServicesPlaceholder";
-import { servicesAPIendpoint } from "@/data/services/fetcher";
+import { servicesAPIendpoint } from "@/data/hooks/service.hooks";
 import { PulseLoader } from "react-spinners";
 import GoogleForm from "@/components/custom/Iframe/googleform";
 import { TbNotesOff } from "react-icons/tb";

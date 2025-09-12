@@ -1,8 +1,8 @@
 import Modal from "@/components/custom/Modal/modal";
-import { subscriptionDefault } from "@/constants";
+import { subscriptionDefault } from "@/data/constants";
 import {
   MainAPIendpoint,
-} from "@/data/organization/fetcher";
+} from "@/data/hooks/organization.hooks";
 import React, { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Pagination from "@/components/custom/Pagination/Pagination";

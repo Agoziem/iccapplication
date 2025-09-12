@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Pagination from "@/components/custom/Pagination/Pagination";
 import { useMemo, useState, useCallback, useEffect } from "react";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
-import { useGetVideos } from "@/data/videos/video.hook";
+import { useGetVideos } from "@/data/hooks/video.hooks";
 
 /**
  * Enhanced UserVideos component with comprehensive error handling and validation

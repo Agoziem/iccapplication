@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { WATemplateSchema } from "@/schemas/whatsapp";
 import Alert from "../../custom/Alert/Alert";
-import { useCreateTemplateMessage } from "@/data/whatsappAPI/whatsapp.hook";
+import { useCreateTemplateMessage } from "@/data/hooks/whatsapp.hooks";
 
 /**
  * Enhanced WhatsApp Template Form with comprehensive validation and error handling

@@ -1,6 +1,6 @@
 import ImageUploader from "@/components/custom/Imageuploader/ImageUploader";
 import Tiptap from "@/components/custom/Richtexteditor/Tiptap";
-import { servicesAPIendpoint } from "@/data/services/fetcher";
+import { servicesAPIendpoint } from "@/data/hooks/service.hooks";
 import { PulseLoader } from "react-spinners";
 import { useFetchSubCategories } from "@/data/categories/categories.hook";
 

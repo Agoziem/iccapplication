@@ -1,4 +1,4 @@
-import { useFetchMedia } from "@/data/whatsappAPI/whatsapp.hook";
+import { useFetchMedia } from "@/data/hooks/whatsapp.hooks";
 import Link from "next/link";
 import { BiCheckDouble } from "react-icons/bi";
 import { FaRegFileImage } from "react-icons/fa6";

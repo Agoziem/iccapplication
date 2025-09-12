@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useSession } from "next-auth/react";
 import Modal from "../../custom/Modal/modal";
-import { ArticleCommentDefault } from "@/constants";
-import { useDeleteComment, useUpdateComment } from "@/data/articles/articles.hook";
+import { ArticleCommentDefault } from "@/data/constants";
+import { useDeleteComment, useUpdateComment } from "@/data/hooks/articles.hooks";
 
 /**
  * Article Comments

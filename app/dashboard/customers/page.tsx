@@ -5,8 +5,8 @@ import PageTitle from "@/components/custom/PageTitle/PageTitle";
 import OrganizationCard from "@/components/features/configuration/home/organizationcard";
 import CustomersTable from "@/components/features/orders/CustomersTable";
 import { useGetOrderReport } from "@/data/payments/orders.hook";
-import { authAPIendpoint, fetchUser } from "@/data/users/fetcher";
-import { useFetchUser } from "@/data/users/user.hook";
+import { authAPIendpoint, fetchUser } from "@/data/hooks/user.hooks";
+import { useFetchUser } from "@/data/hooks/user.hooks";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 

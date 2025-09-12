@@ -12,9 +12,9 @@ import Pagination from "../../custom/Pagination/Pagination";
 import CategoryTabs from "../Categories/Categoriestab";
 import {
   articleAPIendpoint,
-} from "@/data/articles/fetcher";
+} from "@/data/hooks/articles.hooks";
 import { useRouter } from "next/navigation";
-import { useFetchArticleCategories, useFetchArticles } from "@/data/articles/articles.hook";
+import { useFetchArticleCategories, useFetchArticles } from "@/data/hooks/articles.hooks";
 
 /**
  * Error Component for Categories

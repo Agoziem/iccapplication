@@ -8,7 +8,7 @@ import {
 } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import { IoLogoWhatsapp } from "react-icons/io5";
-import { OrganizationContext } from "@/data/organization/Organizationalcontextdata";
+import { OrganizationContext } from "@/providers/context/Organizationalcontextdata";
 import Link from "next/link";
 
 /**

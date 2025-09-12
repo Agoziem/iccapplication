@@ -3,16 +3,16 @@ import React, { useContext, useEffect, useState } from "react";
 import Alert from "@/components/custom/Alert/Alert";
 import Tiptap from "@/components/custom/Richtexteditor/Tiptap";
 import { TiTimes } from "react-icons/ti";
-import { ArticleDefault } from "@/constants";
+import { ArticleDefault } from "@/data/constants";
 import { Controller, useForm } from "react-hook-form";
 import { ArticleSchema } from "@/schemas/articles";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createArticle, updateArticle } from "@/data/articles/fetcher";
+import { createArticle, updateArticle } from "@/data/hooks/articles.hooks";
 import { useSession } from "next-auth/react";
 import {
   useCreateArticle,
   useUpdateArticle,
-} from "@/data/articles/articles.hook";
+} from "@/data/hooks/articles.hooks";
 
 /**
  * @param {{ article: Article;setArticle: (value:Article) => void; editMode: any; setEditMode: any; articles: ArticlesResponse; categories: any;  }} param0

@@ -1,6 +1,6 @@
 import Tiptap from "@/components/custom/Richtexteditor/Tiptap";
-import { OrganizationDefault } from "@/constants";
-import { updateOrganization } from "@/data/organization/fetcher";
+import { OrganizationDefault } from "@/data/constants";
+import { updateOrganization } from "@/data/hooks/organization.hooks";
 import { useUpdateOrganization } from "@/data/organization/organization.hook";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";

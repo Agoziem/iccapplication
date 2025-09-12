@@ -4,8 +4,8 @@ import Modal from "@/components/custom/Modal/modal";
 import { BiSolidQuoteAltRight } from "react-icons/bi";
 import TestimonialForm from "./TestimonialForm";
 
-import { MainAPIendpoint } from "@/data/organization/fetcher";
-import { testimonialDefault } from "@/constants";
+import { MainAPIendpoint } from "@/data/hooks/organization.hooks";
+import { testimonialDefault } from "@/data/constants";
 import { useSearchParams, useRouter } from "next/navigation";
 import Pagination from "@/components/custom/Pagination/Pagination";
 import {

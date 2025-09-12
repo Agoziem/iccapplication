@@ -3,7 +3,7 @@ import { BiSolidQuoteAltRight } from "react-icons/bi";
 import StarRating from "@/components/custom/StarRating/StarRating";
 import ReusableSwiper from "@/components/custom/Swiper/ReusableSwiper";
 import "./section.css";
-import { MainAPIendpoint } from "@/data/organization/fetcher";
+import { MainAPIendpoint } from "@/data/hooks/organization.hooks";
 import { useFetchTestimonials } from "@/data/organization/organization.hook";
 
 const CustomSwiper = () => {

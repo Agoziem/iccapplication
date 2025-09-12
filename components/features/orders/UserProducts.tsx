@@ -2,7 +2,7 @@ import { useSession } from "next-auth/react";
 import { PiEmptyBold } from "react-icons/pi";
 import ProductPlaceholder from "../../custom/ImagePlaceholders/Productplaceholder";
 import Link from "next/link";
-import { productsAPIendpoint } from "@/data/product/fetcher";
+import { productsAPIendpoint } from "@/data/hooks/product.hooks";
 import { useSearchParams, useRouter } from "next/navigation";
 import Pagination from "@/components/custom/Pagination/Pagination";
 import SearchInput from "@/components/custom/Inputs/SearchInput";

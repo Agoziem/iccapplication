@@ -1,9 +1,9 @@
 "use client";
 import React, { useEffect, useState, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useAdminContext } from "@/data/payments/Admincontextdata";
-import { useCart } from "@/data/carts/Cartcontext";
-import { servicesAPIendpoint } from "@/data/services/fetcher";
+import { useAdminContext } from "@/providers/context/Admincontextdata";
+import { useCart } from "@/providers/context/Cartcontext";
+import { servicesAPIendpoint } from "@/data/hooks/service.hooks";
 import ServiceCard from "@/components/features/Services/ServiceCard";
 import CartButton from "@/components/custom/Offcanvas/CartButton";
 import CategoryTabs from "@/components/features/Categories/Categoriestab";

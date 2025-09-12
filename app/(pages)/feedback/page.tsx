@@ -3,7 +3,7 @@ import TestimonialForm from "@/components/features/configuration/home/Testimonia
 import React, { useContext, useState } from "react";
 import { converttoformData } from "@/utils/formutils";
 import Alert from "@/components/custom/Alert/Alert";
-import { testimonialDefault } from "@/constants";
+import { testimonialDefault } from "@/data/constants";
 import {
   useCreateTestimonial,
   useUpdateTestimonial,

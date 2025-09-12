@@ -1,7 +1,7 @@
 "use client";
 import { useContext, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { useAdminContext } from "@/data/payments/Admincontextdata";
+import { useAdminContext } from "@/providers/context/Admincontextdata";
 
 const useCurrentUser = () => {
   const [currentUser, setCurrentUser] = useState({});

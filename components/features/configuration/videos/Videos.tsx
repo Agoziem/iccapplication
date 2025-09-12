@@ -1,5 +1,5 @@
 "use client";
-import { useAdminContext } from "@/data/payments/Admincontextdata";
+import { useAdminContext } from "@/providers/context/Admincontextdata";
 import React, { useEffect, useState, useTransition } from "react";
 import Modal from "@/components/custom/Modal/modal";
 import Alert from "@/components/custom/Alert/Alert";
@@ -10,7 +10,7 @@ import CategoriesForm from "@/components/features/Categories/Categories";
 import SubCategoriesForm from "@/components/features/SubCategories/SubCategoriesForm";
 import { FaVideo } from "react-icons/fa6";
 import Pagination from "@/components/custom/Pagination/Pagination";
-import { VideoDefault } from "@/constants";
+import { VideoDefault } from "@/data/constants";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import {
@@ -19,11 +19,11 @@ import {
   fetchVideos,
   updateVideo,
   vidoesapiAPIendpoint,
-} from "@/data/videos/fetcher";
+} from "@/data/hooks/video.hooks";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
 import { PulseLoader } from "react-spinners";
 import { useFetchCategories } from "@/data/categories/categories.hook";
-import { useCreateVideo, useDeleteVideo, useFetchVideos, useUpdateVideo } from "@/data/videos/video.hook";
+import { useCreateVideo, useDeleteVideo, useFetchVideos, useUpdateVideo } from "@/data/hooks/video.hooks";
 
 const Videos = () => {
   const { openModal } = useAdminContext();

@@ -3,9 +3,9 @@ import Modal from "@/components/custom/Modal/modal";
 import Alert from "@/components/custom/Alert/Alert";
 import ArticlePlaceholder from "./ArticlePlaceholder";
 import Pagination from "@/components/custom/Pagination/Pagination";
-import { ArticleDefault } from "@/constants";
+import { ArticleDefault } from "@/data/constants";
 import { useRouter } from "next/navigation";
-import { useDeleteArticle } from "@/data/articles/articles.hook";
+import { useDeleteArticle } from "@/data/hooks/articles.hooks";
 import toast from "react-hot-toast";
 
 /**

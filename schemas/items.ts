@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { documentSchema, imageSchema, videoSchema } from "./custom-validation";
 
 // ------------------------------------
 // Category Schemas (from API)
@@ -65,7 +66,7 @@ export const VideoSubCategorySchema = z.object({
 /**
  * Service Schema (ServiceSerializer from API)
  */
-export const ServiceSchema = z.object({
+export const ServiceResponseSchema = z.object({
   id: z.number().optional(),
   organization: z.string().optional(),
   preview: z.string().url().optional(),
@@ -109,7 +110,7 @@ export const CreateServiceSubCategorySchema = z.object({
 /**
  * Product Schema (ProductSerializer from API)
  */
-export const ProductSchema = z.object({
+export const ProductResponseSchema = z.object({
   id: z.number(),
   organization: z.string(),
   img_url: z.string().optional(),
@@ -155,7 +156,7 @@ export const CreateProductSubCategorySchema = z.object({
 /**
  * Video Schema (VideoSerializer from API)
  */
-export const VideoSchema = z.object({
+export const VideoResponseSchema = z.object({
   id: z.number(),
   organization: z.string(),
   thumbnail: z.string().url().optional(),
@@ -203,7 +204,7 @@ export const PaginatedServiceResponseSchema = z.object({
   count: z.number(),
   next: z.string().url().nullable(),
   previous: z.string().url().nullable(),
-  results: z.array(ServiceSchema),
+  results: z.array(ServiceResponseSchema),
 });
 
 /**
@@ -213,7 +214,7 @@ export const PaginatedProductResponseSchema = z.object({
   count: z.number(),
   next: z.string().url().nullable(),
   previous: z.string().url().nullable(),
-  results: z.array(ProductSchema),
+  results: z.array(ProductResponseSchema),
 });
 
 /**
@@ -223,16 +224,109 @@ export const PaginatedVideoResponseSchema = z.object({
   count: z.number(),
   next: z.string().url().nullable(),
   previous: z.string().url().nullable(),
-  results: z.array(VideoSchema),
+  results: z.array(VideoResponseSchema),
 });
 
 // ------------------------------------
 // Array Schemas
 // ------------------------------------
 
-export const ServicesSchema = z.array(ServiceSchema);
-export const ProductsSchema = z.array(ProductSchema);
-export const VideosSchema = z.array(VideoSchema);
+export const ServicesSchema = z.array(ServiceResponseSchema);
+export const ProductsSchema = z.array(ProductResponseSchema);
+export const VideosSchema = z.array(VideoResponseSchema);
 export const ServiceCategoriesSchema = z.array(ServiceCategorySchema);
 export const ProductCategoriesSchema = z.array(ProductCategorySchema);
 export const VideoCategoriesSchema = z.array(VideoCategorySchema);
+
+// ------------------------------------
+// Simple Response Schemas
+// ------------------------------------
+
+/**
+ * Success Response Schema for product operations
+ */
+export const SuccessResponseSchema = z.object({
+  message: z.string().min(1),
+});
+
+/**
+ * Error Response Schema for product operations
+ */
+export const ErrorResponseSchema = z.object({
+  error: z.string().min(1),
+});
+
+/**
+ * Delete Response Schema - returns the ID of deleted item
+ */
+export const DeleteResponseSchema = z.object({
+  id: z.number(),
+});
+
+// ------------------------------------
+// Create/Update Item Schemas
+// ------------------------------------
+
+/* ---------- Product ---------- */
+export const createProductSchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  price: z.number(),
+  preview: imageSchema,   // Image (file upload)
+  product: documentSchema,   // File (upload)
+  category: z.number(),
+  subcategory: z.number(),
+  organization: z.string().uuid(),          // assuming org is UUID in Django
+});
+
+export const updateProductSchema = z.object({
+  name: z.string().optional(),
+  description: z.string().optional(),
+  price: z.number().optional(),
+  preview: imageSchema,
+  product: documentSchema,
+  category: z.number().optional(),
+  subcategory: z.number().optional(),
+});
+
+/* ---------- Service ---------- */
+export const createServiceSchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  price: z.number(),
+  preview: imageSchema, // image
+  category: z.number(),
+  subcategory: z.number(),
+  organization: z.string().uuid(),
+});
+
+export const updateServiceSchema = z.object({
+  name: z.string().optional(),
+  description: z.string().optional(),
+  price: z.number().optional(),
+  preview: imageSchema,
+  category: z.number().optional(),
+  subcategory: z.number().optional(),
+});
+
+/* ---------- Video ---------- */
+export const createVideoSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  price: z.number(),
+  thumbnail: imageSchema,
+  video: videoSchema,
+  category: z.number(),
+  subcategory: z.number(),
+  organization: z.string().uuid(),
+});
+
+export const updateVideoSchema = z.object({
+  title: z.string().optional(),
+  description: z.string().optional(),
+  price: z.number().optional(),
+  thumbnail: imageSchema,
+  video: videoSchema,
+  category: z.number().optional(),
+  subcategory: z.number().optional(),
+});

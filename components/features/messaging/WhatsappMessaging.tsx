@@ -3,7 +3,7 @@ import React, { useMemo, useCallback } from "react";
 import { TbBrandWhatsapp } from "react-icons/tb";
 import { PulseLoader } from "react-spinners";
 import WATemplateForm from "./WhatsappForm";
-import { useWhatsAppTemplates } from "@/data/whatsappAPI/whatsapp.hook";
+import { useWhatsAppTemplates } from "@/data/hooks/whatsapp.hooks";
 import moment from "moment";
 
 /**

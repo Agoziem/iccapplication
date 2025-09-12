@@ -9,6 +9,13 @@ export const UserminiSchema = z.object({
   img: z.string().optional(),
 });
 
+export const AuthUserSchema = z.object({
+  id: z.number().optional(),
+  first_name: z.string().max(150).optional(),
+  last_name: z.string().max(150).optional(),
+  email: z.string().email().max(254).optional(),
+});
+
 /**
  * Main User Schema (AuthUser from API)
  * Complete user profile with all available fields from Django REST API
@@ -53,8 +60,8 @@ export const UserRegistrationSchema = z.object({
  * Register User Response Schema (RegisterUserResponse from API)
  */
 export const UserRegistrationResponseSchema = z.object({
-  token: z.string().min(1),
-  user: UserSchema,
+  message: z.string().min(1),
+  user: AuthUserSchema,
 });
 
 /**
@@ -92,8 +99,10 @@ export const UserLoginSchema = z.object({
  * Verify User Response Schema (VerifyUserResponse from API)
  */
 export const UserLoginResponseSchema = z.object({
-  token: z.string().min(1),
-  user: UserSchema,
+  message: z.string().min(1),
+  access_token: z.string().min(1),
+  refresh_token: z.string().min(1),
+  user: AuthUserSchema,
 });
 
 /**

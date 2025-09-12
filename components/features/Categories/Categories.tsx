@@ -8,7 +8,7 @@ import {
   updateCategory,
 } from "@/data/categories/fetcher";
 import { useCreateCategory, useDeleteCategory, useUpdateCategory } from "@/data/categories/categories.hook";
-import { useUpdateComment } from "@/data/articles/articles.hook";
+import { useUpdateComment } from "@/data/hooks/articles.hooks";
 
 /**
  * @type {Category}

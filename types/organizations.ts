@@ -20,7 +20,10 @@ import {
   StaffArraySchema,
   DepartmentArraySchema,
   TestimonialArraySchema,
-  SubscriptionArraySchema
+  SubscriptionArraySchema,
+  UpdateDepartmentSchema,
+  UpdateTestimonialSchema,
+  UpdateSubscriptionSchema
 } from "../schemas/organizations";
 
 // Extract TypeScript types from Zod schemas
@@ -35,14 +38,17 @@ export type PaginatedStaff = z.infer<typeof PaginatedStaffSerializer>;
 
 export type Department = z.infer<typeof DepartmentSchema>;
 export type CreateDepartment = z.infer<typeof CreateDepartmentSchema>;
+export type UpdateDepartment = z.infer<typeof UpdateDepartmentSchema>;
 export type PaginatedDepartment = z.infer<typeof PaginatedDepartmentSerializer>;
 
 export type Testimonial = z.infer<typeof TestimonialSchema>;
 export type CreateTestimonial = z.infer<typeof CreateTestimonialSchema>;
+export type UpdateTestimonial = z.infer<typeof UpdateTestimonialSchema>;
 export type PaginatedTestimonial = z.infer<typeof PaginatedTestimonialSerializer>;
 
 export type Subscription = z.infer<typeof SubscriptionSchema>;
 export type CreateSubscription = z.infer<typeof CreateSubscriptionSchema>;
+export type UpdateSubscription = z.infer<typeof UpdateSubscriptionSchema>;
 export type PaginatedSubscription = z.infer<typeof PaginatedSubscriptionSerializer>;
 
 // Array types
