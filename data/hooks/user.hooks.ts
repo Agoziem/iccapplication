@@ -3,6 +3,7 @@ import { AxiosInstance, AxiosInstancemultipart, AxiosInstanceWithToken, AxiosIns
 import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from "react-query";
 import {
   User,
+  UserLogin,
   UserRegistration,
   UserRegistrationResponse,
   UserRegistrationOAuth,
@@ -15,6 +16,7 @@ import {
   SuccessResponse,
   Users
 } from "@/types/users";
+import { getRefreshToken } from "@/utils/auth";
 
 export const authAPIendpoint = "/authapi";
 
@@ -92,6 +94,16 @@ export const verifyUser = async (userData: any): Promise<SuccessResponse> => {
 // Password Reset
 export const resetPassword = async (resetData: ResetPassword): Promise<SuccessResponse> => {
   const response = await AxiosInstance.post(`${authAPIendpoint}/resetPassword/`, resetData);
+  return response.data;
+};
+
+// logout function
+export const logoutUser = async (): Promise<SuccessResponse> => {
+  const refresh_token = getRefreshToken();
+  if (!refresh_token) {
+    throw new Error("No refresh token available for logout.");
+  }
+  const response = await AxiosInstanceWithToken.post(`${authAPIendpoint}/logout/`, { refresh_token });
   return response.data;
 };
 

@@ -28,4 +28,9 @@ export type CategoryFilter = z.infer<typeof categoryFilterSchema>;
 
 // Additional utility types
 export type CategorySummary = Pick<Category, 'id' | 'category'>;
+export type ExtendedCategory = Category & {
+  id: number;
+  category: string;
+  description: string;
+};
 export type SubcategorySummary = Pick<Subcategory, 'id' | 'subcategory'>;

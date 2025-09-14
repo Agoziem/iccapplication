@@ -1,17 +1,28 @@
-import React from "react";
+import React, { ReactNode, ErrorInfo } from "react";
 
-class CbtErrorBoundary extends React.Component {
-  constructor(props) {
+interface CbtErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+  errorInfo: ErrorInfo | null;
+}
+
+interface CbtErrorBoundaryProps {
+  children: ReactNode;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+}
+
+class CbtErrorBoundary extends React.Component<CbtErrorBoundaryProps, CbtErrorBoundaryState> {
+  constructor(props: CbtErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null, errorInfo: null };
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(error: Error): Partial<CbtErrorBoundaryState> {
     // Update state so the next render will show the fallback UI
     return { hasError: true };
   }
 
-  componentDidCatch(error, errorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     // Log error details for debugging
     console.error('CBT Module Error:', error);
     console.error('Error Info:', errorInfo);
@@ -27,7 +38,7 @@ class CbtErrorBoundary extends React.Component {
     }
   }
 
-  handleRetry = () => {
+  handleRetry = (): void => {
     this.setState({ 
       hasError: false, 
       error: null, 
@@ -35,7 +46,7 @@ class CbtErrorBoundary extends React.Component {
     });
   };
 
-  render() {
+  render(): ReactNode {
     if (this.state.hasError) {
       // Fallback UI
       return (

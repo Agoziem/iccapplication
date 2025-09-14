@@ -1,18 +1,37 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
+import { BsThreeDotsVertical, BsWhatsapp } from "react-icons/bs";
 import ChatInput from "../../custom/Inputs/ChatInput";
 import ProfileimagePlaceholders from "../../custom/ImagePlaceholders/ProfileimagePlaceholders";
 import ChatBody from "./ChatBody";
 import { useWhatsappAPIContext } from "@/providers/context/WhatsappContext";
-import { BsThreeDotsVertical, BsWhatsapp } from "react-icons/bs";
+
+interface ChatProps {
+  showlist: boolean;
+  setShowlist: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
 /**
- * Holds all the
- * @param {{showlist:boolean,
- * setShowlist:(value:boolean)=> void,}} props
- * @returns {JSX.Element}
+ * Enhanced Chat component with comprehensive error handling and type safety
+ * Displays chat interface with contact header and message input
+ * Optimized with React.memo and proper TypeScript typing
  */
-const Chat = ({ showlist, setShowlist }) => {
+const Chat: React.FC<ChatProps> = React.memo(({ showlist, setShowlist }) => {
   const { selectedContact } = useWhatsappAPIContext();
+
+  // Handle back to contacts list
+  const handleBackToContacts = useCallback(() => {
+    setShowlist(true);
+  }, [setShowlist]);
+
+  // Safe contact profile name
+  const profileName = useMemo(() => {
+    return selectedContact?.profile_name || 'Unknown Contact';
+  }, [selectedContact?.profile_name]);
+
+  // Safe WhatsApp ID
+  const whatsappId = useMemo(() => {
+    return selectedContact?.wa_id || '';
+  }, [selectedContact?.wa_id]);
 
   return (
     <div
@@ -22,6 +41,8 @@ const Chat = ({ showlist, setShowlist }) => {
       style={{
         minHeight: "100vh",
       }}
+      role="main"
+      aria-label={selectedContact ? `Chat with ${profileName}` : "Chat interface"}
     >
       {selectedContact ? (
         <div className="d-flex align-items-center">
@@ -30,20 +51,28 @@ const Chat = ({ showlist, setShowlist }) => {
               showlist ? "d-none d-md-block" : ""
             }`}
             style={{ cursor: "pointer" }}
-            onClick={() => {
-              setShowlist(true);
+            onClick={handleBackToContacts}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleBackToContacts();
+              }
             }}
+            aria-label="Back to contacts"
           >
             <BsThreeDotsVertical
               className="me-3"
               style={{ fontSize: "1.3rem" }}
+              aria-hidden="true"
             />
           </h6>
           <div className="flex-fill d-flex">
             <ProfileimagePlaceholders firstname="John" />
             <div className="ms-3">
-              <h5>{selectedContact.profile_name}</h5>
-              <p className="text-primary small my-0">{selectedContact.wa_id}</p>
+              <h5 className="mb-1">{profileName}</h5>
+              <p className="text-primary small my-0">{whatsappId}</p>
             </div>
           </div>
         </div>
@@ -55,23 +84,29 @@ const Chat = ({ showlist, setShowlist }) => {
                 fontSize: "3.5rem",
                 color: "var(--bgDarkerColor)",
               }}
+              aria-hidden="true"
             />
           </div>
-          No contact selected
+          <p className="text-muted">No contact selected</p>
+          <small className="text-muted">Select a contact from the list to start chatting</small>
         </div>
       )}
 
-      {/* the message */}
+      {/* The message area */}
       <div className="position-relative">
         <ChatBody />
 
-        {/* the reply */}
-        <div className="mt-3">
-          <ChatInput contact={selectedContact} />
-        </div>
+        {/* The reply input */}
+        {selectedContact && (
+          <div className="mt-3">
+            <ChatInput contact={selectedContact} />
+          </div>
+        )}
       </div>
     </div>
   );
-};
+});
+
+Chat.displayName = 'Chat';
 
 export default Chat;

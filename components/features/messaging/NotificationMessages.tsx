@@ -4,28 +4,30 @@ import NotificationForm from "./NotificationForm";
 import Modal from "../../custom/Modal/modal";
 import Alert from "../../custom/Alert/Alert";
 import { shortenMessage } from "@/utils/utilities";
-import { useDeleteNotification, useFetchNotifications } from "@/data/notificationsAPI/notification.hook";
 import moment from "moment";
+import { Notification as NotificationType } from "@/types/notifications";
+import { useDeleteNotification, useNotifications } from "@/data/hooks/notifications.hooks";
 
 /**
  * Enhanced NotificationMessages component with comprehensive error handling and safety checks
  * Manages notification creation, editing, deletion, and display
+ * Optimized with React.memo for performance
  */
-const NotificationMessages = () => {
-  const [errormessage, setErrorMessage] = useState("");
-  const [success, setSuccess] = useState("");
-  const [Notification, setNotification] = useState(null);
-  const [notificationId, setNotificationId] = useState(null);
-  const [editmode, setEditMode] = useState(false);
-  const [showdeleteModal, setShowDeleteModal] = useState(false);
-  const formRef = useRef(null);
+const NotificationMessages: React.FC = React.memo(() => {
+  const [errormessage, setErrorMessage] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
+  const [notification, setNotification] = useState<NotificationType | null>(null);
+  const [notificationId, setNotificationId] = useState<string | null>(null);
+  const [editmode, setEditMode] = useState<boolean>(false);
+  const [showdeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   // Fetch notifications with error handling
   const {
     data: notifications,
     isLoading,
     error,
-  } = useFetchNotifications();
+  } = useNotifications();
 
   // Mutation for deleting notifications
   const { mutateAsync: deleteNotification } = useDeleteNotification();
@@ -43,7 +45,7 @@ const NotificationMessages = () => {
 
 
   // Safe message shortening with fallback
-  const safelyTruncateMessage = useCallback((message, length = 100) => {
+  const safelyTruncateMessage = useCallback((message: string | undefined, length = 100) => {
     if (!message || typeof message !== 'string') {
       return 'No message content';
     }
@@ -87,10 +89,10 @@ const NotificationMessages = () => {
       setErrorMessage("");
       setSuccess("");
       
-      await deleteNotification(notificationId);
+      await deleteNotification(parseInt(notificationId));
       setSuccess("Notification deleted successfully!");
       
-    } catch (error) {
+    } catch (error : any) {
       console.error("Error deleting notification:", error);
       setErrorMessage(
         error.message || "Failed to delete notification. Please try again."
@@ -107,7 +109,7 @@ const NotificationMessages = () => {
   }, [notificationId, deleteNotification]);
 
   // Safe edit handler
-  const handleEditNotification = useCallback((notification) => {
+  const handleEditNotification = useCallback((notification: NotificationType) => {
     if (!notification || !notification.id) {
       setErrorMessage("Invalid notification data");
       return;
@@ -119,7 +121,7 @@ const NotificationMessages = () => {
   }, [scrolltoform]);
 
   // Safe delete handler
-  const handleDeleteNotification = useCallback((notificationId) => {
+  const handleDeleteNotification = useCallback((notificationId: string | null) => {
     if (!notificationId) {
       setErrorMessage("Invalid notification ID");
       return;
@@ -179,7 +181,7 @@ const NotificationMessages = () => {
           <h5>Alerts & Notifications</h5>
           <div className="card my-3 p-3 px-md-4 py-4">
             <NotificationForm
-              notification={Notification}
+              notification={notification || undefined}
               editmode={editmode}
               setEditMode={setEditMode}
               formRef={formRef}
@@ -242,7 +244,7 @@ const NotificationMessages = () => {
                         type="button"
                         className="badge bg-danger text-white p-2 px-3 border-0"
                         style={{ cursor: "pointer" }}
-                        onClick={() => handleDeleteNotification(notification.id)}
+                        onClick={() => handleDeleteNotification(notification.id ? String(notification.id) : null)}
                       >
                         delete
                       </button>
@@ -307,8 +309,9 @@ const NotificationMessages = () => {
       </Modal>
     </div>
   );
-};
+});
 
-  
+// Add display name for debugging
+NotificationMessages.displayName = 'NotificationMessages';
 
 export default NotificationMessages;

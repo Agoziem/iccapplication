@@ -47,6 +47,23 @@ export const getToken = (): string | null => {
   };
 
 // --------------------------------------------------
+// get refresh token
+// --------------------------------------------------
+export const getRefreshToken = (): string | null => {
+  const tokenData = Cookies.get(COOKIE_NAME);
+  if (!tokenData) return null;
+
+  try {
+    const parsed = JSON.parse(tokenData) as TokenType;
+    return parsed.refresh_token;
+  } catch (error) {
+    console.error("Invalid token cookie:", error);
+    Cookies.remove(COOKIE_NAME);
+    return null;
+  }
+};
+
+// --------------------------------------------------
 // Get user ID from cookies
 // --------------------------------------------------
 export const getUserId = (): string | null => {

@@ -1,48 +1,58 @@
 "use client";
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAdminContext } from "@/providers/context/Admincontextdata";
-import { useCart } from "@/providers/context/Cartcontext";
 import CartButton from "@/components/custom/Offcanvas/CartButton";
 import CategoryTabs from "@/components/features/Categories/Categoriestab";
 import ProductCard from "@/components/features/Products/ProductCard";
 import { RiShoppingBasketFill } from "react-icons/ri";
 import Pagination from "@/components/custom/Pagination/Pagination";
 import { useRouter } from "next/navigation";
-import { productsAPIendpoint } from "@/data/hooks/product.hooks";
+import { useProductCategories, useProducts, useTrendingProducts } from "@/data/hooks/product.hooks";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
-import { useFetchCategories } from "@/data/categories/categories.hook";
-import { useFetchProducts } from "@/data/product/product.hook";
 import AnimationContainer from "@/components/animation/animation-container";
+import { ORGANIZATION_ID } from "@/data/constants";
+import { Category } from "@/types/categories";
 
-const Products = () => {
-  const { openModal } = useAdminContext();
-  const { cart, addToCart, removeFromCart } = useCart();
+type ExtendedCategory = Category & {
+  description: string;
+};
+
+/**
+ * Enhanced Products component with comprehensive error handling and safety checks
+ * Manages product browsing with categories, search, pagination, and trending products
+ * Optimized with React.memo for performance
+ */
+const Products: React.FC = React.memo(() => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const currentCategory = searchParams.get("category") || "All";
-  const page = searchParams.get("page") || "1";
+  const currentCategory = searchParams?.get("category") || "All";
+  const page = searchParams?.get("page") || "1";
   const pageSize = "10";
-  const [allCategories, setAllCategories] = useState([]);
-  const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
-  const [searchQuery, setSearchQuery] = useState(""); // State for search input
+  const [allCategories, setAllCategories] = useState<ExtendedCategory[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>(""); // State for search input
 
   const {
     data: categories,
     isLoading: loadingCategories,
     error: categoryError,
-  } = useFetchCategories(`${productsAPIendpoint}/categories/`);
+  } = useProductCategories();
 
   // ----------------------------------------------------
-  // Add a new category to the list of categories
+  // Add a new category to the list of categories with proper typing
   // ----------------------------------------------------
   useEffect(() => {
     if (!categories) return;
-    if (categories.length > 0)
-      setAllCategories([
+    if (categories.length > 0) {
+      const allCategoriesWithAll: ExtendedCategory[] = [
         { id: 0, category: "All", description: "All Categories" },
-        ...categories,
-      ]);
+        ...categories.map(cat => ({
+          ...cat,
+          description: cat.description || cat.category || 'Category'
+        })),
+      ];
+      setAllCategories(allCategoriesWithAll);
+    }
   }, [categories]);
 
   // ----------------------------------------
@@ -52,9 +62,11 @@ const Products = () => {
     data: products,
     isLoading: loadingProducts,
     error,
-  } = useFetchProducts(
-    `${productsAPIendpoint}/products/${Organizationid}/?category=${currentCategory}&page=${page}&page_size=${pageSize}`
-  );
+  } = useProducts(parseInt(ORGANIZATION_ID) || 0, {
+    category: currentCategory === "All" ? "" : currentCategory,
+    page,
+    page_size: pageSize,
+  });
 
   // ----------------------------------------
   // Fetch Products based on category
@@ -63,42 +75,71 @@ const Products = () => {
     data: trendingproducts,
     isLoading: loadingTrendingProducts,
     error: trendingError,
-  } = useFetchProducts(
-    `${productsAPIendpoint}/trendingproducts/${Organizationid}/?category=${currentCategory}&page=1&page_size=6`
-  );
+  } = useTrendingProducts(parseInt(ORGANIZATION_ID) || 0, {
+    category: currentCategory === "All" ? "" : currentCategory,
+    page: 1,
+    page_size: 6,
+  });
+  // -----------------------------------------
+  // Handle page change with proper type safety
+  // -----------------------------------------
+  const handlePageChange = useCallback((newPage: string | number) => {
+    const pageValue = typeof newPage === 'number' ? newPage : parseInt(newPage, 10);
+    
+    if (isNaN(pageValue) || pageValue < 1) {
+      console.error('Invalid page number:', newPage);
+      return;
+    }
 
-  // -----------------------------------------
-  // Handle page change
-  // -----------------------------------------
-  /**  @param {string} newPage */
-  const handlePageChange = (newPage) => {
-    router.push(
-      `?category=${currentCategory}&page=${newPage}&page_size=${pageSize}`,
-      {
+    try {
+      router.push(
+        `?category=${encodeURIComponent(currentCategory)}&page=${pageValue}&page_size=${pageSize}`,
+        {
+          scroll: false,
+        }
+      );
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
+  }, [currentCategory, pageSize, router]);
+
+  // -------------------------------
+  // Handle category change with proper validation
+  // -------------------------------
+  const handleCategoryChange = useCallback((category: string) => {
+    if (!category || typeof category !== 'string') {
+      console.error('Invalid category:', category);
+      return;
+    }
+
+    try {
+      router.push(`?category=${encodeURIComponent(category)}&page=1&page_size=${pageSize}`, {
         scroll: false,
-      }
-    );
-  };
+      });
+    } catch (error) {
+      console.error('Category navigation error:', error);
+    }
+  }, [pageSize, router]);
 
-  // -------------------------------
-  // Handle category change
-  // -------------------------------
-  /**  @param {string} category */
-  const handleCategoryChange = (category) => {
-    router.push(`?category=${category}&page=${page}&page_size=${pageSize}`, {
-      scroll: false,
-    });
-  };
-
-  // Memoized filtered services based on search query
+  // Memoized filtered products based on search query
   const filteredProducts = useMemo(() => {
     if (!products?.results) return [];
     if (!searchQuery) return products.results;
 
     return products.results.filter((product) =>
-      product.name.toLowerCase().includes(searchQuery.toLowerCase())
+      product.name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [products, searchQuery]);
+
+  // Safe product count
+  const safeProductCount = useMemo(() => {
+    return products?.count || 0;
+  }, [products?.count]);
+
+  // Safe trending products check
+  const safeTrendingProducts = useMemo(() => {
+    return trendingproducts?.results || [];
+  }, [trendingproducts?.results]);
 
   return (
     <div>
@@ -106,7 +147,7 @@ const Products = () => {
         <div>
           <h3 className="me-2">{currentCategory} Products</h3>
           <p className="mb-0 text-primary">
-            {products?.count} Product{products?.count > 1 ? "s" : ""}
+            {safeProductCount} Product{safeProductCount !== 1 ? "s" : ""}
           </p>
         </div>
         <CartButton />
@@ -167,10 +208,6 @@ const Products = () => {
               >
                 <ProductCard
                   product={product}
-                  addToCart={addToCart}
-                  removeFromCart={removeFromCart}
-                  cart={cart}
-                  openModal={openModal}
                 />
               </AnimationContainer>
             ))
@@ -201,7 +238,7 @@ const Products = () => {
       </div>
 
       {/* Trending Products */}
-      {!loadingTrendingProducts && trendingproducts?.results.length > 0 && (
+      {!loadingTrendingProducts && safeTrendingProducts.length > 0 && (
         <>
           <hr />
           <div className="mb-3">
@@ -210,15 +247,11 @@ const Products = () => {
         </>
       )}
       <div className="row">
-        {!loadingTrendingProducts && trendingproducts?.results.length > 0
-          ? trendingproducts?.results.map((product) => (
+        {!loadingTrendingProducts && safeTrendingProducts.length > 0
+          ? safeTrendingProducts.map((product) => (
               <div key={product.id} className="col-12 col-md-4">
                 <ProductCard
                   product={product}
-                  addToCart={addToCart}
-                  removeFromCart={removeFromCart}
-                  cart={cart}
-                  openModal={openModal}
                 />
               </div>
             ))
@@ -226,6 +259,9 @@ const Products = () => {
       </div>
     </div>
   );
-};
+});
+
+// Add display name for debugging
+Products.displayName = 'Products';
 
 export default Products;

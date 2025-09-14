@@ -3,38 +3,31 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { notificationSchema } from "@/schemas/notifications";
 import Alert from "../../custom/Alert/Alert";
-import { useCreateNotification, useUpdateNotification } from "@/data/notificationsAPI/notification.hook";
+import {
+  CreateNotification,
+  Notification as NotificationType,
+} from "@/types/notifications";
+import { useCreateNotification, useUpdateNotification } from "@/data/hooks/notifications.hooks";
+
+type NotificationFormProps = {
+  notification?: NotificationType;
+  editmode: boolean;
+  setEditMode: (value: boolean) => void;
+  formRef: React.RefObject<HTMLFormElement | null>;
+};
 
 /**
  * Enhanced NotificationForm component with comprehensive validation and error handling
- * @param {{ 
- *   notification: NotificationMessage; 
- *   editmode: boolean; 
- *   setEditMode: (value: boolean) => void; 
- *   formRef: React.RefObject<HTMLFormElement>; 
- * }} props
- * @returns {JSX.Element}
+ * Optimized with React.memo for performance
  */
-const NotificationForm = ({ notification, editmode, setEditMode, formRef }) => {
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-
-  // Safe notification data extraction
-  const notificationData = useMemo(() => {
-    if (!editmode || !notification) return null;
-    return {
-      id: notification.id || null,
-      title: notification.title || "",
-      message: notification.message || "",
-      created_at: notification.created_at || null,
-    };
-  }, [notification, editmode]);
-
-  // Default form values
-  const defaultNotificationValues = useMemo(() => ({
-    title: "",
-    message: "",
-  }), []);
+const NotificationForm: React.FC<NotificationFormProps> = React.memo(({
+  notification,
+  editmode,
+  setEditMode,
+  formRef,
+}) => {
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
 
   const {
     register,
@@ -42,10 +35,13 @@ const NotificationForm = ({ notification, editmode, setEditMode, formRef }) => {
     formState: { errors, isValid, isSubmitting },
     reset,
     watch,
-  } = useForm({
+  } = useForm<CreateNotification>({
     resolver: zodResolver(notificationSchema),
     mode: "onChange",
-    defaultValues: defaultNotificationValues,
+    defaultValues: {
+      title: "",
+      message: "",
+    },
   });
 
   // Watch form values
@@ -53,15 +49,18 @@ const NotificationForm = ({ notification, editmode, setEditMode, formRef }) => {
 
   // Reset form values when notification or editmode changes
   useEffect(() => {
-    if (editmode && notificationData) {
+    if (editmode && notification) {
       reset({
-        title: notificationData.title,
-        message: notificationData.message,
+        title: notification.title,
+        message: notification.message,
       });
     } else {
-      reset(defaultNotificationValues);
+      reset({
+        title: "",
+        message: "",
+      });
     }
-  }, [notificationData, editmode, reset, defaultNotificationValues]);
+  }, [notification, editmode, reset]);
 
   // Clear alerts after timeout
   useEffect(() => {
@@ -74,93 +73,80 @@ const NotificationForm = ({ notification, editmode, setEditMode, formRef }) => {
     }
   }, [error, success]);
 
-  // Safe random ID generation
-  const generateRandomId = useCallback(() => {
-    try {
-      const randomBuffer = new Uint32Array(1);
-      window.crypto.getRandomValues(randomBuffer);
-      const randomNumber = randomBuffer[0] / (0xffffffff + 1);
-      return Math.floor(randomNumber * 900_000) + 100_000;
-    } catch {
-      // Fallback if crypto is not available
-      return Math.floor(Math.random() * 900_000) + 100_000;
-    }
-  }, []);
 
   // Mutation hooks
   const { mutateAsync: createNotification } = useCreateNotification();
   const { mutateAsync: updateNotification } = useUpdateNotification();
 
   // Enhanced form submission with comprehensive error handling
-  const onSubmit = useCallback(async (data) => {
-    // Validate required fields
-    if (!data.title?.trim()) {
-      setError("Notification title is required");
-      return;
-    }
-
-    if (!data.message?.trim()) {
-      setError("Notification message is required");
-      return;
-    }
-
-    try {
-      setError("");
-      setSuccess("");
-
-      const notificationPayload = {
-        ...data,
-        title: data.title.trim(),
-        message: data.message.trim(),
-        id: editmode && notificationData?.id 
-          ? notificationData.id 
-          : generateRandomId(),
-        created_at: editmode && notificationData?.created_at
-          ? notificationData.created_at
-          : new Date().toISOString(),
-        viewed: false,
-      };
-
-      if (editmode) {
-        await updateNotification(notificationPayload);
-        setSuccess("Notification updated successfully!");
-      } else {
-        await createNotification(notificationPayload);
-        setSuccess("Notification created successfully!");
+  const onSubmit = useCallback(
+    async (data: CreateNotification) => {
+      // Validate required fields
+      if (!data.title?.trim()) {
+        setError("Notification title is required");
+        return;
       }
 
-      // Reset form and exit edit mode
-      setEditMode(false);
-      reset(defaultNotificationValues);
-      
-    } catch (error) {
-      console.error("Error processing notification:", error);
-      setError(
-        error.message ||
-        `Failed to ${editmode ? "update" : "create"} notification. Please try again.`
-      );
-    }
-  }, [
-    createNotification, 
-    updateNotification, 
-    editmode, 
-    notificationData, 
-    generateRandomId, 
-    setEditMode, 
-    reset, 
-    defaultNotificationValues
-  ]);
+      if (!data.message?.trim()) {
+        setError("Notification message is required");
+        return;
+      }
+
+      try {
+        setError("");
+        setSuccess("");
+
+        const notificationPayload = {
+          ...data,
+          title: data.title.trim(),
+          message: data.message.trim(),
+          viewed: false,
+        };
+
+        if (editmode) {
+          await updateNotification({
+            notificationId: notification?.id!,
+            updateData: notificationPayload,
+          });
+          setSuccess("Notification updated successfully!");
+        } else {
+          await createNotification(notificationPayload);
+          setSuccess("Notification created successfully!");
+        }
+
+        // Reset form and exit edit mode
+        setEditMode(false);
+        reset();
+      } catch (error : any) {
+        console.error("Error processing notification:", error);
+        setError(
+          error.message ||
+            `Failed to ${
+              editmode ? "update" : "create"
+            } notification. Please try again.`
+        );
+      }
+    },
+    [
+      createNotification,
+      updateNotification,
+      editmode,
+      setEditMode,
+      reset,
+    ]
+  );
 
   // Cancel edit mode handler
   const handleCancel = useCallback(() => {
-    reset(defaultNotificationValues);
+    reset();
     setEditMode(false);
     setError("");
     setSuccess("");
-  }, [reset, defaultNotificationValues, setEditMode]);
+  }, [reset, setEditMode]);
 
   // Form validation status
-  const isFormValid = formValues.title?.trim() && formValues.message?.trim() && isValid;
+  const isFormValid =
+    formValues.title?.trim() && formValues.message?.trim() && isValid;
 
   return (
     <div
@@ -171,16 +157,8 @@ const NotificationForm = ({ notification, editmode, setEditMode, formRef }) => {
       }}
     >
       {/* Alert messages */}
-      {success && (
-        <Alert type="success">
-          {success}
-        </Alert>
-      )}
-      {error && (
-        <Alert type="danger" >
-          {error}
-        </Alert>
-      )}
+      {success && <Alert type="success">{success}</Alert>}
+      {error && <Alert type="danger">{error}</Alert>}
 
       <form
         ref={formRef}
@@ -194,7 +172,7 @@ const NotificationForm = ({ notification, editmode, setEditMode, formRef }) => {
             {editmode ? "Edit Notification" : "Create Notification"}
             {editmode && (
               <small className="text-muted ms-2">
-                (ID: {notificationData?.id})
+                (ID: {notification?.id})
               </small>
             )}
           </h6>
@@ -209,14 +187,12 @@ const NotificationForm = ({ notification, editmode, setEditMode, formRef }) => {
             id="title"
             type="text"
             placeholder="Enter the notification title"
-            className={`form-control ${errors.title ? 'is-invalid' : ''}`}
+            className={`form-control ${errors.title ? "is-invalid" : ""}`}
             {...register("title")}
             disabled={isSubmitting}
           />
           {errors.title && (
-            <div className="invalid-feedback">
-              {errors.title.message}
-            </div>
+            <div className="invalid-feedback">{errors.title.message}</div>
           )}
         </div>
 
@@ -229,15 +205,13 @@ const NotificationForm = ({ notification, editmode, setEditMode, formRef }) => {
             id="message"
             rows={6}
             placeholder="Enter your notification message"
-            className={`form-control ${errors.message ? 'is-invalid' : ''}`}
+            className={`form-control ${errors.message ? "is-invalid" : ""}`}
             style={{ resize: "vertical" }}
             {...register("message")}
             disabled={isSubmitting}
           />
           {errors.message && (
-            <div className="invalid-feedback">
-              {errors.message.message}
-            </div>
+            <div className="invalid-feedback">{errors.message.message}</div>
           )}
           <small className="form-text text-muted">
             {formValues.message?.length || 0} characters
@@ -263,15 +237,17 @@ const NotificationForm = ({ notification, editmode, setEditMode, formRef }) => {
           >
             {isSubmitting ? (
               <>
-                <span 
-                  className="spinner-border spinner-border-sm me-2" 
-                  role="status" 
+                <span
+                  className="spinner-border spinner-border-sm me-2"
+                  role="status"
                   aria-hidden="true"
                 />
                 {editmode ? "Updating..." : "Creating..."}
               </>
+            ) : editmode ? (
+              "Update Notification"
             ) : (
-              editmode ? "Update Notification" : "Create Notification"
+              "Create Notification"
             )}
           </button>
         </div>
@@ -285,8 +261,9 @@ const NotificationForm = ({ notification, editmode, setEditMode, formRef }) => {
       </form>
     </div>
   );
-};
+});
 
-
+// Add display name for debugging
+NotificationForm.displayName = 'NotificationForm';
 
 export default NotificationForm;

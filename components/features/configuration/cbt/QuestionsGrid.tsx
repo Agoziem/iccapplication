@@ -1,6 +1,19 @@
 import React, { useState } from "react";
 import Modal from "@/components/custom/Modal/modal";
 import Alert from "@/components/custom/Alert/Alert";
+import { Answer, Question, Subject, Test } from "@/types/cbt";
+import { useDeleteQuestion } from "@/data/hooks/cbt.hooks";
+
+interface QuestionsGridProps {
+  currentSubject: Subject | null;
+  setQuestion: (question: Question) => void;
+  setEditMode: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
+  setCorrectAnswer: (answer: string | null) => void;
+  test: Test | null;
+  setTest: React.Dispatch<React.SetStateAction<Test | null>>;
+  setCurrentSubject: React.Dispatch<React.SetStateAction<Subject | null>>;
+}
 const QuestionsGrid = ({
   currentSubject,
   setQuestion,
@@ -10,52 +23,26 @@ const QuestionsGrid = ({
   test,
   setTest,
   setCurrentSubject,
-}) => {
-  const [questiontodelete, setQuestionToDelete] = useState({
-    id: "",
-    questionnumber: "",
-  });
+}: QuestionsGridProps) => {
+  const [questiontodelete, setQuestionToDelete] = useState<Question | null>(
+    null
+  );
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [alert, setAlert] = useState({ show: true, message: "", type: "" });
+  const [alert, setAlert] = useState<{ show: boolean; message: string; type: "success" | "danger" | "warning" | "info" }>({ show: false, message: "", type: "info" });
+  const { mutateAsync: deleteQuestionMutation } = useDeleteQuestion();
+
   const closeModal = () => {
     setShowDeleteModal(false);
-    setQuestionToDelete({
-      id: "",
-      questionnumber: "",
-    });
+    setQuestionToDelete(null);
   };
-  const deleteQuestion = async (questionID) => {
+
+  const deleteQuestion = async (questionID: number) => {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/CBTapi/deleteQuestion/${questionID}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error("An error occurred while deleting the question");
-      }
+      await deleteQuestionMutation(questionID);
       setAlert({
         show: true,
         message: "Question deleted successfully",
         type: "success",
-      });
-      setCurrentSubject({
-        ...currentSubject,
-        questions: currentSubject.questions.filter(
-          (question) => question.id !== questionID
-        ),
-      });
-      setTest({
-        ...test,
-        testSubject: test.testSubject.map((subject) =>
-          subject.id === currentSubject.id
-            ? { ...subject, questions: subject.questions.filter((q) => q.id !== questionID) }
-            : subject
-        ),
       });
     } catch (error) {
       console.error(error);
@@ -67,7 +54,7 @@ const QuestionsGrid = ({
     } finally {
       closeModal();
       setTimeout(() => {
-        setAlert({ show: false, message: "", type: "" });
+        setAlert({ show: false, message: "", type: "info" });
       }, 3000);
     }
   };
@@ -76,7 +63,7 @@ const QuestionsGrid = ({
     <>
       {alert.show && <Alert type={alert.type}>{alert.message}</Alert>}
       <div className="my-4">
-        {currentSubject?.questions?.length > 0 ? (
+        {currentSubject?.questions && currentSubject.questions.length > 0 ? (
           <div className="">
             {currentSubject.questions.map((question, index) => (
               <div
@@ -95,14 +82,7 @@ const QuestionsGrid = ({
                       className="btn btn-primary border-0 rounded me-2"
                       style={{ backgroundColor: "var(--bgDarkerColor)" }}
                       onClick={() => {
-                        setQuestion({
-                          ...question,
-                          answers: question.answers.map((a) => ({
-                            ...a,
-                            isCorrect: a.id === question?.correctAnswer?.id,
-                          })),
-                        });
-                        setCorrectAnswer(question?.correctAnswer?.answertext);
+                        setQuestion(question);
                         setEditMode(true);
                         setShowModal(true);
                       }}
@@ -112,10 +92,7 @@ const QuestionsGrid = ({
                     <button
                       className="btn btn-danger border-0 rounded"
                       onClick={() => {
-                        setQuestionToDelete({
-                          id: question.id,
-                          questionnumber: index + 1,
-                        });
+                        setQuestionToDelete(question);
                         setShowDeleteModal(true);
                       }}
                     >
@@ -142,7 +119,7 @@ const QuestionsGrid = ({
             <p>
               Are you sure you want to delete{" "}
               <span className="fw-bold">
-                question {questiontodelete.questionnumber}?
+                question {questiontodelete?.id}?
               </span>
             </p>
             <div className="d-flex justify-content-end">
@@ -157,7 +134,9 @@ const QuestionsGrid = ({
               <button
                 className="btn btn-danger"
                 onClick={() => {
-                  deleteQuestion(questiontodelete.id);
+                  if (questiontodelete?.id) {
+                    deleteQuestion(questiontodelete.id);
+                  }
                 }}
               >
                 Delete
@@ -171,35 +150,3 @@ const QuestionsGrid = ({
 };
 
 export default QuestionsGrid;
-
-///   {
-//     "id": 8,
-//     "answers": [
-//         {
-//             "id": 14,
-//             "answertext": "True"
-//         },
-//         {
-//             "id": 15,
-//             "answertext": "False"
-//         }
-//     ],
-//     "correctAnswer": null,
-//     "questiontext": "The Lord is Good",
-//     "questionMark": 2,
-//     "required": true,
-//     "correctAnswerdescription": "The Lord is indeed Good"
-// } from the database
-
-// {
-//   id: "",
-//   questiontext: "",
-//   questionMark: "",
-//   answers: [
-//     {
-//       answertext: "",
-//       isCorrect: false,
-//     },
-//   ],
-//   correctAnswerdescription: "",
-// } for the form

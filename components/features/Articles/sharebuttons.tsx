@@ -10,7 +10,7 @@ import {
 } from "react-share";
 import { toast } from "react-hot-toast";
 
-const ShareButtons = ({ url, title }) => {
+const ShareButtons = ({ url, title } : { url: string; title: string; }) => {
   const copyLink = () => {
     navigator.clipboard.writeText(url);
     toast.success("Link copied to clipboard successfully");

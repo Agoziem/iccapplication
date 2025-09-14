@@ -1,6 +1,6 @@
 import React from "react";
 
-interface AlertProps {
+export interface AlertProps {
   type: "info" | "success" | "warning" | "danger";
   children: React.ReactNode;
   className?: string;

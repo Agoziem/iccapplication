@@ -1,10 +1,9 @@
 import React from 'react';
 
-/**
- * Error Boundary Component for Articles Module
- * @param {{ error: Error; resetError: () => void; }} props
- */
-const ArticleErrorBoundary = ({ error, resetError }) => {
+const ArticleErrorBoundary = ({ error, resetError } : {
+  error: Error;
+  resetError: () => void;
+}) => {
   return (
     <section className="px-4 px-md-5 mx-auto mb-5" style={{ maxWidth: "900px" }}>
       <div className="text-center" style={{ minHeight: "400px", paddingTop: "100px" }}>
@@ -48,9 +47,7 @@ const ArticleErrorBoundary = ({ error, resetError }) => {
   );
 };
 
-/**
- * Loading Component for Articles
- */
+
 export const ArticleLoadingSkeleton = () => {
   return (
     <section className="px-4 px-md-5 mx-auto mb-5" style={{ maxWidth: "900px" }}>
@@ -104,10 +101,11 @@ export const ArticleLoadingSkeleton = () => {
   );
 };
 
-/**
- * Comments Error Component
- */
-export const CommentsErrorBoundary = ({ error, onRetry }) => {
+
+export const CommentsErrorBoundary = ({ error, onRetry }: {
+  error: Error;
+  onRetry: () => void;
+}) => {
   return (
     <div className="alert alert-warning" role="alert">
       <div className="d-flex align-items-center">
@@ -124,5 +122,39 @@ export const CommentsErrorBoundary = ({ error, onRetry }) => {
     </div>
   );
 };
+
+export const CategoriesError = ({ error, onRetry } : {
+  error: Error;
+  onRetry: () => void;
+}) => (
+  <div className="alert alert-warning" role="alert">
+    <div className="d-flex align-items-center">
+      <i className="bi bi-exclamation-triangle-fill me-2"></i>
+      <div>
+        <strong>Failed to load categories</strong>
+        <p className="mb-0 small">{error?.message || "Could not fetch article categories"}</p>
+        <button className="btn btn-sm btn-outline-warning mt-1" onClick={onRetry}>
+          Retry
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+
+export const ArticlesError = ({ error, onRetry } : {
+  error: Error;
+  onRetry: () => void;
+}) => (
+  <div className="alert alert-danger text-center" role="alert">
+    <i className="bi bi-exclamation-circle-fill mb-3" style={{ fontSize: "3rem" }}></i>
+    <h5>Failed to Load Articles</h5>
+    <p className="mb-3">{error?.message || "Could not fetch articles at this time"}</p>
+    <button className="btn btn-primary" onClick={onRetry}>
+      <i className="bi bi-arrow-clockwise me-1"></i>
+      Try Again
+    </button>
+  </div>
+);
 
 export default ArticleErrorBoundary;

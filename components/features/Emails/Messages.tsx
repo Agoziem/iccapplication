@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef, memo } from "react";
 import MessageCard from "./MessageCard";
 import SearchInput from "../../custom/Inputs/SearchInput";
 import "./Email.css";
@@ -8,27 +8,32 @@ import { MessageWebsocketSchema } from "@/schemas/emails";
 import { MdOutlineContacts } from "react-icons/md";
 import Pagination from "@/components/custom/Pagination/Pagination";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useFetchEmails } from "@/data/Emails/emails.hook";
 import { useQueryClient } from "react-query";
 import toast from "react-hot-toast";
+import { Email, PaginatedEmailResponse, MessageWebsocket } from "@/types/emails";
+import { useEmails } from "@/data/hooks/email.hooks";
+import { ORGANIZATION_ID } from "@/data/constants";
 
-/**
- * Messages component with comprehensive error handling and performance optimizations
- * @param {{ message : Email,
- * selectMessage:(value:Email)=> void,
- * showlist:boolean,
- * setShowlist:(value:boolean)=> void,
- * }} props
- * @returns {JSX.Element}
- */
-const Messages = ({ message, selectMessage, showlist, setShowlist }) => {
+interface MessagesProps {
+  message: Email | null;
+  selectMessage: (message: Email | null) => void;
+  showlist: boolean;
+  setShowlist: (show: boolean) => void;
+}
+
+const Messages: React.FC<MessagesProps> = memo(({ 
+  message, 
+  selectMessage, 
+  showlist, 
+  setShowlist 
+}) => {
   const [showUnread, setShowUnread] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [wsError, setWsError] = useState(null);
+  const [wsError, setWsError] = useState<string | null>(null);
   
   // Refs for cleanup and race condition prevention
   const isMountedRef = useRef(true);
-  const wsHandlerRef = useRef(null);
+  const wsHandlerRef = useRef<((event: MessageEvent) => void) | null>(null);
 
   // Safe WebSocket connection with error handling
   const { isConnected, ws, error: wsConnectionError } = useWebSocket(
@@ -54,7 +59,10 @@ const Messages = ({ message, selectMessage, showlist, setShowlist }) => {
     isLoading: loadingMessages,
     error: fetchError,
     refetch
-  } = useFetchEmails();
+  } = useEmails(parseInt(ORGANIZATION_ID) || 0, {
+    page,
+    page_size: pageSize,
+  });
 
   // Safe data extraction
   const messages = useMemo(() => {
@@ -75,11 +83,13 @@ const Messages = ({ message, selectMessage, showlist, setShowlist }) => {
   }, []);
 
   // Safe page change handler
-  const handlePageChange = useCallback((newPage) => {
-    if (!router || newPage < 1) return;
+  const handlePageChange = useCallback((newPage: string | number) => {
+    const pageNum = typeof newPage === 'string' ? parseInt(newPage) : newPage;
+    
+    if (!router || pageNum < 1 || isNaN(pageNum)) return;
     
     try {
-      router.push(`?page=${newPage}&page_size=${pageSize}`);
+      router.push(`?page=${pageNum}&page_size=${pageSize}`);
     } catch (error) {
       console.error('Error navigating to page:', error);
       toast.error('Failed to navigate to page');
@@ -87,7 +97,7 @@ const Messages = ({ message, selectMessage, showlist, setShowlist }) => {
   }, [router]);
 
   // Safe WebSocket message handler
-  const handleWebSocketMessage = useCallback((event) => {
+  const handleWebSocketMessage = useCallback((event: MessageEvent) => {
     if (!isMountedRef.current) return;
 
     try {
@@ -103,20 +113,22 @@ const Messages = ({ message, selectMessage, showlist, setShowlist }) => {
 
       if (!queryClient) return;
 
-      queryClient.setQueryData(["emails"], (oldData) => {
-        if (!oldData || !Array.isArray(oldData.results)) {
-          return oldData;
+      queryClient.setQueryData(["emails"], (oldData: unknown) => {
+        const emailData = oldData as PaginatedEmailResponse | undefined;
+        
+        if (!emailData || !Array.isArray(emailData.results)) {
+          return emailData;
         }
 
-        const updatedResults = [...oldData.results];
-        const currentCount = oldData.count || 0;
+        const updatedResults = [...emailData.results];
+        const currentCount = emailData.count || 0;
 
         switch (operation) {
           case "create":
             if (wsMessage && wsMessage.id) {
               toast.success("You have a new message");
               return {
-                ...oldData,
+                ...emailData,
                 count: currentCount + 1,
                 results: [wsMessage, ...updatedResults],
               };
@@ -129,7 +141,7 @@ const Messages = ({ message, selectMessage, showlist, setShowlist }) => {
                 msg?.id === wsMessage.id ? { ...msg, ...wsMessage } : msg
               );
               return {
-                ...oldData,
+                ...emailData,
                 results: updatedMessages,
               };
             }
@@ -142,7 +154,7 @@ const Messages = ({ message, selectMessage, showlist, setShowlist }) => {
                 (msg) => msg?.id !== wsMessage.id
               );
               return {
-                ...oldData,
+                ...emailData,
                 count: Math.max(0, currentCount - 1),
                 results: filteredMessages,
               };
@@ -153,7 +165,7 @@ const Messages = ({ message, selectMessage, showlist, setShowlist }) => {
             console.warn(`Unhandled WebSocket operation: ${operation}`);
         }
         
-        return oldData;
+        return emailData;
       });
     } catch (error) {
       console.error("Error handling WebSocket message:", error);
@@ -218,7 +230,7 @@ const Messages = ({ message, selectMessage, showlist, setShowlist }) => {
   }, [messages.results, showUnread, searchQuery]);
 
   // Safe message update function
-  const updateMessage = useCallback(async (updatedMessage) => {
+  const updateMessage = useCallback(async (updatedMessage: Email) => {
     if (!updatedMessage || !updatedMessage.id || !isMountedRef.current) {
       console.warn('Invalid message data for update');
       return;
@@ -278,13 +290,14 @@ const Messages = ({ message, selectMessage, showlist, setShowlist }) => {
     <div className={`${!showlist ? "d-none d-md-block" : "d-block"}`}>
       {/* WebSocket error notification */}
       {(wsError || wsConnectionError) && (
-        <div className="alert alert-warning alert-dismissible">
+        <div className="alert alert-warning alert-dismissible" role="alert">
           <small>
-            {wsError || 'Real-time updates unavailable'}
+            {wsError || 'Real-time updates unavailable. Messages will refresh when you reload the page.'}
             <button
               type="button"
               className="btn-close btn-close-sm ms-2"
               onClick={() => setWsError(null)}
+              aria-label="Dismiss notification"
             ></button>
           </small>
         </div>
@@ -293,7 +306,7 @@ const Messages = ({ message, selectMessage, showlist, setShowlist }) => {
       {/* Header */}
       <div className="d-flex align-items-center mb-3">
         <h4 className="flex-fill mb-0">Inbox</h4>
-        <div className="d-flex">
+        <div className="d-flex" role="tablist" aria-label="Email filter tabs">
           <button
             className="btn btn-sm rounded me-2"
             style={{
@@ -306,7 +319,10 @@ const Messages = ({ message, selectMessage, showlist, setShowlist }) => {
               color: "white"
             }}
             onClick={() => setShowUnread(false)}
-            aria-pressed={!showUnread}
+            role="tab"
+            aria-selected={!showUnread}
+            aria-controls="all-messages"
+            id="all-mail-tab"
           >
             All mail ({messages.count || 0})
           </button>
@@ -322,7 +338,10 @@ const Messages = ({ message, selectMessage, showlist, setShowlist }) => {
               color: "white"
             }}
             onClick={() => setShowUnread(true)}
-            aria-pressed={showUnread}
+            role="tab"
+            aria-selected={showUnread}
+            aria-controls="unread-messages"
+            id="unread-mail-tab"
           >
             Unread ({filteredMessages.filter(m => m && !m.read).length || 0})
           </button>
@@ -341,7 +360,12 @@ const Messages = ({ message, selectMessage, showlist, setShowlist }) => {
       </div>
 
       {/* Messages List */}
-      <div className="messageslist d-flex flex-column gap-2 pe-2">
+      <div 
+        className="messageslist d-flex flex-column gap-2 pe-2"
+        role="tabpanel"
+        id={showUnread ? "unread-messages" : "all-messages"}
+        aria-labelledby={showUnread ? "unread-mail-tab" : "all-mail-tab"}
+      >
         {filteredMessages.length > 0 ? (
           filteredMessages.map((message) => {
             if (!message || !message.id) return null;
@@ -357,13 +381,14 @@ const Messages = ({ message, selectMessage, showlist, setShowlist }) => {
             );
           })
         ) : (
-          <div className="text-center mt-4">
+          <div className="text-center mt-4" role="status" aria-live="polite">
             <div className="mb-3">
               <MdOutlineContacts
                 style={{
                   fontSize: "3.5rem",
                   color: "var(--bgDarkerColor)",
                 }}
+                aria-hidden="true"
               />
             </div>
             <h6 className="text-muted">
@@ -374,6 +399,7 @@ const Messages = ({ message, selectMessage, showlist, setShowlist }) => {
               <button 
                 className="btn btn-link btn-sm"
                 onClick={() => setSearchQuery("")}
+                aria-label="Clear search to show all messages"
               >
                 Clear search
               </button>
@@ -394,6 +420,8 @@ const Messages = ({ message, selectMessage, showlist, setShowlist }) => {
       )}
     </div>
   );
-};
+});
+
+Messages.displayName = 'Messages';
 
 export default Messages;

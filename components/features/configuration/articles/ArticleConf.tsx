@@ -4,33 +4,36 @@ import ArticleForm from "./ArticleForm";
 import ArticleList from "./ArticleList";
 import ArticleCategoryForm from "./ArticleCategoryForm";
 import { useSearchParams } from "next/navigation";
-import { articleAPIendpoint, fetchArticles, fetchArticlesCategories } from "@/data/hooks/articles.hooks";
-import { ArticleDefault } from "@/data/constants";
-import { useFetchCategories } from "@/data/categories/categories.hook";
-import { useFetchArticles } from "@/data/hooks/articles.hooks";
+import { useArticleCategories, useArticles } from "@/data/hooks/articles.hooks";
+import { ArticleResponse } from "@/types/articles";
 
-const ArticleConf = () => {
+const ArticleConf: React.FC = () => {
   const searchParams = useSearchParams();
   const currentCategory = searchParams.get("category") || "All";
   const page = searchParams.get("page") || "1";
   const pageSize = "10";
   const [editMode, setEditMode] = useState(false);
-  const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
-  const [article,setArticle] = useState(ArticleDefault)
+  const [article, setArticle] = useState<ArticleResponse | null>(null);
 
   const {
     data: categories,
     isLoading: loadingCategories,
     error: categoryError,
-  } = useFetchCategories(`${articleAPIendpoint}/getCategories/`);
+  } = useArticleCategories();
 
   const {
     data: articles,
     isLoading: loadingArticles,
     error: articleError,
-  } = useFetchArticles(
-    `${articleAPIendpoint}/orgblogs/${Organizationid}/?category=${currentCategory}&page=${page}&page_size=${pageSize}`,
-  )
+  } = useArticles(
+    undefined,
+    {
+      category: currentCategory !== "All" ? currentCategory : undefined,
+      page,
+      page_size: pageSize,
+    }
+  );
+
 
 
 
@@ -39,28 +42,27 @@ const ArticleConf = () => {
       <div className="col-12 col-md-8">
         <div>
           <ArticleCategoryForm
-            categories={categories}
+            categories={categories || []}
           />
         </div>
         <ArticleForm
           article={article}
-          setArticle= {setArticle}
+          setArticle={setArticle}
           editMode={editMode}
           setEditMode={setEditMode}
-          articles={articles}
-          categories={categories}
+          categories={categories || []}
         />
       </div>
       <div className="col-12 col-md-4">
         <ArticleList
-          articles={articles}
+          articles={articles || null}
           article={article}
           setArticle={setArticle}
           editMode={editMode}
           setEditMode={setEditMode}
           loading={loadingArticles}
-          currentPage={page}
-          pageSize ={pageSize}
+          currentPage={parseInt(page)}
+          pageSize={pageSize}
         />
       </div>
     </div>

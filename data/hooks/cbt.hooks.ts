@@ -149,7 +149,8 @@ export const deleteSubject = async (subjectId: number): Promise<void> => {
   await AxiosInstanceWithToken.delete(`${cbtAPIendpoint}/deletesubject/${subjectId}/`);
 };
 
-export const fetchTests = async (organizationId: number): Promise<TestArray> => {
+export const fetchTests = async (organizationId: number | null): Promise<TestArray> => {
+  if (!organizationId) return [];
   const response = await AxiosInstance.get(`${cbtAPIendpoint}/tests/${organizationId}/`);
   return response.data;
 };
@@ -176,7 +177,7 @@ export const deleteTest = async (testId: number): Promise<void> => {
   await AxiosInstanceWithToken.delete(`${cbtAPIendpoint}/deletetest/${testId}/`);
 };
 
-export const practiceTest = async (practiceData: any): Promise<any> => {
+export const practiceTest = async (practiceData: StudentTestRequest): Promise<Test> => {
   const response = await AxiosInstanceWithToken.post(`${cbtAPIendpoint}/practicetest/`, practiceData);
   return response.data;
 };
@@ -243,7 +244,7 @@ export const useSubjects = (testId: number): UseQueryResult<SubjectArray, Error>
 };
 
 // Tests Hooks
-export const useTests = (organizationId: number): UseQueryResult<TestArray, Error> => {
+export const useTests = (organizationId: number | null): UseQueryResult<TestArray, Error> => {
   return useQuery({
     queryKey: CBT_KEYS.tests(),
     queryFn: () => fetchTests(organizationId),
@@ -575,7 +576,7 @@ export const useDeleteQuestion = (): UseMutationResult<void, Error, number> => {
 };
 
 // Practice Test Hook
-export const usePracticeTest = (): UseMutationResult<TestScoreResponse, Error, StudentTestRequest> => {
+export const usePracticeTest = (): UseMutationResult<Test, Error, StudentTestRequest> => {
   const queryClient = useQueryClient();
   
   return useMutation({

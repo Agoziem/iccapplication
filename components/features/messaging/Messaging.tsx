@@ -7,13 +7,14 @@ import NotificationMessages from "./NotificationMessages";
 /**
  * Enhanced Messaging component with comprehensive error handling and accessibility
  * Manages template messaging for emails, WhatsApp, and notifications
+ * Optimized with React.memo for performance
  */
-const Messaging = () => {
+const Messaging: React.FC = React.memo(() => {
   const Templates = useMemo(() => ["Emails", "WhatsApp", "Alerts & Notifications"], []);
-  const [selectedTab, setSelectedTab] = useState(Templates[0]);
+  const [selectedTab, setSelectedTab] = useState<string>(Templates[0]);
 
   // Safe tab selection handler
-  const handleTabSelect = useCallback((template) => {
+  const handleTabSelect = useCallback((template: string) => {
     if (typeof template === 'string' && Templates.includes(template)) {
       setSelectedTab(template);
     }
@@ -35,7 +36,7 @@ const Messaging = () => {
     } catch (error) {
       console.error("Error rendering messaging content:", error);
       return (
-        <div className="alert alert-danger">
+        <div className="alert alert-danger" role="alert">
           <h6>Unable to load messaging content</h6>
           <p>Please refresh the page and try again.</p>
         </div>
@@ -91,6 +92,9 @@ const Messaging = () => {
       </div>
     </div>
   );
-};
+});
+
+// Add display name for debugging
+Messaging.displayName = 'Messaging';
 
 export default Messaging;

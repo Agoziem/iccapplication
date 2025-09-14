@@ -1,155 +1,322 @@
-import ImageUploader from "@/components/custom/Imageuploader/ImageUploader";
-import React, { useState } from "react";
+"use client";
+import React, { useState, useTransition, useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { TiTimes } from "react-icons/ti";
+import { PulseLoader } from "react-spinners";
+import ImageUploader from "@/components/custom/Imageuploader/ImageUploader";
+import { ORGANIZATION_ID } from "@/data/constants";
+import {
+  useCreateDepartment,
+  useStaffs,
+  useUpdateDepartment,
+} from "@/data/hooks/organization.hooks";
+import { Department } from "@/types/organizations";
+import {
+  UpdateDepartmentSchema,
+  CreateDepartmentSchema,
+} from "@/schemas/organizations";
+import { UpdateDepartment, CreateDepartment } from "@/types/organizations";
 
-/**
- * @param {{ addorupdate: {type: string;state: boolean;}; department: Department; setDepartment: (value:Department) => void; handleSubmit: any; closeModal: any;staffs:Staffs;loading:boolean }} param0
- */
+type CreateDepartmentFormData = {
+  name: string;
+  description: string;
+  staff_in_charge: number;
+  img?: File;
+};
+
+type UpdateDepartmentFormData = {
+  name: string;
+  description: string;
+  staff_in_charge: number;
+  img?: File;
+};
+
+interface DepartmentFormProps {
+  department?: Department | null;
+  editMode: boolean;
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
 const DepartmentForm = ({
-  addorupdate,
   department,
-  setDepartment,
-  handleSubmit,
-  staffs,
-  closeModal,
-  loading,
-}) => {
+  editMode,
+  onSuccess,
+  onCancel,
+}: DepartmentFormProps) => {
   const [service, setService] = useState("");
+  const [services, setServices] = useState<string[]>([]);
+  const [formData, setFormData] = useState<any>({});
+  const [isPending, startTransition] = useTransition();
 
-  const handleFormSubmit = (e) => {
-    handleSubmit(e);
+  // Hooks
+  const { data: staffs } = useStaffs(parseInt(ORGANIZATION_ID, 10));
+  const { mutateAsync: createDepartment } = useCreateDepartment();
+  const { mutateAsync: updateDepartment } = useUpdateDepartment();
+
+  // Form setup
+  const {
+    control,
+    handleSubmit: handleFormSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+    setValue,
+    watch,
+  } = useForm<CreateDepartmentFormData | UpdateDepartmentFormData>({
+    resolver: zodResolver(
+      editMode ? UpdateDepartmentSchema : CreateDepartmentSchema
+    ),
+    defaultValues: {
+      name: "",
+      description: "",
+      staff_in_charge: 0,
+    },
+  });
+
+  // Initialize form data
+  useEffect(() => {
+    if (editMode && department) {
+      setValue("name", department.name || "");
+      setValue("description", department.description || "");
+      setValue("staff_in_charge", department.staff_in_charge?.id || 0);
+      setServices(department.services?.map(s => s.name) || []);
+      setFormData({
+        img_url: department.img_url || "",
+        img_name: department.img_name || "",
+        img: department.img || "",
+      });
+    } else {
+      reset();
+      setServices([]);
+      setFormData({});
+    }
+  }, [editMode, department, setValue, reset]);
+
+  // Handle form submission
+  const onSubmit = async (data: CreateDepartmentFormData | UpdateDepartmentFormData) => {
+    startTransition(async () => {
+      try {
+        const departmentData = {
+          name: data.name,
+          description: data.description,
+          staff_in_charge: data.staff_in_charge,
+          services: services,
+          img: formData.img || "",
+        };
+
+        if (editMode && department) {
+          await updateDepartment({
+            departmentId: department.id || 0,
+            organizationId: parseInt(ORGANIZATION_ID || "0", 10),
+            updateData: departmentData,
+          });
+        } else {
+          await createDepartment({
+            organizationId: parseInt(ORGANIZATION_ID || "0", 10),
+            departmentData,
+          });
+        }
+        
+        onSuccess();
+      } catch (error) {
+        console.error("Error saving department:", error);
+      }
+    });
+  };
+
+  // Add service
+  const addService = () => {
+    if (service.trim() && !services.includes(service.trim())) {
+      setServices([...services, service.trim()]);
+      setService("");
+    }
+  };
+
+  // Remove service
+  const removeService = (serviceToRemove: string) => {
+    setServices(services.filter(s => s !== serviceToRemove));
   };
 
   return (
-    <div className="mt-4">
-      <h4>{addorupdate.type} Department</h4>
+    <div className="p-3">
+      <h5 className="text-center mb-3">
+        {editMode ? "Update Department" : "Add New Department"}
+      </h5>
       <hr />
-      <form onSubmit={handleFormSubmit}>
-        <div className="form-group mb-3">
-          <ImageUploader
-            imagekey={"img"}
-            imageurlkey={"img_url"}
-            imagename={"img_name"}
-            formData={department}
-            setFormData={setDepartment}
+
+      <form onSubmit={handleFormSubmit(onSubmit)}>
+        {/* Image Upload */}
+        <div className="mb-3">
+          <label className="form-label fw-bold">Department Image</label>
+          <Controller
+            name="img"
+            control={control}
+            render={({ field: { onChange, onBlur, name } }) => (
+              <ImageUploader
+                name={name}
+                value={formData.img}
+                onChange={(file) => {
+                  onChange(file);
+                  setFormData({ ...formData, img: file });
+                }}
+                onBlur={onBlur}
+                error={errors.img?.message}
+                placeholder="Upload department image"
+              />
+            )}
           />
         </div>
-        <div className="form-group mb-3">
-          <label className="form-label">Department Name</label>
-          <input
-            type="text"
-            className="form-control"
-            value={department.name}
-            onChange={(e) =>
-              setDepartment({ ...department, name: e.target.value })
-            }
-            required
+
+        {/* Department Name */}
+        <div className="mb-3">
+          <label htmlFor="name" className="form-label fw-bold">
+            Department Name <span className="text-danger">*</span>
+          </label>
+          <Controller
+            name="name"
+            control={control}
+            render={({ field }) => (
+              <input
+                {...field}
+                type="text"
+                className={`form-control ${errors.name ? "is-invalid" : ""}`}
+                id="name"
+                placeholder="Enter department name"
+              />
+            )}
           />
+          {errors.name && (
+            <div className="invalid-feedback">{errors.name.message}</div>
+          )}
         </div>
 
         {/* Description */}
-        <div className="form-group mb-3">
-          <label className="form-label">Description</label>
-          <textarea
-            className="form-control"
-            value={department.description}
-            rows={5}
-            onChange={(e) =>
-              setDepartment({
-                ...department,
-                description: e.target.value,
-              })
-            }
-            required
-          ></textarea>
+        <div className="mb-3">
+          <label htmlFor="description" className="form-label fw-bold">
+            Description <span className="text-danger">*</span>
+          </label>
+          <Controller
+            name="description"
+            control={control}
+            render={({ field }) => (
+              <textarea
+                {...field}
+                className={`form-control ${errors.description ? "is-invalid" : ""}`}
+                id="description"
+                rows={4}
+                placeholder="Enter department description"
+              />
+            )}
+          />
+          {errors.description && (
+            <div className="invalid-feedback">{errors.description.message}</div>
+          )}
         </div>
 
         {/* Staff in Charge */}
-        <div className="form-group mb-3">
-          <label className="form-label">Staff in Charge</label>
-          <select
-            className="form-select"
-            value={department.staff_in_charge?.id || ""}
-            onChange={(e) =>
-              setDepartment({
-                ...department,
-                staff_in_charge: {
-                  ...department.staff_in_charge,
-                  id: Number(e.target.value), // Ensure correct type
-                },
-              })
-            }
-            required
-          >
-            <option value="">Select Staff in Charge</option>
-            {staffs.map((staff) => (
-              <option key={staff.id} value={staff.id}>
-                {staff.first_name} {staff.last_name}
-              </option>
-            ))}
-          </select>
+        <div className="mb-3">
+          <label htmlFor="staff_in_charge" className="form-label fw-bold">
+            Staff in Charge <span className="text-danger">*</span>
+          </label>
+          <Controller
+            name="staff_in_charge"
+            control={control}
+            render={({ field }) => (
+              <select
+                {...field}
+                className={`form-select ${errors.staff_in_charge ? "is-invalid" : ""}`}
+                id="staff_in_charge"
+              >
+                <option value={0}>Select Staff in Charge</option>
+                {staffs?.results?.map((staff) => (
+                  <option key={staff.id} value={staff.id}>
+                    {staff.first_name} {staff.last_name}
+                  </option>
+                ))}
+              </select>
+            )}
+          />
+          {errors.staff_in_charge && (
+            <div className="invalid-feedback">{errors.staff_in_charge.message}</div>
+          )}
         </div>
 
         {/* Services */}
-        <div className="form-group mb-3">
-          <label className="form-label">Add Service</label>
-          <div className="d-flex align-items-center">
+        <div className="mb-3">
+          <label className="form-label fw-bold">Department Services</label>
+          <div className="d-flex align-items-center mb-2">
             <input
               type="text"
-              className="form-control"
+              className="form-control me-2"
               value={service}
               onChange={(e) => setService(e.target.value)}
+              placeholder="Add a service"
+              onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addService())}
             />
             <button
-              className="btn btn-primary ms-2 rounded"
-              onClick={(e) => {
-                e.preventDefault();
-                setDepartment({
-                  ...department,
-                  services: [...department.services, { name: service }],
-                });
-                setService("");
-              }}
+              type="button"
+              className="btn btn-primary"
+              onClick={addService}
+              disabled={!service.trim()}
             >
               Add
             </button>
           </div>
-        </div>
 
-        <div className="mb-3">
-          <p className="fw-bold text-primary mb-0">Services</p>
-          <div>
-            {department && department.services.length > 0 ? (
-              department.services.map((service, index) => (
-                <div
-                  key={index}
-                  className={`badge bg-secondary-light text-secondary mt-2 p-2 px-3 ${
-                    department.services.length === index + 1 ? "" : "me-2"
-                  }`}
-                >
-                  {service.name}
-                  <TiTimes
-                    className="ms-2"
-                    style={{ cursor: "pointer" }}
-                    onClick={() => {
-                      const newServices = department.services.filter(
-                        (sub) => sub.name !== service.name
-                      );
-                      setDepartment({ ...department, services: newServices });
-                    }}
-                  />
+          {/* Services List */}
+          <div className="mb-3">
+            <p className="fw-bold text-primary mb-2">Services ({services.length})</p>
+            <div>
+              {services.length > 0 ? (
+                <div className="d-flex flex-wrap gap-2">
+                  {services.map((serviceItem, index) => (
+                    <div
+                      key={index}
+                      className="badge bg-light text-dark border p-2 px-3 d-flex align-items-center"
+                    >
+                      {serviceItem}
+                      <TiTimes
+                        className="ms-2 text-danger"
+                        size={16}
+                        style={{ cursor: "pointer" }}
+                        onClick={() => removeService(serviceItem)}
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))
-            ) : (
-              <p>No services added yet</p>
-            )}
+              ) : (
+                <p className="text-muted mb-0">No services added yet</p>
+              )}
+            </div>
           </div>
         </div>
 
-        <hr />
-        <button type="submit" className="btn btn-primary border-0 mt-3 rounded" >
-          {loading ? "submitting department..." : addorupdate.type === "add" ? "Add Department" : "Update Department"}
-        </button>
+        {/* Submit Buttons */}
+        <div className="d-flex justify-content-end gap-2 mt-4">
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <div className="d-inline-flex align-items-center justify-content-center gap-2">
+                <div>{editMode ? "Updating..." : "Adding..."}</div>
+                <PulseLoader size={8} color={"#ffffff"} loading={true} />
+              </div>
+            ) : (
+              editMode ? "Update Department" : "Add Department"
+            )}
+          </button>
+        </div>
       </form>
     </div>
   );

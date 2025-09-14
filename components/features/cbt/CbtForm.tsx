@@ -1,4 +1,3 @@
-import { useSession } from "next-auth/react";
 import Image from "next/image";
 import React, { useEffect, useState, useCallback } from "react";
 import { useForm, Controller } from "react-hook-form";
@@ -6,35 +5,71 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { MultiSelectDropdown } from "@/components/custom/Multiselectinput/MultiSelect";
 import Alert from "@/components/custom/Alert/Alert";
+import { Test, Subject, StudentTestRequest } from "@/types/cbt";
+import { useMyProfile } from "@/data/hooks/user.hooks";
+import { usePracticeTest, useTests } from "@/data/hooks/cbt.hooks";
+import { ORGANIZATION_ID } from "@/data/constants";
+
+interface MultiSelectItem {
+  id: number;
+  subjectname: string;
+}
+
+interface AlertState {
+  show: boolean;
+  message: string;
+  type: "success" | "danger" | "warning" | "info";
+}
+
+
+interface CbtFormProps {
+  setTest: (test: Test | null) => void;
+}
 
 // Zod validation schema
 const cbtFormSchema = z.object({
-  test_id: z.number()
+  test_id: z
+    .number()
     .min(1, "Please select an exam")
-    .refine(val => !isNaN(val), "Invalid exam selected"),
-  
-  examSubjects: z.array(z.any())
+    .refine((val) => !isNaN(val), "Invalid exam selected"),
+
+  examSubjects: z
+    .array(z.any())
     .min(1, "Please select at least one subject")
-    .max(10, "Maximum 10 subjects can be selected")
+    .max(10, "Maximum 10 subjects can be selected"),
 });
 
-const CbtForm = ({
-  OrganizationData,
-  examdetails,
-  setExamDetails,
-  sendExamDetails,
+type CbtFormData = z.infer<typeof cbtFormSchema>;
+
+const CbtForm: React.FC<CbtFormProps> = ({
+  setTest,
 }) => {
-  const { data: session } = useSession();
-  const [exams, setExams] = useState([]);
-  const [examType, setExamType] = useState(null);
-  const [examSubjects, setExamSubjects] = useState([]);
-  const [loadingExams, setLoadingExams] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [alert, setAlert] = useState({
+  const { data: user } = useMyProfile();
+  const [examType, setExamType] = useState<string | null>(null);
+  const [examSubjects, setExamSubjects] = useState<Subject[]>([]);
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [alert, setAlert] = useState<AlertState>({
     show: false,
     message: "",
-    type: "",
+    type: "info",
   });
+  const { data: exams , isLoading: loadingExams } = useTests(parseInt(ORGANIZATION_ID) || null);
+  const { mutateAsync: startExam, isLoading: startingExam } = usePracticeTest(); // hook to start Exam
+
+  // Helper function to convert Subject[] to MultiSelectItem[]
+  const subjectsToMultiSelectItems = (
+    subjects: Subject[]
+  ): MultiSelectItem[] => {
+    return subjects
+      .filter(
+        (subject): subject is Subject & { id: number } =>
+          subject.id !== undefined
+      )
+      .map((subject) => ({
+        id: subject.id,
+        subjectname: subject.subjectname,
+      }));
+  };
 
   // React Hook Form setup
   const {
@@ -42,120 +77,98 @@ const CbtForm = ({
     handleSubmit: handleFormSubmit,
     watch,
     setValue,
-    formState: { errors, isValid }
-  } = useForm({
+    formState: { errors, isValid },
+  } = useForm<CbtFormData>({
     resolver: zodResolver(cbtFormSchema),
     defaultValues: {
       test_id: 0,
-      examSubjects: []
+      examSubjects: [],
     },
-    mode: "onChange"
+    mode: "onChange",
   });
 
   const watchedTestId = watch("test_id");
 
   // Error handler
-  const showAlert = useCallback((message, type = "danger") => {
-    setAlert({
-      show: true,
-      message,
-      type,
-    });
-
-    setTimeout(() => {
+  const showAlert = useCallback(
+    (message: string, type: AlertState["type"] = "danger") => {
       setAlert({
-        show: false,
-        message: "",
-        type: "",
+        show: true,
+        message,
+        type,
       });
-    }, 5000);
-  }, []);
 
-  // Safe fetch exams with error handling
-  const fetchExams = useCallback(async () => {
-    if (!OrganizationData?.id) {
-      showAlert("Organization data not available", "warning");
-      return;
-    }
+      setTimeout(() => {
+        setAlert({
+          show: false,
+          message: "",
+          type: "info",
+        });
+      }, 5000);
+    },
+    []
+  );
 
-    setLoadingExams(true);
-    
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/CBTapi/tests/${OrganizationData.id}`
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      
-      if (Array.isArray(data)) {
-        setExams(data);
-      } else {
-        throw new Error("Invalid response format");
-      }
-    } catch (error) {
-      console.error("Error fetching exam years:", error);
-      showAlert("Failed to load exams. Please try again.", "danger");
-      setExams([]);
-    } finally {
-      setLoadingExams(false);
-    }
-  }, [OrganizationData?.id, showAlert]);
 
   // Safe function to change the exam type
-  const changeExamtype = useCallback((examid) => {
-    try {
-      const examIdNum = parseInt(examid);
-      const exam = exams.find((exam) => exam?.id === examIdNum);
-      
-      if (exam?.texttype?.testtype) {
-        setExamType(exam.texttype.testtype);
-      } else {
+  const changeExamtype = useCallback(
+    (examid: number) => {
+      try {
+        if (!exams || !Array.isArray(exams)) {
+          setExamType(null);
+          return;
+        }
+
+        const examIdNum =
+          typeof examid === "number" ? examid : parseInt(String(examid));
+        const exam = exams.find((exam) => exam?.id === examIdNum);
+
+        if (exam?.texttype?.testtype) {
+          setExamType(exam.texttype.testtype);
+        } else {
+          setExamType(null);
+          console.warn("Exam type not found for exam ID:", examid);
+        }
+      } catch (error) {
+        console.error("Error changing exam type:", error);
         setExamType(null);
-        console.warn("Exam type not found for exam ID:", examid);
       }
-    } catch (error) {
-      console.error("Error changing exam type:", error);
-      setExamType(null);
-    }
-  }, [exams]);
+    },
+    [exams]
+  );
 
   // Safe function to change the exam subjects
-  const changeExamSubjects = useCallback((examid) => {
-    try {
-      const examIdNum = parseInt(examid);
-      const exam = exams.find((exam) => exam?.id === examIdNum);
-      
-      if (exam?.testSubject && Array.isArray(exam.testSubject)) {
-        setExamSubjects(exam.testSubject);
-        setValue("examSubjects", []); // Reset selected subjects
-      } else {
+  const changeExamSubjects = useCallback(
+    (examid: number) => {
+      try {
+        if (!exams || !Array.isArray(exams)) {
+          setExamSubjects([]);
+          setValue("examSubjects", []);
+          return;
+        }
+
+        const examIdNum =
+          typeof examid === "number" ? examid : parseInt(String(examid));
+        const exam = exams.find((exam) => exam?.id === examIdNum);
+
+        if (exam?.testSubject && Array.isArray(exam.testSubject)) {
+          setExamSubjects(exam.testSubject);
+          setValue("examSubjects", []); // Reset selected subjects
+        } else {
+          setExamSubjects([]);
+          setValue("examSubjects", []);
+          console.warn("Exam subjects not found for exam ID:", examid);
+        }
+      } catch (error) {
+        console.error("Error changing exam subjects:", error);
         setExamSubjects([]);
         setValue("examSubjects", []);
-        console.warn("Exam subjects not found for exam ID:", examid);
       }
-    } catch (error) {
-      console.error("Error changing exam subjects:", error);
-      setExamSubjects([]);
-      setValue("examSubjects", []);
-    }
-  }, [exams, setValue]);
+    },
+    [exams, setValue]
+  );
 
-  // Fetch exams when component mounts or OrganizationData changes
-  useEffect(() => {
-    fetchExams();
-    
-    // Safely set exam details with user ID
-    if (session?.user?.id && setExamDetails) {
-      setExamDetails(prevDetails => ({
-        ...prevDetails,
-        user_id: session.user.id
-      }));
-    }
-  }, [fetchExams, session?.user?.id, setExamDetails]);
+
 
   // Watch for test_id changes to update exam type and subjects
   useEffect(() => {
@@ -169,41 +182,43 @@ const CbtForm = ({
   }, [watchedTestId, changeExamtype, changeExamSubjects]);
 
   // Submit handler with validation
-  const onSubmit = useCallback(async (data) => {
-    if (!session?.user) {
-      showAlert("Please log in to take the exam", "warning");
-      return;
-    }
+  const onSubmit = useCallback(
+    async (data: CbtFormData) => {
+      if (!user) {
+        showAlert("Please log in to take the exam", "warning");
+        return;
+      }
 
-    if (!sendExamDetails || typeof sendExamDetails !== 'function') {
-      showAlert("Unable to proceed. Please try again.", "danger");
-      return;
-    }
+      setSubmitting(true);
 
-    setSubmitting(true);
-    
-    try {
-      // Update exam details with validated form data
-      const updatedExamDetails = {
-        ...examdetails,
-        test_id: data.test_id,
-        examSubjects: data.examSubjects,
-        user_id: session.user.id
-      };
+      try {
+        // Update exam details with validated form data
+        const updatedExamDetails: StudentTestRequest = {
+          test_id: data.test_id,
+          examSubjects: data.examSubjects,
+          user_id: user.id as number,
+        };
 
-      setExamDetails(updatedExamDetails);
-      
-      // Call the parent's submit handler
-      await sendExamDetails();
-      
-      showAlert("Exam started successfully!", "success");
-    } catch (error) {
-      console.error("Error submitting exam details:", error);
-      showAlert("Failed to start exam. Please try again.", "danger");
-    } finally {
-      setSubmitting(false);
-    }
-  }, [session, examdetails, setExamDetails, sendExamDetails, showAlert]);
+        
+        // Use the startExam mutation to start the exam
+        const result = await startExam(updatedExamDetails);
+        setTest(result);
+
+        showAlert("Exam started successfully!", "success");
+        
+        // You can handle the result here if needed
+        // For example, redirect to exam page or update state
+        console.log("Exam started with result:", result);
+        
+      } catch (error) {
+        console.error("Error submitting exam details:", error);
+        showAlert("Failed to start exam. Please try again.", "danger");
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [user, startExam, showAlert]
+  );
 
   return (
     <div
@@ -247,10 +262,11 @@ const CbtForm = ({
           <div className="my-3 text-center">
             <h3>CBT Practice Portal</h3>
             <p>
-              Practice and prepare for any exam of your choice as much as you can
+              Practice and prepare for any exam of your choice as much as you
+              can
             </p>
           </div>
-          
+
           <form onSubmit={handleFormSubmit(onSubmit)} noValidate>
             {/* Exam Selection */}
             <div className="my-3">
@@ -262,7 +278,9 @@ const CbtForm = ({
                 control={control}
                 render={({ field: { onChange, value } }) => (
                   <select
-                    className={`form-select ${errors.test_id ? 'is-invalid' : ''}`}
+                    className={`form-select ${
+                      errors.test_id ? "is-invalid" : ""
+                    }`}
                     onChange={(e) => {
                       const selectedValue = parseInt(e.target.value) || 0;
                       onChange(selectedValue);
@@ -272,11 +290,11 @@ const CbtForm = ({
                   >
                     <option value="">Choose any Exam</option>
                     {!loadingExams ? (
-                      exams?.length > 0 ? (
+                      exams && exams.length > 0 ? (
                         exams.map((exam) => (
                           <option key={exam?.id} value={exam?.id}>
-                            {exam?.name || 'Unknown Exam'} {exam?.texttype?.testtype || ''}{" "}
-                            {exam?.testYear?.year || ''}
+                            {exam?.texttype?.testtype || "Unknown Exam"}{" "}
+                            {exam?.testYear?.year || ""}
                           </option>
                         ))
                       ) : (
@@ -289,9 +307,7 @@ const CbtForm = ({
                 )}
               />
               {errors.test_id && (
-                <div className="invalid-feedback">
-                  {errors.test_id.message}
-                </div>
+                <div className="invalid-feedback">{errors.test_id.message}</div>
               )}
             </div>
 
@@ -317,13 +333,15 @@ const CbtForm = ({
                 control={control}
                 render={({ field: { onChange, value } }) => (
                   <div>
-                    {(!watchedTestId || submitting) ? (
+                    {!watchedTestId || submitting ? (
                       <div className="form-control bg-light text-muted">
-                        {!watchedTestId ? 'Please select an exam first to load subjects' : 'Loading subjects...'}
+                        {!watchedTestId
+                          ? "Please select an exam first to load subjects"
+                          : "Loading subjects..."}
                       </div>
                     ) : (
                       <MultiSelectDropdown
-                        initiallist={examSubjects}
+                        initiallist={subjectsToMultiSelectItems(examSubjects)}
                         currentlist={value || []}
                         setCurrentlist={onChange}
                         itemName="Subjects"
@@ -348,13 +366,13 @@ const CbtForm = ({
             <div className="my-2">
               {alert.show && (
                 <div className="position-relative">
-                  <Alert type={alert.type}>
-                    {alert.message}
-                  </Alert>
+                  <Alert type={alert.type}>{alert.message}</Alert>
                   <button
                     type="button"
                     className="btn-close position-absolute top-0 end-0 mt-2 me-2"
-                    onClick={() => setAlert({ show: false, message: "", type: "" })}
+                    onClick={() =>
+                      setAlert({ show: false, message: "", type: "info" })
+                    }
                     aria-label="Close"
                   ></button>
                 </div>
@@ -363,15 +381,19 @@ const CbtForm = ({
 
             {/* Submit Button */}
             <div className="my-4">
-              <button 
+              <button
                 type="submit"
                 className="btn btn-primary w-100"
-                disabled={loadingExams || submitting || !isValid}
+                disabled={loadingExams || submitting || startingExam || !isValid}
               >
-                {submitting && (
-                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                {(submitting || startingExam) && (
+                  <span
+                    className="spinner-border spinner-border-sm me-2"
+                    role="status"
+                    aria-hidden="true"
+                  ></span>
                 )}
-                {submitting ? 'Starting Practice...' : 'Start Practice'}
+                {submitting || startingExam ? "Starting Practice..." : "Start Practice"}
               </button>
             </div>
           </form>

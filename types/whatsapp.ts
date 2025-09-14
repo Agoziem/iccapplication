@@ -13,7 +13,10 @@ import {
   SendMessageSchema,
   ContactArraySchema,
   WAMessageArraySchema,
-  WATemplateArraySchema
+  WATemplateArraySchema,
+  UpdateSeenStatusSchema,
+  WAContactEventSchema,
+  WAMessageEventSchema
 } from "../schemas/whatsapp";
 
 // Extract TypeScript types from Zod schemas
@@ -53,3 +56,7 @@ export type ChatConversation = {
   messages: WAMessage[];
   unreadCount: number;
 };
+// WebSocket event types
+export type UpdateSeenStatus = z.infer<typeof UpdateSeenStatusSchema>;
+export type WAContactEvent = z.infer<typeof WAContactEventSchema>;
+export type WAMessageEvent = z.infer<typeof WAMessageEventSchema>;

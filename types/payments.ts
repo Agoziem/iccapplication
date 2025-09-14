@@ -33,3 +33,9 @@ export type PaymentWithItems = PaymentResponse & {
   totalItems: number;
   itemTypes: ('service' | 'product' | 'video')[];
 };
+
+export type PaymentStats = {
+  totalOrders: number;
+  totalCustomers: number;
+  customers: CustomerPaymentStats[];
+};

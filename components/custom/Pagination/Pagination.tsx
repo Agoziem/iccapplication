@@ -4,7 +4,7 @@ import { TiArrowBack, TiArrowForward } from "react-icons/ti";
 interface PaginationProps {
   currentPage: string | number;
   totalPages: number;
-  handlePageChange: (page: number) => void;
+  handlePageChange: (page: number | string) => void;
   className?: string;
   style?: React.CSSProperties;
   showPageNumbers?: boolean;
@@ -24,13 +24,14 @@ const Pagination: React.FC<PaginationProps> = ({
   const isValidPage = !isNaN(currentPageNum) && currentPageNum > 0 && currentPageNum <= totalPages;
   const safeCurrentPage = isValidPage ? currentPageNum : 1;
 
-  const handlePageClick = (page: number) => {
-    if (page >= 1 && page <= totalPages && page !== safeCurrentPage) {
-      handlePageChange(page);
+  const handlePageClick = (page: number | string) => {
+    const pageNum = typeof page === 'string' ? parseInt(page) : page;
+    if (pageNum >= 1 && pageNum <= totalPages && pageNum !== safeCurrentPage) {
+      handlePageChange(pageNum);
     }
   };
 
-  const handleKeyDown = (event: React.KeyboardEvent, page: number) => {
+  const handleKeyDown = (event: React.KeyboardEvent, page: number | string) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       handlePageClick(page);

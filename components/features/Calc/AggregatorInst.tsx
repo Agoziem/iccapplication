@@ -1,6 +1,6 @@
 import React from "react";
 
-const AggregatorInst = () => {
+const AggregatorInst: React.FC = () => {
   return (
     <div className="col-12 col-md-7 px-3 px-md-5 py-2 py-md-4">
       {/* Introduction */}

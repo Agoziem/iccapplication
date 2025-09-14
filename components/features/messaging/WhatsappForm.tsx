@@ -1,29 +1,20 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { WATemplateSchema } from "@/schemas/whatsapp";
+import { CreateWATemplateSchema } from "@/schemas/whatsapp";
 import Alert from "../../custom/Alert/Alert";
-import { useCreateTemplateMessage } from "@/data/hooks/whatsapp.hooks";
+import { useCreateWhatsAppTemplate } from "@/data/hooks/whatsapp.hooks";
+import { CreateWATemplate } from "@/types/whatsapp";
 
 /**
  * Enhanced WhatsApp Template Form with comprehensive validation and error handling
  * Handles creation of WhatsApp template messages with React Hook Form + Zod validation
+ * Optimized with React.memo for performance
  */
-const WATemplateForm = () => {
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [showLink, setShowLink] = useState(false);
-
-  // Form schema for WhatsApp templates
-  const formSchema = useMemo(() => 
-    WATemplateSchema.pick({
-      template: true,
-      title: true,
-      link: true,
-      text: true,
-    }),
-    []
-  );
+const WATemplateForm: React.FC = React.memo(() => {
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
+  const [showLink, setShowLink] = useState<boolean>(false);
 
   // Template options with proper validation
   const templateOptions = useMemo(() => [
@@ -37,7 +28,7 @@ const WATemplateForm = () => {
     { value: "textwithCTA", label: "Text with CTA" },
   ], []);
 
-  const { mutateAsync: createTemplateMessage } = useCreateTemplateMessage();
+  const { mutateAsync: createTemplateMessage } = useCreateWhatsAppTemplate();
 
   const {
     register,
@@ -45,11 +36,11 @@ const WATemplateForm = () => {
     formState: { errors, isValid, isSubmitting },
     reset,
     watch,
-  } = useForm({
-    resolver: zodResolver(formSchema),
+  } = useForm<CreateWATemplate>({
+    resolver: zodResolver(CreateWATemplateSchema),
     mode: "onChange",
     defaultValues: {
-      template: "",
+      template: "textonly",
       title: "",
       link: "",
       text: "",
@@ -74,24 +65,12 @@ const WATemplateForm = () => {
   // Control link field visibility based on template type
   useEffect(() => {
     const textOnlyTemplates = ["textonly", "", "hello_world"];
-    setShowLink(!textOnlyTemplates.includes(selectedTemplate));
+    setShowLink(!textOnlyTemplates.includes(selectedTemplate || ""));
   }, [selectedTemplate]);
 
-  // Safe random ID generation
-  const generateRandomId = useCallback(() => {
-    try {
-      const randomBuffer = new Uint32Array(1);
-      window.crypto.getRandomValues(randomBuffer);
-      const randomNumber = randomBuffer[0] / (0xffffffff + 1);
-      return Math.floor(randomNumber * 900_000) + 100_000;
-    } catch {
-      // Fallback if crypto is not available
-      return Math.floor(Math.random() * 900_000) + 100_000;
-    }
-  }, []);
 
   // Enhanced form submission with comprehensive error handling
-  const onSubmit = useCallback(async (data) => {
+  const onSubmit = useCallback(async (data: CreateWATemplate) => {
     // Validate required fields
     if (!data.title?.trim()) {
       setError("Template title is required");
@@ -116,13 +95,9 @@ const WATemplateForm = () => {
       // Prepare template data with validation
       const templateData = {
         ...data,
-        id: generateRandomId(),
-        status: "pending",
-        created_at: new Date().toISOString(),
-        // Ensure link is null if not needed
-        link: showLink && data.link?.trim() ? data.link.trim() : null,
-        // Ensure text is properly formatted
-        text: data.text?.trim() || null,
+        status: "pending" as const,
+        link: showLink && data.link?.trim() ? data.link.trim() : undefined,
+        text: data.text?.trim() || "",
       };
 
       await createTemplateMessage(templateData);
@@ -130,23 +105,19 @@ const WATemplateForm = () => {
       setSuccess("WhatsApp template created and queued for broadcast!");
       
       // Reset form to default values
-      reset({
-        template: "",
-        title: "",
-        link: "",
-        text: "",
-      });
-    } catch (error) {
+      reset();
+    } catch (error : any) {
       console.error("Error creating WhatsApp template:", error);
       setError(
         error.message || 
         "Failed to create WhatsApp template. Please check your input and try again."
       );
     }
-  }, [createTemplateMessage, generateRandomId, reset, showLink]);
+  }, [createTemplateMessage, reset, showLink]);
 
   // URL validation helper
-  const isValidUrl = useCallback((string) => {
+  const isValidUrl = useCallback((string: string | undefined) => {
+    if (!string) return false;
     try {
       new URL(string);
       return true;
@@ -310,6 +281,9 @@ const WATemplateForm = () => {
       </form>
     </div>
   );
-};
+});
+
+// Add display name for debugging
+WATemplateForm.displayName = 'WATemplateForm';
 
 export default WATemplateForm;

@@ -1,17 +1,19 @@
 import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { emailMessageSchema } from "@/schemas/emails";
+import { CreateEmailMessageSchema } from "@/schemas/emails";
+import { CreateEmailMessage } from "@/types/emails";
 import Alert from "../../custom/Alert/Alert";
-import { useCreateEmail } from "@/data/Emails/emails.hook";
+import { useCreateEmailMessage } from "@/data/hooks/email.hooks";
 
 /**
  * Enhanced EmailForm component with comprehensive validation and error handling
  * Handles creation of email template messages with React Hook Form + Zod validation
+ * Optimized with React.memo for performance
  */
-const EmailForm = () => {
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+const EmailForm: React.FC = React.memo(() => {
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
 
   // Initialize React Hook Form with enhanced validation
   const {
@@ -20,8 +22,8 @@ const EmailForm = () => {
     formState: { errors, isValid, isSubmitting },
     reset,
     watch,
-  } = useForm({
-    resolver: zodResolver(emailMessageSchema),
+  } = useForm<CreateEmailMessage>({
+    resolver: zodResolver(CreateEmailMessageSchema),
     mode: "onChange",
     defaultValues: {
       subject: "",
@@ -33,7 +35,7 @@ const EmailForm = () => {
   // Watch form values for validation feedback
   const formValues = watch();
 
-  // Clear alerts after timeout
+  // Clear alerts after timeout with cleanup
   useEffect(() => {
     if (error || success) {
       const timer = setTimeout(() => {
@@ -44,23 +46,10 @@ const EmailForm = () => {
     }
   }, [error, success]);
 
-  // Safe random ID generation
-  const generateRandomId = useCallback(() => {
-    try {
-      const randomBuffer = new Uint32Array(1);
-      window.crypto.getRandomValues(randomBuffer);
-      const randomNumber = randomBuffer[0] / (0xffffffff + 1);
-      return Math.floor(randomNumber * (900_000)) + 100_000;
-    } catch {
-      // Fallback if crypto is not available
-      return Math.floor(Math.random() * 900_000) + 100_000;
-    }
-  }, []);
-
   // Enhanced form submission with comprehensive error handling
-  const { mutateAsync: createEmailMessage } = useCreateEmail();
-  
-  const onSubmit = useCallback(async (data) => {
+  const { mutateAsync: createEmailMessage } = useCreateEmailMessage();
+
+  const onSubmit = useCallback(async (data: CreateEmailMessage) => {
     if (!data.subject?.trim()) {
       setError("Subject is required");
       return;
@@ -78,10 +67,8 @@ const EmailForm = () => {
       // Prepare email data with enhanced validation
       const emailData = {
         ...data,
-        id: generateRandomId(),
-        created_at: new Date().toISOString(),
         status: "pending",
-        template: null, // Optional template field
+        template: undefined, // Optional template field
       };
 
       await createEmailMessage(emailData);
@@ -93,14 +80,14 @@ const EmailForm = () => {
         subject: "",
         body: "",
       });
-    } catch (error) {
+    } catch (error : any) {
       console.error("Error creating email template:", error);
       setError(
         error.message || 
         "Failed to create email template. Please check your input and try again."
       );
     }
-  }, [createEmailMessage, generateRandomId, reset]);
+  }, [createEmailMessage, reset]);
 
   // Form validation status
   const isFormValid = formValues.subject?.trim() && formValues.body?.trim() && isValid;
@@ -205,6 +192,9 @@ const EmailForm = () => {
       </form>
     </div>
   );
-};
+});
+
+// Add display name for debugging
+EmailForm.displayName = 'EmailForm';
 
 export default EmailForm;

@@ -1,28 +1,32 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, memo, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { sendReplyEmail } from "@/utils/mail";
-import { emailResponseSchema } from "@/schemas/emails";
+import { CreateEmailResponseSchema, emailResponseSchema } from "@/schemas/emails";
 import Alert from "../../custom/Alert/Alert";
-import { emailAPIendpoint, submitResponse } from "@/data/hooks/email.hooks";
 import { useQueryClient } from "react-query";
+import { Email, CreateEmailResponse } from "@/types/emails";
+
+interface EmailInputProps {
+  message: Email;
+}
+
+
 
 /**
  * Enhanced EmailInput component with comprehensive error handling and validation
- * @param {{message: Email}} props
- * @returns {JSX.Element}
  */
-const EmailInput = ({ message }) => {
+const EmailInput: React.FC<EmailInputProps> = memo(({ message }) => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const queryClient = useQueryClient();
 
   // Safe message data extraction
-  const messageData = {
+  const messageData = useMemo(() => ({
     id: message?.id || null,
     email: message?.email || "",
     subject: message?.subject || "",
-  };
+  }), [message]);
 
   // Initialize React Hook Form with enhanced validation
   const {
@@ -31,20 +35,31 @@ const EmailInput = ({ message }) => {
     formState: { errors, isValid, isSubmitting },
     reset,
     watch,
-  } = useForm({
-    resolver: zodResolver(emailResponseSchema),
+  } = useForm<CreateEmailResponse>({
+    resolver: zodResolver(CreateEmailResponseSchema),
     mode: "onChange",
     defaultValues: {
-      message: messageData.id,
-      recipient_email: messageData.email,
-      response_subject: messageData.subject ? `Re: ${messageData.subject}` : "",
+      message: undefined,
+      recipient_email: "",
+      response_subject: "",
       response_message: "",
-      created_at: new Date().toISOString(),
     },
   });
 
   // Watch for changes in response_message to show/hide send button
   const responseMessage = watch("response_message");
+
+  // set the other details
+  useEffect(() => {
+    if (messageData) {
+      reset({
+        message: messageData.id || undefined,
+        recipient_email: messageData.email || undefined,
+        response_subject: messageData.subject ? `Re: ${messageData.subject}` : undefined,
+        response_message: "",
+      });
+    }
+  }, [messageData, reset]);
 
   // Clear alerts after timeout
   useEffect(() => {
@@ -59,9 +74,8 @@ const EmailInput = ({ message }) => {
 
   /**
    * Enhanced form submission with comprehensive error handling
-   * @param {EmailResponse} data - Form data
    */
-  const onSubmit = useCallback(async (data) => {
+  const onSubmit = useCallback(async (data: CreateEmailResponse) => {
     if (!messageData.id) {
       setError("Cannot send reply: Invalid message ID");
       return;
@@ -76,10 +90,9 @@ const EmailInput = ({ message }) => {
       setError("");
       setSuccess("");
 
-      // Enhance data with current timestamp
-      const enhancedData = {
+      // Enhance data with proper typing for the API
+      const enhancedData: CreateEmailResponse = {
         ...data,
-        created_at: new Date().toISOString(),
         message: messageData.id,
       };
 
@@ -87,14 +100,7 @@ const EmailInput = ({ message }) => {
       
       if (result && !result.error) {
         setSuccess(result.message || "Response sent successfully!");
-        reset({
-          message: messageData.id,
-          recipient_email: messageData.email,
-          response_subject: messageData.subject ? `Re: ${messageData.subject}` : "",
-          response_message: "",
-          created_at: new Date().toISOString(),
-        });
-        
+        reset();
         // Invalidate queries to refresh the UI
         await queryClient.invalidateQueries(["responses", messageData.id]);
       } else {
@@ -102,10 +108,10 @@ const EmailInput = ({ message }) => {
       }
     } catch (error) {
       console.error("Error sending email response:", error);
-      setError(
-        error.message || 
-        "An unexpected error occurred while sending your response. Please try again."
-      );
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "An unexpected error occurred while sending your response. Please try again.";
+      setError(errorMessage);
     }
   }, [messageData, queryClient, reset]);
 
@@ -114,6 +120,18 @@ const EmailInput = ({ message }) => {
     return (
       <div className="alert alert-warning">
         <small>Cannot reply: No message selected</small>
+      </div>
+    );
+  }
+
+  // Loading state during submission
+  if (isSubmitting) {
+    return (
+      <div className="d-flex justify-content-center align-items-center py-4">
+        <div className="spinner-border text-primary me-2" role="status">
+          <span className="visually-hidden">Sending response...</span>
+        </div>
+        <span>Sending your response...</span>
       </div>
     );
   }
@@ -138,7 +156,6 @@ const EmailInput = ({ message }) => {
         <input type="hidden" {...register("message")} />
         <input type="hidden" {...register("recipient_email")} />
         <input type="hidden" {...register("response_subject")} />
-        <input type="hidden" {...register("created_at")} />
 
         {/* Reply textarea */}
         <div className="mb-3">
@@ -204,6 +221,8 @@ const EmailInput = ({ message }) => {
       </form>
     </div>
   );
-};
+});
+
+EmailInput.displayName = 'EmailInput';
 
 export default EmailInput;

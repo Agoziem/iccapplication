@@ -2,10 +2,10 @@
 import React, { useState } from "react";
 import EmailBody from "./EmailBody";
 import Messages from "./Messages";
+import { Email } from "@/types/emails";
 
-const Email = () => {
-  /** @type {[Email,(value:Email) => void]} */
-  const [selectedMessage, setSelectedMessage] = useState(null);
+const EmailContainer = () => {
+  const [selectedMessage, setSelectedMessage] = useState<Email | null>(null);
   const [showlist, setShowlist] = useState(true);
   return (
     <div
@@ -34,4 +34,4 @@ const Email = () => {
   );
 };
 
-export default Email;
+export default EmailContainer;

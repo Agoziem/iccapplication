@@ -5,29 +5,30 @@ import UserProducts from "./UserProducts";
 import UserVideos from "./UserVideos";
 import Datatable from "@/components/custom/Datatable/Datatable";
 import OrderTableItems from "./OrderTableItems";
-import { useFetchPaymentsByUser } from "@/data/payments/orders.hook";
-import { useSession } from "next-auth/react";
+import { useMyProfile } from "@/data/hooks/user.hooks";
+import { usePaymentsByUser } from "@/data/hooks/payment.hooks";
+import { PaymentArray } from "@/types/payments";
 
 /**
- * Enhanced UserOrders component with comprehensive error handling and validation
- * Displays user orders with tabs for different item types and complete order history
- * 
- * @component
+ * Enhanced UserOrders component with comprehensive error handling and safety checks
+ * Manages user order display across different categories (services, products, videos)
+ * Optimized with React.memo for performance
  */
-const UserOrders = () => {
-  const { data: session } = useSession();
+const UserOrders: React.FC = React.memo(() => {
+  const { data: user } = useMyProfile();
   
   // Safe categories configuration
-  const categories = useMemo(() => ["services", "products", "videos"], []);
+  const categories = useMemo(() => ["services", "products", "videos"] as const, []);
+  type CategoryType = typeof categories[number];
   
   // Safe state management
-  const [activeTab, setActiveTab] = useState(categories[0]);
-  const [items, setItems] = useState([]);
-  const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState<CategoryType>(categories[0]);
+  const [items, setItems] = useState<PaymentArray | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Memoized user ID validation
   const validUserId = useMemo(() => {
-    const userId = session?.user?.id;
+    const userId = user?.id;
     if (!userId) return null;
     
     const numericId = typeof userId === 'string' 
@@ -35,7 +36,7 @@ const UserOrders = () => {
       : userId;
     
     return (!isNaN(numericId) && numericId > 0) ? numericId : null;
-  }, [session?.user?.id]);
+  }, [user?.id]);
 
   // Safe data fetching with validation
   const { 
@@ -43,23 +44,10 @@ const UserOrders = () => {
     isLoading: loadingUserOrders,
     error: queryError,
     isError 
-  } = useFetchPaymentsByUser(validUserId, {
-    enabled: !!validUserId, // Only fetch if valid user ID exists
-    retry: (failureCount, error) => {
-      // Retry up to 2 times for network errors
-      if (failureCount < 2 && error?.message?.includes('network')) {
-        return true;
-      }
-      return false;
-    },
-    onError: (error) => {
-      console.error('User orders fetch error:', error);
-      setError(error?.message || 'Failed to load orders');
-    }
-  });
+  } = usePaymentsByUser(validUserId || 0);
 
   // Safe items update with validation
-  const updateItems = useCallback((newItems) => {
+  const updateItems = useCallback((newItems: PaymentArray | null) => {
     try {
       // Reset error state
       setError(null);
@@ -80,7 +68,7 @@ const UserOrders = () => {
       const validItems = newItems.filter(item => 
         item && 
         typeof item === 'object' && 
-        (item.id || item.payment_id)
+        (item.id)
       );
 
       setItems(validItems);
@@ -89,10 +77,10 @@ const UserOrders = () => {
         console.warn(`Filtered out ${newItems.length - validItems.length} invalid items`);
       }
 
-    } catch (error) {
+    } catch (error : any) {
       console.error('Error updating items:', error);
       setError('Failed to process order data');
-      setItems([]);
+      setItems(null);
     }
   }, []);
 
@@ -107,14 +95,14 @@ const UserOrders = () => {
   }, [userOrders, isError, queryError, updateItems]);
 
   // Safe tab change handler
-  const handleTabChange = useCallback((category) => {
+  const handleTabChange = useCallback((category: string) => {
     if (!category || typeof category !== 'string') {
       console.error('Invalid category:', category);
       return;
     }
 
-    if (categories.includes(category)) {
-      setActiveTab(category);
+    if (categories.includes(category as CategoryType)) {
+      setActiveTab(category as CategoryType);
       setError(null); // Clear any existing errors when switching tabs
     } else {
       console.error('Invalid category:', category);
@@ -122,7 +110,7 @@ const UserOrders = () => {
   }, [categories]);
 
   // Safe style calculation
-  const getTabStyle = useCallback((category) => {
+  const getTabStyle = useCallback((category: string) => {
     const isActive = activeTab === category;
     
     return {
@@ -179,8 +167,8 @@ const UserOrders = () => {
     );
   }
 
-  // No session state
-  if (!session?.user) {
+  // No user state
+  if (!user) {
     return (
       <div className="alert alert-warning d-flex align-items-center mt-4" role="alert">
         <i className="bi bi-person-exclamation me-2"></i>
@@ -232,7 +220,7 @@ const UserOrders = () => {
       <div className="mt-4">
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h5 className="mb-0">All Orders</h5>
-          {items.length > 0 && (
+          {items && items.length > 0 && (
             <span className="badge bg-primary bg-opacity-10 text-primary">
               {items.length} order{items.length !== 1 ? 's' : ''}
             </span>
@@ -240,7 +228,7 @@ const UserOrders = () => {
         </div>
         
         <Datatable
-          items={items}
+          items={items || []}
           setItems={setItems}
           label="Orders"
           filteritemlabel="reference"
@@ -250,6 +238,9 @@ const UserOrders = () => {
       </div>
     </div>
   );
-};
+});
+
+// Add display name for debugging
+UserOrders.displayName = 'UserOrders';
 
 export default UserOrders;

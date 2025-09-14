@@ -1,18 +1,22 @@
-import React, { useCallback } from "react";
+import React, { useCallback, memo } from "react";
 import { FaCircle } from "react-icons/fa";
 import "./Email.css";
 import moment from "moment";
+import { Email } from "@/types/emails";
 
-/**
- * Enhanced MessageCard component with safety checks and error handling
- * @param {{ message: Email,
- * selectMessage:(value:Email)=> void,
- * updateMessagefn:(message:Email) => Promise<void>
- * setShowlist:(value:boolean)=> void,
- * }} props
- * @returns {JSX.Element}
- */
-const MessageCard = ({ message, selectMessage, updateMessagefn, setShowlist }) => {
+interface MessageCardProps {
+  message: Email | null;
+  selectMessage: (message: Email | null) => void;
+  updateMessagefn?: (message: Email) => Promise<void>;
+  setShowlist: (show: boolean) => void;
+}
+
+const MessageCard: React.FC<MessageCardProps> = memo(({ 
+  message, 
+  selectMessage, 
+  updateMessagefn, 
+  setShowlist 
+}) => {
   // Validate required props
   if (!message || !message.id) {
     console.warn('MessageCard: Invalid message data provided');
@@ -27,35 +31,6 @@ const MessageCard = ({ message, selectMessage, updateMessagefn, setShowlist }) =
   const createdAt = message.created_at || '';
   const isRead = Boolean(message.read);
 
-  // Format creation date safely
-  const formatDate = useCallback((dateString) => {
-    if (!dateString) return 'Unknown date';
-    
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return 'Invalid date';
-      
-      // Check if date is today
-      const today = new Date();
-      const messageDate = new Date(dateString);
-      const isToday = today.toDateString() === messageDate.toDateString();
-      
-      if (isToday) {
-        return messageDate.toLocaleTimeString([], { 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        });
-      }
-      
-      return messageDate.toLocaleDateString([], { 
-        month: 'short', 
-        day: 'numeric' 
-      });
-    } catch (error) {
-      console.error('Error formatting date:', error);
-      return 'Unknown date';
-    }
-  }, []);
 
   // Safe click handler with error handling
   const handleClick = useCallback(async () => {
@@ -91,7 +66,7 @@ const MessageCard = ({ message, selectMessage, updateMessagefn, setShowlist }) =
   }, [message, selectMessage, updateMessagefn, setShowlist, isRead]);
 
   // Truncate message text safely
-  const getTruncatedMessage = useCallback((text) => {
+  const getTruncatedMessage = useCallback((text: string) => {
     if (!text) return 'No content';
     
     const maxLength = 100;
@@ -100,8 +75,20 @@ const MessageCard = ({ message, selectMessage, updateMessagefn, setShowlist }) =
     return `${text.slice(0, maxLength)}...`;
   }, []);
 
-  const truncatedMessage = getTruncatedMessage(messageText);
-  const formattedDate = formatDate(createdAt);
+  // Memoize truncated message and formatted date to prevent recalculation
+  const truncatedMessage = React.useMemo(() => getTruncatedMessage(messageText), [messageText, getTruncatedMessage]);
+  
+  const formattedDate = React.useMemo(() => {
+    if (!createdAt) return 'Unknown date';
+    const momentDate = moment(createdAt);
+    return momentDate.isValid() ? momentDate.format('MMM D, h:mm A') : 'Invalid date';
+  }, [createdAt]);
+
+  const dateTitle = React.useMemo(() => {
+    if (typeof createdAt === 'string') return createdAt;
+    if (createdAt instanceof Date) return createdAt.toISOString();
+    return 'Unknown date';
+  }, [createdAt]);
 
   return (
     <div
@@ -136,7 +123,7 @@ const MessageCard = ({ message, selectMessage, updateMessagefn, setShowlist }) =
           </p>
         </div>
         <div>
-          <p className="text-muted mt-1 small" title={ typeof createdAt === 'string' ? createdAt : moment(createdAt).format('MMMM Do YYYY, h:mm:ss a') }>
+          <p className="text-muted mt-1 small" title={dateTitle}>
             {formattedDate}
           </p>
         </div>
@@ -150,6 +137,8 @@ const MessageCard = ({ message, selectMessage, updateMessagefn, setShowlist }) =
       </div>
     </div>
   );
-};
+});
+
+MessageCard.displayName = 'MessageCard';
 
 export default MessageCard;

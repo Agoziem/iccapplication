@@ -1,10 +1,17 @@
 import React from 'react';
 
+interface CalculatorErrorBoundaryProps {
+  error: Error;
+  resetError: () => void;
+}
+
 /**
  * Error Boundary Component for Calculator Module
- * @param {{ error: Error; resetError: () => void; }} props
  */
-const CalculatorErrorBoundary = ({ error, resetError }) => {
+const CalculatorErrorBoundary: React.FC<CalculatorErrorBoundaryProps> = ({ 
+  error, 
+  resetError 
+}) => {
   return (
     <div className="card p-4 mx-auto" style={{ maxWidth: "600px" }}>
       <div className="text-center">
@@ -51,7 +58,7 @@ const CalculatorErrorBoundary = ({ error, resetError }) => {
 /**
  * Loading Component for Calculators
  */
-export const CalculatorLoadingSkeleton = () => {
+export const CalculatorLoadingSkeleton: React.FC = () => {
   return (
     <div className="card p-4 mx-auto" style={{ maxWidth: "700px" }}>
       <div className="text-center mb-4">

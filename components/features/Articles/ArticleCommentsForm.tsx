@@ -1,147 +1,231 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import Modal from "../../custom/Modal/modal";
-import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Alert from "@/components/custom/Alert/Alert";
-import { ArticleCommentDefault } from "@/data/constants";
 import { useCreateComment } from "@/data/hooks/articles.hooks";
+import { useMyProfile } from "@/data/hooks/user.hooks";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { commentSchema } from "@/schemas/articles";
+import { createCommentSchema } from "@/schemas/articles";
+import { ArticleResponse, CreateComment, CommentResponse } from "@/types/articles";
 
-/**
- * @param {{ article: Article; comments: any; }} param0
- */
-const ArticleCommentsForm = ({ article, comments }) => {
-  const { data: session } = useSession();
-  const [showModal, setShowModal] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const { mutateAsync: createComment } = useCreateComment();
+interface ArticleCommentsFormProps {
+  article: ArticleResponse;
+  comments?: CommentResponse;
+  className?: string;
+  style?: React.CSSProperties;
+  onCommentAdded?: () => void;
+}
+
+
+
+const ArticleCommentsForm: React.FC<ArticleCommentsFormProps> = ({ 
+  article, 
+  comments,
+  className = "",
+  style = {},
+  onCommentAdded
+}) => {
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
+  
+  const { data: user } = useMyProfile();
+  const { mutateAsync: createComment, isLoading: isSubmittingComment } = useCreateComment();
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    reset,
-    setValue
-  } = useForm({
-    resolver: zodResolver(commentSchema),
+    reset
+  } = useForm<CreateComment>({
+    resolver: zodResolver(createCommentSchema),
     defaultValues: {
-      comment: "",
-      blog: article?.id || null,
-      user: {
-        id: session?.user?.id || null,
-        username: session?.user?.username || "",
-        img: session?.user?.avatar_url || "",
-      }
+      comment: ""
     }
   });
 
-  const onSubmit = async (data) => {
-    if (!article?.id || !session?.user?.id) {
-      setError("Missing article or user information");
+  const closeModal = useCallback(() => {
+    setShowModal(false);
+    setError("");
+    setSuccess("");
+    reset();
+  }, [reset]);
+
+  const openModal = useCallback(() => {
+    setShowModal(true);
+    setError("");
+    setSuccess("");
+  }, []);
+
+  const onSubmit = useCallback(async (data: CreateComment) => {
+    if (!article?.id) {
+      setError("Article information is missing");
       return;
     }
 
-    const datatosubmit = {
-      comment: data.comment,
-      blog: article.id,
-      user: {
-        id: session.user.id,
-        username: session.user.username,
-        img: session.user.avatar_url,
-      },
+    if (!user?.id) {
+      setError("You must be logged in to comment");
+      return;
+    }
+
+    const commentData: CreateComment = {
+      comment: data.comment.trim()
     };
 
     try {
       setError("");
       setSuccess("");
-      await createComment(datatosubmit);
+      await createComment({
+        blogId: article.id,
+        userId: user.id,
+        commentData
+      });
+      
       setSuccess("Comment submitted successfully!");
-      reset(); // Reset form after successful submission
+      reset();
+      
+      // Call optional callback
+      onCommentAdded?.();
+      
+      // Auto-close modal after success
       setTimeout(() => {
-        setSuccess("");
-        setShowModal(false);
-      }, 2000);
-    } catch (error) {
-      console.log(error.message);
+        closeModal();
+      }, 1500);
+    } catch (error: any) {
+      console.error("Failed to create comment:", error);
       setError(error?.message || "Failed to submit comment. Please try again.");
     }
-  };
+  }, [article?.id, user, createComment, reset, onCommentAdded, closeModal]);
 
   return (
-    <>
-      {session ? (
+    <div className={className} style={style}>
+      {user ? (
         <button
+          type="button"
           className="btn btn-primary me-3"
-          onClick={(e) => {
-            e.preventDefault();
-            setShowModal(true);
-          }}
+          onClick={openModal}
+          disabled={isSubmittingComment}
         >
-          Add Comment
+          {isSubmittingComment ? (
+            <>
+              <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              Adding Comment...
+            </>
+          ) : (
+            "Add Comment"
+          )}
         </button>
       ) : (
         <Link
-          href={`/accounts/signin?next=/articles/${article.slug}/`}
+          href={`/accounts/signin?next=/articles/${article.slug || ""}`}
           className="btn btn-primary me-3"
         >
-          Add Comment
+          Login to Comment
         </Link>
       )}
-      <Modal showmodal={showModal} toggleModal={() => setShowModal(false)}>
+
+      <Modal showmodal={showModal} toggleModal={closeModal}>
         <div className="modal-body">
-          <h4 className="text-center">Add comment</h4>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="form-group my-3">
-              <label htmlFor="name">Name</label>
-              <input
-                type="text"
-                className="form-control"
-                id="name"
-                name="name"
-                value={session?.user?.username || 'Anonymous'}
-                readOnly
-              />
+          <div className="d-flex align-items-center justify-content-between mb-4">
+            <h4 className="mb-0">Add Comment</h4>
+            <button
+              type="button"
+              className="btn-close"
+              onClick={closeModal}
+              aria-label="Close"
+            />
+          </div>
+          
+          <form onSubmit={handleSubmit(onSubmit)} noValidate>
+            {/* User Info Display */}
+            <div className="d-flex align-items-center mb-3">
+              {user?.avatar_url ? (
+                <img
+                  src={user.avatar_url}
+                  alt={`${user.username || 'User'} avatar`}
+                  className="rounded-circle me-3"
+                  style={{ width: 40, height: 40, objectFit: 'cover' }}
+                />
+              ) : (
+                <div
+                  className="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-3"
+                  style={{ width: 40, height: 40, fontSize: '16px' }}
+                >
+                  {user?.username?.[0]?.toUpperCase() || 'A'}
+                </div>
+              )}
+              <div>
+                <p className="mb-0 fw-semibold">{user?.username || 'Anonymous'}</p>
+                <small className="text-muted">Commenting as</small>
+              </div>
             </div>
-            <div className="form-group my-3">
-              <label htmlFor="comment">Comment</label>
+
+            {/* Comment Input */}
+            <div className="form-group mb-3">
+              <label htmlFor="comment" className="form-label">
+                Your Comment *
+              </label>
               <textarea
+                {...register("comment")}
                 className={`form-control ${errors.comment ? 'is-invalid' : ''}`}
                 id="comment"
-                placeholder="Write your comment here..."
-                {...register("comment")}
-              ></textarea>
+                rows={4}
+                placeholder="Share your thoughts about this article..."
+                disabled={isSubmitting || isSubmittingComment}
+              />
               {errors.comment && (
                 <div className="invalid-feedback">
                   {errors.comment.message}
                 </div>
               )}
+              <div className="form-text">
+                Be respectful and constructive in your comments.
+              </div>
             </div>
-            <button
-              type="submit"
-              className="btn btn-primary w-100 rounded mt-3"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Adding Comment...
-                </>
-              ) : (
-                "Add Comment"
-              )}
-            </button>
-            {/* Error Message */}
-            {error && <Alert type={"danger"}>{error}</Alert>}
 
-            {/* Success Message */}
-            {success && <Alert type={"success"}>{success}</Alert>}
+            {/* Action Buttons */}
+            <div className="d-flex justify-content-end gap-2">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={closeModal}
+                disabled={isSubmitting || isSubmittingComment}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={isSubmitting || isSubmittingComment}
+              >
+                {isSubmitting || isSubmittingComment ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Posting...
+                  </>
+                ) : (
+                  "Post Comment"
+                )}
+              </button>
+            </div>
+
+            {/* Error and Success Messages */}
+            {error && (
+              <div className="mt-3">
+                <Alert type="danger">{error}</Alert>
+              </div>
+            )}
+
+            {success && (
+              <div className="mt-3">
+                <Alert type="success">{success}</Alert>
+              </div>
+            )}
           </form>
         </div>
       </Modal>
-    </>
+    </div>
   );
 };
 

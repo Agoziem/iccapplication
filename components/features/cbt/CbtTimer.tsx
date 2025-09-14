@@ -1,14 +1,19 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react'
 
-const CbtTimer = ({ time, handleSubmit }) => {
-  const [minutes, setMinutes] = useState(0);
-  const [seconds, setSeconds] = useState(0);
-  const intervalRef = useRef(null);
-  const isActiveRef = useRef(true);
+interface CbtTimerProps {
+  time: number | string;
+  handleSubmit: () => void;
+}
+
+const CbtTimer: React.FC<CbtTimerProps> = ({ time, handleSubmit }) => {
+  const [minutes, setMinutes] = useState<number>(0);
+  const [seconds, setSeconds] = useState<number>(0);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isActiveRef = useRef<boolean>(true);
 
   // Initialize timer with validation
   useEffect(() => {
-    const initialTime = parseInt(time || 0);
+    const initialTime = typeof time === 'number' ? time : parseInt(String(time || 0));
     if (initialTime < 0 || isNaN(initialTime)) {
       console.warn('Invalid timer value provided:', time);
       setMinutes(0);

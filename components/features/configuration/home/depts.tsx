@@ -1,268 +1,365 @@
-import React, { useState } from "react";
-import Alert from "@/components/custom/Alert/Alert";
+"use client";
+import React, { useState, useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FiEdit, FiTrash2, FiPlus, FiUser, FiHome } from "react-icons/fi";
+import { PulseLoader } from "react-spinners";
 import Modal from "@/components/custom/Modal/modal";
+import Alert from "@/components/custom/Alert/Alert";
 import DepartmentForm from "./DepartmentForm";
-import { deptDefault } from "@/data/constants";
-import { useSearchParams, useRouter } from "next/navigation";
-import {
-  MainAPIendpoint,
-} from "@/data/hooks/organization.hooks";
 import Pagination from "@/components/custom/Pagination/Pagination";
-import {
-  useCreateDepartment,
-  useDeleteDepartment,
-  useFetchDepartments,
-  useFetchStaffs,
-  useUpdateDepartment,
-} from "@/data/organization/organization.hook";
-import toast from "react-hot-toast";
+import { useDepartments, useDeleteDepartment } from "@/data/hooks/organization.hooks";
+import { Department } from "@/types/organizations";
+import { ORGANIZATION_ID } from "@/data/constants";
+
+type AlertState = {
+  show: boolean;
+  message: string;
+  type: "info" | "success" | "warning" | "danger";
+};
 
 const Depts = () => {
-  const OrganizationID = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
+  const [department, setDepartment] = useState<Department | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [showdeleteModal, setShowDeleteModal] = useState(false);
-  const [service, setService] = useState("");
-  const [department, setDepartment] = useState(deptDefault);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [alert, setAlert] = useState<AlertState>({ show: false, message: "", type: "info" });
+  const [addorupdate, setAddOrUpdate] = useState({ mode: "add", state: false });
 
   const router = useRouter();
   const searchParams = useSearchParams();
   const page = searchParams.get("page") || "1";
   const pageSize = "10";
-  const [addorupdate, setAddOrUpdate] = useState({
-    type: "add",
-    state: false,
-  });
+  const [isPending, startTransition] = useTransition();
+  const [isDeleting, startDeletion] = useTransition();
 
-  // for data fetching
-  const { data: staffs } = useFetchStaffs(
-    `${MainAPIendpoint}/staff/${OrganizationID}/`
+  // Hooks
+  const { mutateAsync: deleteDepartment } = useDeleteDepartment();
+
+  // Fetch Departments
+  const { data: depts, isLoading: loadingdepts } = useDepartments(
+    parseInt(ORGANIZATION_ID || "0", 10)
   );
 
-  // for data fetching
-  const { data: depts, isLoading: loadingdepts } = useFetchDepartments(
-    `${MainAPIendpoint}/department/${OrganizationID}/?page=${page}&page_size=${pageSize}`
-  );
+  // Handle alert display
+  const handleAlert = (message: string, type: AlertState["type"]) => {
+    setAlert({ show: true, message, type });
+    setTimeout(() => {
+      setAlert({ show: false, message: "", type: "info" });
+    }, 5000);
+  };
 
   // Handle page change
-  const handlePageChange = (newPage) => {
-    router.push(`?page=${newPage}&page_size=${pageSize}`);
+  const handlePageChange = (newPage: string | number) => {
+    const pageNum = typeof newPage === "string" ? parseInt(newPage) : newPage;
+    router.push(`?page=${pageNum}&page_size=${pageSize}`, { scroll: false });
   };
 
-  // -------------------------------------------------------------
-  // Function to handle form submission
-  // -------------------------------------------------------------
-
-  const { mutateAsync: createDepartment,isLoading: isCreating } = useCreateDepartment();
-  const { mutateAsync: updateDepartment,isLoading: isUpdating } = useUpdateDepartment();
-  const handleSubmit = async (e) => {
-    const { organization, staff_in_charge, services, ...restData } = department;
-    const departmenttosubmit = {
-      ...restData,
-      organization: parseInt(OrganizationID),
-      staff_in_charge: staff_in_charge.id || "",
-      services: services?.map((Service) => Service.name) || [],
-    };
-    e.preventDefault();
-    try {
-      if (addorupdate.type === "add") {
-        await createDepartment(departmenttosubmit);
-      } else {
-        await updateDepartment(departmenttosubmit);
-      }
-      toast.success(
-        `Department ${addorupdate.type === "add" ? "added" : "updated"} successfully`
-      );
-    } catch (error) {
-      toast.error(
-        `An error occurred while ${
-          addorupdate.type === "add" ? "adding" : "updating"
-        } Department`
-      );
-    } finally {
-      closeModal();
+  // Open modal for add/edit
+  const openModal = (editDepartment?: Department) => {
+    if (editDepartment) {
+      setDepartment(editDepartment);
+      setAddOrUpdate({ mode: "update", state: true });
+    } else {
+      setDepartment(null);
+      setAddOrUpdate({ mode: "add", state: false });
     }
+    setShowModal(true);
   };
 
-  // -------------------------------------------------------------
-  // Function to close the modal
-  // -------------------------------------------------------------
+  // Handle department deletion
+  const handleDelete = async (departmentId: number) => {
+    startDeletion(async () => {
+      try {
+        await deleteDepartment({
+          departmentId,
+          organizationId: parseInt(ORGANIZATION_ID || "0", 10),
+        });
+        handleAlert("Department deleted successfully!", "success");
+        setShowDeleteModal(false);
+        setDepartment(null);
+      } catch (error) {
+        handleAlert(
+          error instanceof Error ? error.message : "Failed to delete department",
+          "danger"
+        );
+      }
+    });
+  };
 
+  // Handle department edit
+  const handleEdit = (department: Department) => {
+    setDepartment(department);
+    setAddOrUpdate({ mode: "update", state: true });
+    setShowModal(true);
+  };
+
+  // Handle department delete confirmation
+  const handleDeleteConfirm = (department: Department) => {
+    setDepartment(department);
+    setShowDeleteModal(true);
+  };
+
+  // Close modals
   const closeModal = () => {
     setShowModal(false);
     setShowDeleteModal(false);
-    setAddOrUpdate({
-      type: "add",
-      state: false,
-    });
-    setDepartment(deptDefault);
-    setService("");
+    setDepartment(null);
+    setAddOrUpdate({ mode: "add", state: false });
   };
 
-  // -------------------------------------------------------------
-  // Function to delete a testimonial
-  // -------------------------------------------------------------
-  const { mutateAsync: deleteDepartment, isLoading: isDeleting } =
-    useDeleteDepartment();
-  /**
-   * @param {number} id
-   */
-  const removeDepartment = async (id) => {
-    try {
-      await deleteDepartment(id);
-      toast.success("Department deleted successfully");
-    } catch (error) {
-      toast.error("An error occurred while deleting Department");
-    } finally {
-      closeModal();
-    }
+  // Handle form success
+  const handleFormSuccess = () => {
+    handleAlert(
+      addorupdate.mode === "add" ? "Department created successfully!" : "Department updated successfully!",
+      "success"
+    );
+    closeModal();
   };
+
+  if (loadingdepts) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "400px" }}>
+        <PulseLoader color="#0d6efd" size={15} />
+      </div>
+    );
+  }
 
   return (
-    <div className="px-1 px-md-4">
-      <div className="mb-5 mb-md-0">
-        <div className="d-flex justify-content-end mb-2">
-          <button
-            className="btn btn-primary border-0 rounded"
-            style={{ backgroundColor: "var(--bgDarkerColor)" }}
-            onClick={() => {
-              setAddOrUpdate({
-                type: "add",
-                state: true,
-              });
-              setShowModal(true);
-            }}
-          >
-            <i className="bi bi-plus-circle me-2 h5 mb-0"></i> Add Department
-          </button>
+    <div className="container-fluid">
+      {/* Header */}
+      <div className="row mb-4">
+        <div className="col-md-6">
+          <div className="d-flex align-items-center">
+            <FiHome size={32} className="text-primary me-2" />
+            <h4 className="mb-0">Department Management</h4>
+          </div>
         </div>
-        <div>
-          <h4 className="mb-1">
-            {depts?.count} Department{depts?.count > 1 ? "s" : ""}
-          </h4>
-          <p>in total</p>
+        <div className="col-md-6 text-end">
+          <button
+            className="btn btn-primary"
+            onClick={() => openModal()}
+            disabled={isPending}
+          >
+            <FiPlus size={16} className="me-1" />
+            Add Department
+          </button>
         </div>
       </div>
 
-      {/* set of horizontal Cards that are clickable */}
-      <div className="mt-4">
-        {depts?.results?.length === 0 ? (
-          <p>No testimonials available</p>
-        ) : (
-          depts?.results.map((department) => (
-            <div key={department.id} className="card my-3 p-3">
-              <div className="card-body">
-                <h5>{department.name} Department</h5>
-                <p className="card-text">
-                  {department.description && department.description.length > 100
-                    ? department.description.slice(0, 200) + "..."
-                    : department.description}
-                </p>
-                <div className="d-flex align-items-center">
-                  {department?.staff_in_charge?.img_url ? (
-                    <img
-                      src={department.staff_in_charge.img_url}
-                      alt="department"
-                      className="rounded-circle object-fit-cover"
-                      height={75}
-                      width={75}
-                      style={{ objectPosition: "top center" }}
-                    />
-                  ) : (
-                    <div
-                      className="rounded-circle text-white d-flex justify-content-center align-items-center"
-                      style={{
-                        width: 75,
-                        height: 75,
-                        fontSize: "30px",
-                        backgroundColor: "var(--bgDarkerColor)",
-                      }}
-                    >
-                      {department.staff_in_charge?.name
-                        ?.charAt(0)
-                        .toUpperCase()}
-                    </div>
-                  )}
-                  <div className="ms-3">
-                    <h6 className="mb-1">{department.staff_in_charge?.name}</h6>
-                    <p className="my-0 small">{department.name} Head</p>
-                  </div>
-                </div>
-                <div className="d-flex flex-wrap justify-content-between align-items-center mt-3">
-                  <div className="mt-3 mt-md-0">
-                    <button
-                      className="btn btn-accent-secondary rounded small mx-0 me-2 mx-md-3"
-                      style={{ cursor: "pointer" }}
-                      onClick={() => {
-                        setAddOrUpdate({
-                          type: "update",
-                          state: true,
-                        });
-                        setDepartment(department);
-                        setShowModal(true);
-                      }}
-                    >
-                      edit department
-                    </button>
+      {/* Department Header */}
+      <div className="row mb-3 align-items-center">
+        <div className="col-md-6">
+          <h5 className="mb-1">All Departments</h5>
+          <p className="mb-0 text-primary">
+            {(depts?.count ?? 0)} Department{(depts?.count ?? 0) !== 1 ? "s" : ""} in Total
+          </p>
+        </div>
+      </div>
 
-                    <button
-                      className="btn btn-sm btn-danger rounded px-3"
-                      onClick={() => {
-                        setDepartment(department);
-                        setShowDeleteModal(true);
-                      }}
-                    >
-                      delete
-                    </button>
+      {/* Alert */}
+      {alert.show && <Alert type={alert.type}>{alert.message}</Alert>}
+
+      {/* Departments List */}
+      <div className="row">
+        {loadingdepts ? (
+          <div className="col-12 d-flex justify-content-center">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        ) : depts?.results?.length === 0 ? (
+          <div className="col-12 text-center py-5">
+            <FiHome size={64} className="text-muted mb-3" />
+            <h5 className="text-muted">No departments found</h5>
+            <p className="text-muted">Start by adding your first department</p>
+          </div>
+        ) : (
+          <div className="col-12">
+            {depts?.results?.map((departmentItem) => (
+              <div key={departmentItem.id} className="mb-3">
+                {/* Department Card */}
+                <div className="card border-0 shadow-sm">
+                  <div className="card-body p-4">
+                    <div className="row align-items-start">
+                      {/* Department Image */}
+                      <div className="col-md-3 text-center mb-3 mb-md-0">
+                        {departmentItem.img_url ? (
+                          <img
+                            src={departmentItem.img_url}
+                            alt={departmentItem.name}
+                            className="rounded"
+                            style={{
+                              width: "100%",
+                              maxWidth: "200px",
+                              height: "120px",
+                              objectFit: "cover",
+                            }}
+                          />
+                        ) : (
+                          <div
+                            className="rounded d-flex justify-content-center align-items-center text-white mx-auto"
+                            style={{
+                              width: "100%",
+                              maxWidth: "200px",
+                              height: "120px",
+                              fontSize: "2rem",
+                              backgroundColor: "var(--bs-primary)",
+                            }}
+                          >
+                            <FiHome size={48} />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Department Info */}
+                      <div className="col-md-6">
+                        <h5 className="fw-bold mb-2">{departmentItem.name} Department</h5>
+                        <p className="text-muted mb-3">
+                          {departmentItem.description && departmentItem.description.length > 150
+                            ? `${departmentItem.description.slice(0, 150)}...`
+                            : departmentItem.description}
+                        </p>
+
+                        {/* Department Head */}
+                        <div className="d-flex align-items-center mb-3">
+                          {departmentItem.staff_in_charge?.img_url ? (
+                            <img
+                              src={departmentItem.staff_in_charge.img_url}
+                              alt="Department Head"
+                              className="rounded-circle object-fit-cover me-3"
+                              style={{
+                                width: "50px",
+                                height: "50px",
+                                objectPosition: "top center",
+                              }}
+                            />
+                          ) : (
+                            <div
+                              className="rounded-circle d-flex justify-content-center align-items-center text-white me-3"
+                              style={{
+                                width: "50px",
+                                height: "50px",
+                                fontSize: "1.2rem",
+                                backgroundColor: "var(--bs-secondary)",
+                              }}
+                            >
+                              <FiUser size={20} />
+                            </div>
+                          )}
+                          <div>
+                            <h6 className="mb-0">
+                              {departmentItem.staff_in_charge?.first_name} {departmentItem.staff_in_charge?.last_name}
+                            </h6>
+                            <p className="text-muted mb-0 small">Department Head</p>
+                          </div>
+                        </div>
+
+                        {/* Services */}
+                        {departmentItem.services && departmentItem.services.length > 0 && (
+                          <div className="mb-3">
+                            <h6 className="fw-bold mb-2">Services ({departmentItem.services.length})</h6>
+                            <div className="d-flex flex-wrap gap-1">
+                              {departmentItem.services.slice(0, 3).map((service, index) => (
+                                <span
+                                  key={index}
+                                  className="badge bg-light text-dark border small"
+                                >
+                                  {service.name}
+                                </span>
+                              ))}
+                              {departmentItem.services.length > 3 && (
+                                <span className="badge bg-secondary small">
+                                  +{departmentItem.services.length - 3} more
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="col-md-3 text-end">
+                        <div className="d-flex flex-column gap-2">
+                          <button
+                            className="btn btn-sm btn-outline-primary"
+                            onClick={() => handleEdit(departmentItem)}
+                            title="Edit Department"
+                          >
+                            <FiEdit size={14} className="me-1" />
+                            Edit Department
+                          </button>
+                          <button
+                            className="btn btn-sm btn-outline-danger"
+                            onClick={() => handleDeleteConfirm(departmentItem)}
+                            title="Delete Department"
+                          >
+                            <FiTrash2 size={14} className="me-1" />
+                            Delete Department
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
+      </div>
 
-        {!loadingdepts &&
-          depts &&
-          Math.ceil(depts.count / parseInt(pageSize)) > 1 && (
+      {/* Pagination */}
+      {depts && depts.count > parseInt(pageSize) && (
+        <div className="row mt-4">
+          <div className="col-12">
             <Pagination
-              currentPage={page}
+              currentPage={parseInt(page)}
               totalPages={Math.ceil(depts.count / parseInt(pageSize))}
               handlePageChange={handlePageChange}
             />
-          )}
-      </div>
-
-      {/* Modal for adding a new testimonial */}
-      <Modal showmodal={showModal} toggleModal={() => closeModal()}>
-        <div className="modal-body">
-          {addorupdate.state ? (
-            <DepartmentForm
-              addorupdate={addorupdate}
-              department={department}
-              setDepartment={setDepartment}
-              handleSubmit={handleSubmit}
-              closeModal={closeModal}
-              staffs={staffs.results}
-              loading={isCreating || isUpdating}
-            />
-          ) : null}
+          </div>
         </div>
+      )}
+
+      {/* Add/Edit Department Modal */}
+      <Modal showmodal={showModal} toggleModal={closeModal} overlayclose={false}>
+        <DepartmentForm
+          department={department}
+          editMode={addorupdate.mode === "update"}
+          onSuccess={handleFormSuccess}
+          onCancel={closeModal}
+        />
       </Modal>
-      <Modal
-        showmodal={showdeleteModal}
-        toggleModal={() => setShowDeleteModal(false)}
-      >
-        <div className="modal-body">
-          <div className="mt-4">
-            <h4>Delete Department</h4>
-            <p>Are you sure you want to delete this Department?</p>
+
+      {/* Delete Confirmation Modal */}
+      <Modal showmodal={showDeleteModal} toggleModal={closeModal}>
+        <div className="p-3">
+          <p className="text-center">Delete Department</p>
+          <hr />
+          <h5 className="text-center mb-4">
+            {department?.name} Department
+          </h5>
+          <p className="text-center text-muted mb-4">
+            Are you sure you want to delete this department? This action cannot be undone.
+          </p>
+          <div className="d-flex justify-content-center gap-2">
             <button
-              className="btn btn-accent-secondary border-0 text-secondary mt-3 rounded"
-              onClick={() => {
-                removeDepartment(department.id);
-              }}
+              className="btn btn-danger"
+              onClick={() => department?.id && handleDelete(department.id)}
               disabled={isDeleting}
             >
-              {isDeleting ? "Deleting Testimonial..." : "Delete Testimonial"}
+              {isDeleting ? (
+                <div className="d-inline-flex align-items-center justify-content-center gap-2">
+                  <div>Deleting...</div>
+                  <PulseLoader size={8} color={"#ffffff"} loading={true} />
+                </div>
+              ) : (
+                "Delete"
+              )}
+            </button>
+            <button
+              className="btn btn-secondary"
+              onClick={closeModal}
+            >
+              Cancel
             </button>
           </div>
         </div>

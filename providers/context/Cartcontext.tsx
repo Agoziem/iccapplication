@@ -16,7 +16,7 @@ import { Product, Service, Video } from "@/types/items";
 import { CreatePayment } from "@/types/payments";
 import { ORGANIZATION_ID } from "@/data/constants";
 
-type CartItem = (Video | Service | Product) & {
+export type CartItem = (Video | Service | Product) & {
   cartType?: "service" | "product" | "video";
 };
 

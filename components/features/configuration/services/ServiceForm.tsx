@@ -1,220 +1,380 @@
+"use client";
+import React, { useEffect, useMemo, useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import ImageUploader from "@/components/custom/Imageuploader/ImageUploader";
 import Tiptap from "@/components/custom/Richtexteditor/Tiptap";
-import { servicesAPIendpoint } from "@/data/hooks/service.hooks";
+import {
+  useCreateService,
+  useServiceSubCategories,
+  useUpdateService,
+  useServiceCategories,
+} from "@/data/hooks/service.hooks";
 import { PulseLoader } from "react-spinners";
-import { useFetchSubCategories } from "@/data/categories/categories.hook";
+import { Service, ServiceCategory, ServiceSubCategory } from "@/types/items";
+import { createServiceSchema, updateServiceSchema } from "@/schemas/items";
+import { ORGANIZATION_ID } from "@/data/constants";
 
-/**
- * @param {{ service: Service; setService: (value:Service) => void; handleSubmit: any; addorupdate: any; OrganizationData: any; tab: any; categories: any;isSubmitting: boolean; }} param0
- */
-const ServiceForm = ({
+// Create extended schemas for form validation
+
+interface ServiceFormProps {
+  service?: Service | null;
+  editMode: boolean;
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+const ServiceForm: React.FC<ServiceFormProps> = ({
   service,
-  setService,
-  handleSubmit,
-  addorupdate,
-  tab,
-  categories: servicecategories,
-  isSubmitting,
+  editMode = false,
+  onSuccess,
+  onCancel,
 }) => {
-  const { data: subcategories, isLoading: loadingsubcategories } =
-    useFetchSubCategories(
-      `${servicesAPIendpoint}/subcategories/${service.category.id}/`
-    );
+  // React Hook Form setup
+  const [selectedCategory, setSelectedCategory] =
+    useState<ServiceCategory | null>(null);
+  const formDataSchema = editMode ? updateServiceSchema : createServiceSchema;
+  type ServiceFormData = z.infer<typeof formDataSchema>;
 
-  // ------------------------------
-  // Handle category change
-  // -------------------------------
-  const handleCategoryChange = (e) => {
-    const selectedCategory = servicecategories?.find(
-      (category) => category.category === e.target.value
-    );
-    setService({ ...service, category: selectedCategory, subcategory: null });
+  const form = useForm<ServiceFormData>({
+    resolver: zodResolver(formDataSchema),
+    defaultValues: {
+      name: service?.name || "",
+      description: service?.description || "",
+      price: service?.price ? parseFloat(service.price) : 0,
+      preview: service?.img_url || "",
+      category: service?.category?.id || 0,
+      subcategory: service?.subcategory?.id || 0,
+      organization: ORGANIZATION_ID || "",
+    },
+  });
+
+  // Hooks for API calls
+  const { mutateAsync: createService, isLoading: isCreating } =
+    useCreateService();
+  const { mutateAsync: updateService, isLoading: isUpdating } =
+    useUpdateService();
+  const { data: serviceCategories, isLoading: loadingCategories } =
+    useServiceCategories();
+  const { data: subcategories, isLoading: loadingSubcategories } =
+    useServiceSubCategories(selectedCategory?.id || 0);
+
+  // Update form when service prop changes
+  useEffect(() => {
+    if (service && editMode) {
+      form.reset({
+        name: service.name || "",
+        description: service.description || "",
+        price: service.price ? parseFloat(service.price) : 0,
+        preview: service.img_url || "",
+        category: service.category?.id || 0,
+        subcategory: service.subcategory?.id || 0,
+        organization: ORGANIZATION_ID || "",
+      });
+      setSelectedCategory(service.category || null);
+    }
+  }, [service, editMode, form]);
+
+  // Watch category changes for subcategory loading
+  const selectedCategoryId = form.watch("category");
+
+  // Update selected category when form category changes
+  useEffect(() => {
+    if (serviceCategories && selectedCategoryId) {
+      const category = serviceCategories.find(
+        (cat) => cat.id === selectedCategoryId
+      );
+      setSelectedCategory(category || null);
+    }
+  }, [selectedCategoryId, serviceCategories]);
+
+  // Form submission handler
+  const handleSubmit = async (data: ServiceFormData) => {
+    try {
+      const formData = {
+        ...data,
+        price:
+          typeof data.price === "string" ? parseFloat(data.price) : data.price,
+      };
+
+      if (editMode && service?.id) {
+        await updateService({
+          serviceId: service.id,
+          serviceData: {
+            ...formData,
+            preview: formData.preview || undefined,
+          },
+        });
+      } else {
+        await createService({
+          organizationId: parseInt(ORGANIZATION_ID),
+          serviceData: {
+            name: service?.name || "",
+            description: service?.description || "",
+            price: service?.price ? parseFloat(service.price) : 0,
+            preview: service?.img_url || "",
+            category: service?.category?.id || 0,
+            subcategory: service?.subcategory?.id || 0,
+            organization: ORGANIZATION_ID || "",
+          },
+        });
+      }
+
+      onSuccess();
+    } catch (error) {
+      console.error("Service form error:", error);
+      // Error handling is done by the parent component through react-query
+    }
   };
 
-  // - -------------------------------
-  // Handle subcategory change
-  //  -------------------------------
-  const handleSubCategoryChange = (e) => {
-    const selectedSubCategory = subcategories?.find(
-      (subcategory) => subcategory.subcategory === e.target.value
-    );
-    setService({ ...service, subcategory: selectedSubCategory });
-  };
+  const isSubmitting = isCreating || isUpdating;
 
   return (
     <div className="p-3">
       <h5 className="text-center mb-4">
-        {addorupdate.mode === "add"
-          ? `Add ${tab !== "application" ? "service" : "application"}`
-          : `Edit ${tab !== "application" ? "service" : "application"}`}
+        {editMode ? "Edit Service" : "Add New Service"}
       </h5>
       <hr />
-      <form
-        onSubmit={(e) => {
-          handleSubmit(e);
-        }}
-      >
-        {/* Preview */}
+
+      <form onSubmit={form.handleSubmit(handleSubmit)} noValidate>
+        {/* Service Preview Image */}
         <div className="mb-2">
-          <ImageUploader
-            imagekey={"preview"}
-            imageurlkey={"img_url"}
-            imagename={"img_name"}
-            formData={service}
-            setFormData={setService}
+          <label htmlFor="preview" className="form-label">
+            Service Preview Image
+          </label>
+          <Controller
+            name="preview"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <>
+                <ImageUploader
+                  {...field}
+                  placeholder="Upload service preview image"
+                  error={fieldState.error?.message}
+                />
+              </>
+            )}
           />
         </div>
 
         {/* Name */}
         <div className="mb-3">
           <label htmlFor="name" className="form-label">
-            Name
+            Name *
           </label>
-          <input
-            type="text"
-            className="form-control"
-            id="name"
+          <Controller
             name="name"
-            value={service.name}
-            onChange={(e) => setService({ ...service, name: e.target.value })}
-            required
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <>
+                <input
+                  {...field}
+                  type="text"
+                  className={`form-control ${
+                    fieldState.error ? "is-invalid" : ""
+                  }`}
+                  id="name"
+                  placeholder="Enter service name"
+                />
+                {fieldState.error && (
+                  <div className="invalid-feedback">
+                    {fieldState.error.message}
+                  </div>
+                )}
+              </>
+            )}
           />
         </div>
 
         {/* Description */}
         <div className="mb-3">
           <label htmlFor="description" className="form-label">
-            Description
+            Description *
           </label>
-          <textarea
-            className="form-control"
-            id="description"
+          <Controller
             name="description"
-            value={service.description}
-            onChange={(e) =>
-              setService({ ...service, description: e.target.value })
-            }
-            rows={4}
-            required
-          ></textarea>
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <>
+                <Tiptap
+                  item={field.value ?? ""}
+                  setItem={field.onChange}
+                  placeholder="Enter service description"
+                />
+                {fieldState.error && (
+                  <div className="text-danger small mt-1">
+                    {fieldState.error.message}
+                  </div>
+                )}
+              </>
+            )}
+          />
         </div>
 
         {/* Price */}
         <div className="mb-3">
           <label htmlFor="price" className="form-label">
-            Price
+            Price (₦) *
           </label>
-          <input
-            type="number"
-            className="form-control"
-            id="price"
+          <Controller
             name="price"
-            value={service.price}
-            onChange={(e) => setService({ ...service, price: e.target.value })}
-            required
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <>
+                <input
+                  {...field}
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className={`form-control ${
+                    fieldState.error ? "is-invalid" : ""
+                  }`}
+                  id="price"
+                  placeholder="Enter service price"
+                  onChange={(e) =>
+                    field.onChange(parseFloat(e.target.value) || 0)
+                  }
+                />
+                {fieldState.error && (
+                  <div className="invalid-feedback">
+                    {fieldState.error.message}
+                  </div>
+                )}
+              </>
+            )}
           />
         </div>
 
         {/* Category */}
         <div className="mb-3">
           <label htmlFor="category" className="form-label">
-            Category
+            Category *
           </label>
-          <select
-            className="form-select"
-            id="category"
+          <Controller
             name="category"
-            value={service.category?.category || ""}
-            onChange={handleCategoryChange}
-            required
-          >
-            <option value="">Select category</option>
-            {servicecategories.map((category) => (
-              <option key={category.id} value={category.category}>
-                {category.category}
-              </option>
-            ))}
-          </select>
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <>
+                <select
+                  {...field}
+                  className={`form-select ${
+                    fieldState.error ? "is-invalid" : ""
+                  }`}
+                  id="category"
+                  onChange={(e) =>
+                    field.onChange(parseInt(e.target.value) || 0)
+                  }
+                  disabled={loadingCategories}
+                >
+                  <option value={0}>Select a category</option>
+                  {serviceCategories?.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.category}
+                    </option>
+                  ))}
+                </select>
+                {loadingCategories && (
+                  <div className="form-text">
+                    <PulseLoader size={8} color="#0d6efd" />
+                  </div>
+                )}
+                {fieldState.error && (
+                  <div className="invalid-feedback">
+                    {fieldState.error.message}
+                  </div>
+                )}
+              </>
+            )}
+          />
         </div>
 
         {/* Subcategory */}
         <div className="mb-3">
           <label htmlFor="subcategory" className="form-label">
-            Sub-Category
+            Subcategory
           </label>
-          <select
-            className="form-select"
-            id="subcategory"
+          <Controller
             name="subcategory"
-            value={service.subcategory?.subcategory || ""}
-            onChange={handleSubCategoryChange}
-            // required
-          >
-            {loadingsubcategories ? (
-              <option>Loading...</option>
-            ) : (
+            control={form.control}
+            render={({ field, fieldState }) => (
               <>
-                <option value="">Select subcategory</option>
-                {subcategories?.map((subcategory) => (
-                  <option key={subcategory.id} value={subcategory.subcategory}>
-                    {subcategory.subcategory}
+                <select
+                  {...field}
+                  className={`form-select ${
+                    fieldState.error ? "is-invalid" : ""
+                  }`}
+                  id="subcategory"
+                  onChange={(e) =>
+                    field.onChange(parseInt(e.target.value) || 0)
+                  }
+                  disabled={!selectedCategoryId || loadingSubcategories}
+                >
+                  <option value={0}>
+                    {!selectedCategoryId
+                      ? "Select a category first"
+                      : "Select a subcategory (optional)"}
                   </option>
-                ))}
+                  {subcategories?.map((subcategory) => (
+                    <option key={subcategory.id} value={subcategory.id}>
+                      {subcategory.subcategory}
+                    </option>
+                  ))}
+                </select>
+                {loadingSubcategories && (
+                  <div className="form-text">
+                    <PulseLoader size={8} color="#0d6efd" />
+                  </div>
+                )}
+                {fieldState.error && (
+                  <div className="invalid-feedback">
+                    {fieldState.error.message}
+                  </div>
+                )}
               </>
             )}
-          </select>
-        </div>
-
-        {/* Service Flow */}
-        <div className="mb-3">
-          <label htmlFor="price" className="form-label">
-            Service flow
-          </label>
-          <Tiptap
-            item={service.service_flow}
-            setItem={(value) => {
-              setService({
-                ...service,
-                service_flow: value,
-              });
-            }}
           />
         </div>
 
-        {/* Service details Form */}
-        <div className="mb-3">
-          <label htmlFor="form_link" className="form-label">
-            Service details link
-          </label>
-          <input
-            type="text"
-            className="form-control"
-            id="form_link"
-            name="details_form_link"
-            value={service.details_form_link}
-            onChange={(e) =>
-              setService({ ...service, details_form_link: e.target.value })
-            }
-            required
-          />
+        {/* Form Actions */}
+        <div className="d-flex justify-content-end gap-2 mt-4">
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={isSubmitting || !form.formState.isValid}
+          >
+            {isSubmitting ? (
+              <>
+                <PulseLoader size={8} color="#ffffff" className="me-2" />
+                {editMode ? "Updating..." : "Creating..."}
+              </>
+            ) : editMode ? (
+              "Update Service"
+            ) : (
+              "Create Service"
+            )}
+          </button>
         </div>
 
-        <button
-          type="submit"
-          className="btn btn-primary rounded px-5 mt-3"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <div className="d-inline-flex align-items-center justify-content-center gap-2">
-              <div>Submitting Service</div>
-              <PulseLoader size={8} color={"#12000d"} loading={true} />
-            </div>
-          ) : addorupdate.mode === "add" ? (
-            "Add Service"
-          ) : (
-            "Update Service"
-          )}
-        </button>
+        {/* Form Debug Info (Development) */}
+        {process.env.NODE_ENV === "development" && (
+          <div className="mt-4 p-3 bg-light rounded">
+            <small className="text-muted">
+              <strong>Form State:</strong> Valid:{" "}
+              {form.formState.isValid.toString()}, Dirty:{" "}
+              {form.formState.isDirty.toString()}, Errors:{" "}
+              {Object.keys(form.formState.errors).length}
+            </small>
+          </div>
+        )}
       </form>
     </div>
   );

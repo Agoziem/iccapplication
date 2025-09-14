@@ -4,13 +4,14 @@ import { TbBrandWhatsapp } from "react-icons/tb";
 import { PulseLoader } from "react-spinners";
 import WATemplateForm from "./WhatsappForm";
 import { useWhatsAppTemplates } from "@/data/hooks/whatsapp.hooks";
+import { WATemplate, MessageStatus } from "@/types/whatsapp";
 import moment from "moment";
 
 /**
  * Enhanced WhatsappMessaging component with comprehensive error handling and safety checks
  * Manages WhatsApp template creation and displays sent template messages
  */
-const WhatsappMessaging = () => {
+const WhatsappMessaging: React.FC = () => {
   // Fetch sent templates with error handling
   const {
     data: senttemplatemessages,
@@ -22,19 +23,25 @@ const WhatsappMessaging = () => {
   const templatesData = useMemo(() => {
     if (!senttemplatemessages || !Array.isArray(senttemplatemessages)) return [];
     
-    return senttemplatemessages.filter(template => template && typeof template === 'object');
+    return senttemplatemessages.filter((template): template is WATemplate => 
+      template && typeof template === 'object' && template.id !== undefined
+    );
   }, [senttemplatemessages]);
 
 
   // Safe text truncation
-  const truncateText = useCallback((text, maxLength = 100) => {
+  const truncateText = useCallback((text: string | undefined, maxLength = 100) => {
     if (!text || typeof text !== 'string') return 'No content available';
     return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
   }, []);
 
   // Status component with proper validation
-  const statusComponent = useCallback((messagestatus) => {
-    const statusMap = {
+  const statusComponent = useCallback((messagestatus: MessageStatus | string | undefined) => {
+    const statusMap: Record<MessageStatus, {
+      className: string;
+      text: string;
+      icon: React.JSX.Element;
+    }> = {
       pending: {
         className: "bg-secondary-light text-secondary",
         text: "sending message",
@@ -52,7 +59,12 @@ const WhatsappMessaging = () => {
       },
     };
 
-    const status = statusMap[messagestatus] || statusMap.failed;
+    const validStatuses: MessageStatus[] = ['pending', 'sent', 'failed'];
+    const normalizedStatus = validStatuses.includes(messagestatus as MessageStatus) 
+      ? (messagestatus as MessageStatus) 
+      : 'failed';
+    
+    const status = statusMap[normalizedStatus];
 
     return (
       <span 
@@ -117,7 +129,13 @@ if (error) {
           {templatesData.length > 0 ? (
             <div className="d-flex flex-column gap-3">
               {templatesData.map((sentmessage) => {
-                const messageKey = sentmessage.id || sentmessage.created_at || Math.random();
+                // Create safe unique key
+                const messageKey = sentmessage.id 
+                  ? String(sentmessage.id) 
+                  : sentmessage.created_at 
+                    ? new Date(sentmessage.created_at).getTime().toString()
+                    : Math.random().toString();
+                
                 const messageTitle = sentmessage.title || 'No Title';
                 const messageText = sentmessage.text || 'No content';
                 const messageDate = sentmessage.created_at || '';

@@ -1,91 +1,149 @@
+"use client";
 import React from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { FiEdit, FiTrash2, FiEye } from "react-icons/fi";
+import { BsGear } from "react-icons/bs";
 import ServicesPlaceholder from "@/components/custom/ImagePlaceholders/ServicesPlaceholder";
 import ApplicationPlaceholder from "@/components/custom/ImagePlaceholders/ApplicationPlaceholder";
-import Link from "next/link";
+import { Service } from "@/types/items";
 
-/**
- * @param {{ item: Service; tab: any; onEdit: any; onDelete: any; openModal: any; }} param0
- */
-const ServiceCard = ({ item, tab, onEdit, onDelete, openModal }) => (
-  <div className="col-12 col-md-4">
-    <div className="card p-3 py-4">
-      <div className="d-flex justify-content-center align-items-center">
-        <div className="me-3">
-          {item.img_url ? (
-            <img
-              src={item.img_url}
-              alt="Services"
-              width={100}
-              height={100}
-              style={{
-                maxWidth: "60px",
-                maxHeight: "60px",
-                objectFit: "cover",
-                borderRadius: "50%",
-              }}
-            />
-          ) : (
-            <>
-              {item.category.category === "application" ? (
-                <ApplicationPlaceholder />
-              ) : (
-                <ServicesPlaceholder />
-              )}
-            </>
+interface ServiceCardProps {
+  item: Service;
+  tab: string;
+  onEdit: (service: Service) => void;
+  onDelete: (service: Service) => void;
+  openModal: (service: Service) => void;
+}
+
+const ServiceCard: React.FC<ServiceCardProps> = ({ 
+  item, 
+  tab, 
+  onEdit, 
+  onDelete, 
+  openModal 
+}) => {
+  const formatPrice = (price: string) => {
+    try {
+      return parseFloat(price).toLocaleString("en-NG", {
+        style: "currency",
+        currency: "NGN",
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      });
+    } catch {
+      return `₦${price}`;
+    }
+  };
+
+  const truncateText = (text: string | undefined, maxLength: number) => {
+    if (!text) return "No description available";
+    return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+  };
+
+  return (
+    <div className="col-12 col-md-6 col-lg-4 mb-4">
+      <div className="card h-100 shadow-sm border-0 position-relative overflow-hidden">
+        {/* Service Image */}
+        <div className="position-relative">
+          <div className="d-flex justify-content-center align-items-center p-3 bg-light">
+            {item.img_url ? (
+              <Image
+                src={item.img_url}
+                alt={item.name}
+                width={80}
+                height={80}
+                className="rounded-circle object-fit-cover"
+                style={{ maxWidth: "80px", maxHeight: "80px" }}
+              />
+            ) : (
+              <div style={{ width: "80px", height: "80px" }}>
+                {item.category?.category === "application" ? (
+                  <ApplicationPlaceholder />
+                ) : (
+                  <ServicesPlaceholder />
+                )}
+              </div>
+            )}
+          </div>
+          {/* Category Badge */}
+          {item.category?.category && (
+            <span className="position-absolute top-0 end-0 badge bg-primary m-2 text-capitalize">
+              {item.category.category}
+            </span>
           )}
         </div>
 
-        <div className="flex-fill py-2">
-          <h6>{item.name}</h6>
-          <p className="text-primary mb-1">
-            {item.description.length > 80 ? (
-              <span className="text-primary">
-                {item.description.substring(0, 80)}...{" "}
-                {/* <span
-                  className="text-secondary fw-bold"
-                  style={{ cursor: "pointer" }}
-                  onClick={() => openModal(item)}
-                >
-                  view more
-                </span> */}
-              </span>
-            ) : (
-              item.description
-            )}
+        {/* Card Body */}
+        <div className="card-body d-flex flex-column">
+          {/* Service Name */}
+          <h6 className="card-title fw-bold text-dark mb-2" title={item.name}>
+            {truncateText(item.name, 30)}
+          </h6>
+
+          {/* Service Description */}
+          <p className="card-text text-muted small mb-3 flex-grow-1">
+            {truncateText(item.description, 80)}
           </p>
 
-          {/* Manage Service */}
-          <div>
-            <Link href={`services/${item.id}`} className="text-secondary fw-bold">
-              manage service
-            </Link>
+          {/* Service Statistics */}
+          <div className="d-flex justify-content-between align-items-center mb-3 small text-muted">
+            <span>
+              {item.number_of_times_bought || 0} purchase{(item.number_of_times_bought || 0) !== 1 ? 's' : ''}
+            </span>
+            {item.created_at && (
+              <span>
+                {new Date(item.created_at).toLocaleDateString()}
+              </span>
+            )}
           </div>
 
-          <div className="d-flex align-items-center justify-content-between mt-3">
-            <span className="fw-bold text-primary">
-              &#8358;{parseFloat(item.price)}
+          {/* Price and Actions */}
+          <div className="d-flex justify-content-between align-items-center">
+            <span className="fw-bold text-success h6 mb-0">
+              {formatPrice(item.price)}
             </span>
-            <div>
+            
+            {/* Action Buttons */}
+            <div className="btn-group" role="group">
               <button
-                className="btn btn-sm btn-accent-secondary rounded py-1 px-3 me-2"
-                onClick={() => {
-                  onEdit(item);
-                }}
+                className="btn btn-sm btn-outline-primary"
+                onClick={() => onEdit(item)}
+                title="Edit Service"
               >
-                edit
+                <FiEdit size={14} />
               </button>
               <button
-                className="btn btn-sm btn-danger rounded py-1 px-3"
-                onClick={() => onDelete(item)}
+                className="btn btn-sm btn-outline-info"
+                onClick={() => openModal(item)}
+                title="View Details"
               >
-                delete
+                <FiEye size={14} />
+              </button>
+              <button
+                className="btn btn-sm btn-outline-danger"
+                onClick={() => onDelete(item)}
+                title="Delete Service"
+              >
+                <FiTrash2 size={14} />
               </button>
             </div>
+          </div>
+
+          {/* Manage Service Link */}
+          <div className="mt-3 pt-2 border-top">
+            <Link 
+              href={`/dashboard/services/${item.id}`} 
+              className="text-decoration-none d-flex align-items-center justify-content-center text-primary small"
+            >
+              <BsGear className="me-1" size={14} />
+              Manage Service
+            </Link>
           </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default ServiceCard;

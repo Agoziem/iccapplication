@@ -134,6 +134,8 @@ export const ProductResponseSchema = z.object({
   userIDs_that_bought_this_product: z.array(z.number()).optional(),
 });
 
+
+
 /**
  * Create Product Category Schema (ProductCreateCategory from API)
  */
@@ -268,25 +270,30 @@ export const DeleteResponseSchema = z.object({
 // ------------------------------------
 
 /* ---------- Product ---------- */
+// Extended create product schema to include digital and free fields
 export const createProductSchema = z.object({
-  name: z.string(),
-  description: z.string(),
-  price: z.number(),
-  preview: imageSchema,   // Image (file upload)
-  product: documentSchema,   // File (upload)
-  category: z.number(),
-  subcategory: z.number(),
-  organization: z.string().uuid(),          // assuming org is UUID in Django
+  name: z.string().min(1, "Product name is required"),
+  description: z.string().min(1, "Description is required"), 
+  price: z.number().min(0, "Price must be positive"),
+  preview: imageSchema,
+  product: documentSchema,
+  category: z.number().min(1, "Category is required"),
+  subcategory: z.number().optional(),
+  organization: z.string(),
+  digital: z.boolean().default(false),
+  free: z.boolean().default(false),
 });
 
 export const updateProductSchema = z.object({
-  name: z.string().optional(),
-  description: z.string().optional(),
-  price: z.number().optional(),
+  name: z.string().min(1, "Product name is required").optional(),
+  description: z.string().min(1, "Description is required").optional(),
+  price: z.number().min(0, "Price must be positive").optional(),
   preview: imageSchema,
   product: documentSchema,
-  category: z.number().optional(),
+  category: z.number().min(1, "Category is required").optional(),
   subcategory: z.number().optional(),
+  digital: z.boolean().optional(),
+  free: z.boolean().optional(),
 });
 
 /* ---------- Service ---------- */

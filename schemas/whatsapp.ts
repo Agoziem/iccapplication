@@ -126,3 +126,25 @@ export const WAMessageArraySchema = z.array(WAMessageSchema);
  * Schema for arrays of WhatsApp templates
  */
 export const WATemplateArraySchema = z.array(WATemplateSchema);
+
+// ---------------------------------------------------------------------
+// WebSocket Message Schema (for real-time updates)
+// ---------------------------------------------------------------------
+export const WAMessageEventSchema = z.object({
+  operation: z.string(), // e.g. "new_message"
+  contact: ContactSchema,
+  message: WAMessageSchema,
+});
+
+export const WAContactEventSchema = z.object({
+  operation: z.enum(["update_seen_status", "contact_update", "contact_delete"]), // extend as needed
+  contact: ContactSchema,
+});
+
+export const UpdateSeenStatusSchema = z.object({
+  operation: z.literal("update_seen_status"),
+  contact: z.object({
+    id: z.number(),
+  }),
+});
+

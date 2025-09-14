@@ -1,36 +1,44 @@
 "use client";
-import { useAdminContext } from "@/providers/context/Admincontextdata";
-import React, { useEffect, useState, useTransition } from "react";
+import React, { useEffect, useMemo, useState, useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FaVideo } from "react-icons/fa6";
+import { BsPersonFillGear } from "react-icons/bs";
+import { PulseLoader } from "react-spinners";
 import Modal from "@/components/custom/Modal/modal";
 import Alert from "@/components/custom/Alert/Alert";
 import VideoCard from "./VideoCard";
 import VideoForm from "./VideoForm";
 import CategoryTabs from "@/components/features/Categories/Categoriestab";
-import CategoriesForm from "@/components/features/Categories/Categories";
-import SubCategoriesForm from "@/components/features/SubCategories/SubCategoriesForm";
-import { FaVideo } from "react-icons/fa6";
 import Pagination from "@/components/custom/Pagination/Pagination";
-import { VideoDefault } from "@/data/constants";
-import { useRouter } from "next/navigation";
-import { useSearchParams } from "next/navigation";
-import {
-  createVideo,
-  deleteVideo,
-  fetchVideos,
-  updateVideo,
-  vidoesapiAPIendpoint,
-} from "@/data/hooks/video.hooks";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
-import { PulseLoader } from "react-spinners";
-import { useFetchCategories } from "@/data/categories/categories.hook";
-import { useCreateVideo, useDeleteVideo, useFetchVideos, useUpdateVideo } from "@/data/hooks/video.hooks";
+import { useAdminContext } from "@/providers/context/Admincontextdata";
+import {
+  useDeleteVideo,
+  useVideoCategories,
+  useVideos,
+} from "@/data/hooks/video.hooks";
+import { Video, VideoCategory } from "@/types/items";
+import { Category } from "@/types/categories";
+import { ORGANIZATION_ID } from "@/data/constants";
+import { VideoCategoryManager } from "../../Categories/CategoryManager";
+import VideoSubCatForm from "../../SubCategories/videossub";
+
+type AlertState = {
+  show: boolean;
+  message: string;
+  type: "info" | "success" | "warning" | "danger";
+};
 
 const Videos = () => {
-  const { openModal } = useAdminContext();
-  const [video, setVideo] = useState(VideoDefault);
+  const adminctx = useAdminContext();
+  const [video, setVideo] = useState<Video | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showModal2, setShowModal2] = useState(false);
-  const [alert, setAlert] = useState({ show: false, message: "", type: "" });
+  const [alert, setAlert] = useState<AlertState>({
+    show: false,
+    message: "",
+    type: "info",
+  });
   const [addorupdate, setAddorupdate] = useState({ mode: "add", state: false });
 
   const router = useRouter();
@@ -38,231 +46,226 @@ const Videos = () => {
   const currentCategory = searchParams.get("category") || "All";
   const page = searchParams.get("page") || "1";
   const pageSize = "10";
-  const [allCategories, setAllCategories] = useState([]);
-  const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
-  const [searchQuery, setSearchQuery] = useState(""); // State for search input
+  const [allCategories, setAllCategories] = useState<Category[] | null>(null);
+  const [selectedCategory, setSelectedCategory] =
+    useState<VideoCategory | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [isPending, startTransition] = useTransition();
   const [isdeleting, startDeletion] = useTransition();
 
+  // Hooks
+  const { mutateAsync: deleteVideo } = useDeleteVideo();
   const {
-    data: categories,
+    data: videoCategories,
     isLoading: loadingCategories,
     error: categoryError,
-  } = useFetchCategories(`${vidoesapiAPIendpoint}/categories/`);
+  } = useVideoCategories();
 
-  useEffect(() => {
-    if (!categories) return;
-    if (categories.length > 0)
-      setAllCategories([
-        { id: 0, category: "All", description: "All Categories" },
-        ...categories,
-      ]);
-  }, [categories]);
-
-  // ----------------------------------------
-  // Fetch Videos based on category
-  // ----------------------------------------
+  // Fetch Videos
   const {
     data: videos,
     isLoading: loadingVideos,
-    error: error,
-  } = useFetchVideos(
-    `${vidoesapiAPIendpoint}/videos/${Organizationid}/?category=${currentCategory}&page=${page}&page_size=${pageSize}`
-  );
+    error: videosError,
+  } = useVideos(parseInt(ORGANIZATION_ID || "0"), {
+    category: currentCategory === "All" ? "" : currentCategory,
+    page: parseInt(page),
+    page_size: parseInt(pageSize),
+  });
 
-  // -----------------------------------------
+  // Setup categories with "All" option
+  useEffect(() => {
+    if (!videoCategories) return;
+    const processedCategories: Category[] = [
+      { id: 0, category: "All", description: "All Categories" },
+      ...videoCategories
+        .filter((cat) => Boolean(cat.category))
+        .map(
+          (cat): Category => ({
+            id: cat.id || 0,
+            category: cat.category!,
+            description: cat.description || "",
+          })
+        ),
+    ];
+    setAllCategories(processedCategories);
+  }, [videoCategories]);
+
+  // Handle alert display
+  const handleAlert = (message: string, type: AlertState["type"]) => {
+    setAlert({ show: true, message, type });
+    setTimeout(() => {
+      setAlert({ show: false, message: "", type: "info" });
+    }, 5000);
+  };
+
   // Handle page change
-  // -----------------------------------------
-  /**  @param {string} newPage */
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: string | number) => {
+    const pageNum = typeof newPage === "string" ? parseInt(newPage) : newPage;
     router.push(
-      `?category=${currentCategory}&page=${newPage}&page_size=${pageSize}`,
+      `?category=${currentCategory}&page=${pageNum}&page_size=${pageSize}`,
       {
         scroll: false,
       }
     );
   };
 
-  // ---------------------------------------
-  // Filter videos based on search input
-  // ---------------------------------------
-  let filteredVideos = videos?.results || [];
-  if (searchQuery) {
-    filteredVideos = filteredVideos.filter((video) =>
-      video.title.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }
-
-  // -------------------------------
   // Handle category change
-  // -------------------------------
-  /**  @param {string} category */
-  const handleCategoryChange = (category) => {
-    router.push(`?category=${category}&page=${page}&page_size=${pageSize}`, {
+  const handleCategoryChange = (categoryName: string) => {
+    const category = allCategories?.find(
+      (cat) => cat.category === categoryName
+    );
+    const categoryId = category?.id || 0;
+    router.push(`?category=${categoryId}&page=1&page_size=${pageSize}`, {
       scroll: false,
     });
   };
 
-  // ------------------------------------------------------
-  // Fetch all videos and paginate them
-  // ------------------------------------------------------
-  const closeModal = () => {
-    setShowModal(false);
-    setShowModal2(false);
-    setVideo(VideoDefault);
-    setAddorupdate({ mode: "", state: false });
+  // Open modal for add/edit
+  const openModal = (editVideo?: Video) => {
+    if (editVideo) {
+      setVideo(editVideo);
+      setAddorupdate({ mode: "update", state: true });
+    } else {
+      setVideo(null);
+      setAddorupdate({ mode: "add", state: false });
+    }
+    setShowModal(true);
   };
 
-  const handleAlert = (message, type) => {
-    setAlert({ show: true, message, type });
-    setTimeout(() => setAlert({ show: false, message: "", type: "" }), 3000);
-  };
-
-  //----------------------------------------------------
-  // Create a new video or update an existing video
-  //----------------------------------------------------
-  const {mutateAsync: createVideo} = useCreateVideo();
-  const {mutateAsync: updateVideo} = useUpdateVideo();
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    startTransition(async () => {
-      const { organization, category, subcategory, ...restData } = video;
-      const videostosubmit = {
-        ...restData,
-        organization: Organizationid,
-        category: category || "",
-        subcategory: subcategory
-          ? {
-              ...subcategory,
-              category: category.id,
-            }
-          : "",
-      };
-      try {
-        if (addorupdate.mode === "add") {
-          await createVideo(videostosubmit);
-        } else {
-          await updateVideo(videostosubmit);
-        }
-        handleAlert(
-          `your Video have been ${
-            addorupdate.mode === "add" ? "added" : "updated"
-          } successfully `,
-          "success"
-        );
-      } catch (error) {
-        handleAlert("An error have occurred, please try again", "danger");
-      } finally {
-        closeModal();
-      }
-    });
-  };
-
-  //----------------------------------------------------
-  // Delete a Video
-  //----------------------------------------------------
-  const {mutateAsync: deleteVideo} = useDeleteVideo();
-  /**
-   * @async
-   * @param {number} id
-   */
-  const handleDelete = async (id) => {
+  // Handle video deletion
+  const handleDelete = async (videoId: number) => {
     startDeletion(async () => {
       try {
-        await deleteVideo(id);
-        handleAlert("Service deleted Successfully", "success");
+        await deleteVideo(videoId);
+        handleAlert("Video deleted successfully!", "success");
+        setShowModal2(false);
+        setVideo(null);
       } catch (error) {
-        console.log(error.message);
-        handleAlert("Error deleting Service", "danger");
-      } finally {
-        closeModal();
+        handleAlert(
+          error instanceof Error ? error.message : "Failed to delete video",
+          "danger"
+        );
       }
     });
   };
 
-  //   ------------------------------------------------------
-  //   // Create a new service
-  //   // ------------------------------------------------------
-  const handleEdit = (video) => {
+  // Handle video edit
+  const handleEdit = (video: Video) => {
     setVideo(video);
     setAddorupdate({ mode: "update", state: true });
     setShowModal(true);
   };
 
-  //   ------------------------------------------------------
-  //   // Delete a service
-  //   // ------------------------------------------------------
-  const handleDeleteConfirm = (video) => {
+  // Handle video delete confirmation
+  const handleDeleteConfirm = (video: Video) => {
     setVideo(video);
     setShowModal2(true);
   };
 
+  // Close modals
+  const closeModal = () => {
+    setShowModal(false);
+    setShowModal2(false);
+    setVideo(null);
+    setAddorupdate({ mode: "", state: false });
+  };
+
+  // Handle form success
+  const handleFormSuccess = () => {
+    handleAlert(
+      addorupdate.mode === "add"
+        ? "Video created successfully!"
+        : "Video updated successfully!",
+      "success"
+    );
+    closeModal();
+  };
+
+  // Filter videos based on search query
+  const filteredVideos = useMemo(() => {
+    if (!videos?.results) return [];
+
+    let filtered = videos.results;
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      filtered = filtered.filter(
+        (video) =>
+          video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (video.description
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase()) ??
+            false)
+      );
+    }
+
+    return filtered;
+  }, [videos, searchQuery]);
+
+  if (loadingVideos) {
+    return (
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ minHeight: "400px" }}
+      >
+        <PulseLoader color="#0d6efd" size={15} />
+      </div>
+    );
+  }
+
   return (
-    <div>
-      <hr />
-      <div className="row">
+    <div className="container-fluid">
+      {/* Header */}
+      <div className="row mb-4">
+        <div className="col-md-6">
+          <div className="d-flex align-items-center">
+            <FaVideo size={32} className="text-primary me-2" />
+            <h4 className="mb-0">Videos Management</h4>
+          </div>
+        </div>
+        <div className="col-md-6 text-end">
+          <button
+            className="btn btn-primary"
+            onClick={() => openModal()}
+            disabled={isPending}
+          >
+            Add New Video
+          </button>
+        </div>
+      </div>
+
+      {/* Category Management */}
+      <div className="row mb-4">
         <div className="col-12 col-md-7">
-          <CategoriesForm
-            items={categories}
-            addUrl={`${vidoesapiAPIendpoint}/add_category/`}
-            updateUrl={`${vidoesapiAPIendpoint}/update_category`}
-            deleteUrl={`${vidoesapiAPIendpoint}/delete_category`}
-          />
+          <VideoCategoryManager />
         </div>
         <div className="col-12 col-md-5">
-          <SubCategoriesForm
-            categories={categories}
-            apiendpoint={vidoesapiAPIendpoint}
-            addUrl={`${vidoesapiAPIendpoint}/create_subcategory/`}
-            updateUrl={`${vidoesapiAPIendpoint}/update_subcategory`}
-            deleteUrl={`${vidoesapiAPIendpoint}/delete_subcategory`}
-          />
+          <VideoSubCatForm />
         </div>
       </div>
 
-      {/* categories */}
-      <div className="mb-3 ps-2 ps-md-0">
-        {/* Categories */}
-        <h5 className="mb-3 fw-bold">categories</h5>
-        {loadingCategories && !categoryError ? (
-          <div className="d-flex gap-2 align-items-center">
-            <div
-              className="spinner-border spinner-border-sm text-primary"
-              role="status"
-            >
-              <span className="visually-hidden">Loading...</span>
+      {/* Categories and Search */}
+      <div className="row mb-4">
+        <div className="col-md-8">
+          <h5 className="mb-3 fw-bold">Categories</h5>
+          {loadingCategories && !categoryError ? (
+            <div className="text-center">
+              <PulseLoader color="#0d6efd" size={10} />
             </div>
-            fetching Service Categories
-          </div>
-        ) : (
-          <CategoryTabs
-            categories={allCategories}
-            currentCategory={currentCategory}
-            setCurrentCategory={handleCategoryChange}
-          />
-        )}
-      </div>
-
-      <div className="d-flex flex-column flex-md-row flex-wrap align-items-start align-items-md-center gap-3 pe-3 pb-3 mb-3">
-        <button
-          className="btn btn-primary border-0 rounded mb-2 mt-4 mt-md-0 mb-md-0"
-          style={{ backgroundColor: "var(--bgDarkerColor)" }}
-          onClick={() => {
-            setAddorupdate({ mode: "add", state: true });
-            setShowModal(true);
-          }}
-        >
-          <i className="bi bi-plus-circle me-2 h5 mb-0"></i> Add{" "}
-          {currentCategory} Video
-        </button>
-        <div>
-          <h5 className="mb-1">{currentCategory} Videos</h5>
-          <p className="mb-0 text-primary">
-            {videos?.count} Video{videos?.count > 1 ? "s" : ""} in Total
-          </p>
+          ) : (
+            <CategoryTabs
+              categories={allCategories || []}
+              currentCategory={currentCategory}
+              setCurrentCategory={(categoryName: string) => {
+                const category = allCategories?.find(
+                  (cat) => cat.category === categoryName
+                );
+                handleCategoryChange(category?.category || "All");
+              }}
+            />
+          )}
         </div>
-        <div className="ms-0 ms-md-auto mb-4 mb-md-0">
+        <div className="col-md-4">
           <SearchInput
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
@@ -271,54 +274,69 @@ const Videos = () => {
         </div>
       </div>
 
+      {/* Videos Header */}
+      <div className="row mb-3 align-items-center">
+        <div className="col-md-6">
+          <h5 className="mb-1">{currentCategory} Videos</h5>
+          <p className="mb-0 text-primary">
+            {videos?.count ?? 0} Video{(videos?.count ?? 0) !== 1 ? "s" : ""} in
+            Total
+          </p>
+        </div>
+      </div>
+
+      {/* Alert */}
       {alert.show && <Alert type={alert.type}>{alert.message}</Alert>}
-      {searchQuery && <h5>Search Results</h5>}
+
+      {/* Search Results Header */}
+      {searchQuery && <h5 className="mb-3">Search Results</h5>}
+
+      {/* Videos Grid */}
       <div className="row">
-        {
-          // loading
-          loadingVideos && !error && (
-            <div className="d-flex justify-content-center">
-              {/* spinner */}
-              <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </div>
+        {loadingVideos && !videosError ? (
+          <div className="col-12 d-flex justify-content-center">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
             </div>
-          )
-        }
-        {!loadingVideos && filteredVideos?.length > 0 ? (
-          filteredVideos?.map((video) => (
+          </div>
+        ) : filteredVideos.length === 0 ? (
+          <div className="col-12 text-center py-5">
+            <FaVideo size={64} className="text-muted mb-3" />
+            <h5 className="text-muted">No videos found</h5>
+            <p className="text-muted">
+              {searchQuery
+                ? "Try adjusting your search criteria"
+                : "Start by adding your first video"}
+            </p>
+          </div>
+        ) : (
+          filteredVideos.map((video) => (
             <VideoCard
-              openModal={openModal}
               key={video.id}
-              tab={currentCategory}
               item={video}
+              tab={currentCategory}
               onEdit={handleEdit}
               onDelete={handleDeleteConfirm}
+              openModal={adminctx?.openModal || (() => {})}
             />
           ))
-        ) : (
-          <div className="mt-3 mb-3 text-center">
-            <FaVideo
-              className="mt-2"
-              style={{
-                fontSize: "6rem",
-                color: "var(--bgDarkerColor)",
-              }}
-            />
-            <p className="mt-3 mb-3">No Videos available</p>
-          </div>
         )}
-        {!loadingVideos &&
-          videos &&
-          Math.ceil(videos.count / parseInt(pageSize)) > 1 && (
+      </div>
+
+      {/* Pagination */}
+      {videos && videos.count > parseInt(pageSize) && (
+        <div className="row mt-4">
+          <div className="col-12">
             <Pagination
-              currentPage={page}
+              currentPage={parseInt(page)}
               totalPages={Math.ceil(videos.count / parseInt(pageSize))}
               handlePageChange={handlePageChange}
             />
-          )}
-      </div>
+          </div>
+        </div>
+      )}
 
+      {/* Add/Edit Video Modal */}
       <Modal
         showmodal={showModal}
         toggleModal={closeModal}
@@ -326,28 +344,27 @@ const Videos = () => {
       >
         <VideoForm
           video={video}
-          setVideo={setVideo}
-          handleSubmit={handleSubmit}
-          addorupdate={addorupdate}
-          categories={categories}
-          isSubmitting={isPending}
+          editMode={addorupdate.mode === "update"}
+          onSuccess={handleFormSuccess}
+          onCancel={closeModal}
         />
       </Modal>
 
+      {/* Delete Confirmation Modal */}
       <Modal showmodal={showModal2} toggleModal={closeModal}>
         <div className="p-3">
-          <p className="text-center">Delete Product</p>
+          <p className="text-center">Delete Video</p>
           <hr />
-          <h5 className="text-center mb-4">{video.title}</h5>
+          <h5 className="text-center mb-4">{video?.title}</h5>
           <div className="d-flex justify-content-center">
             <button
               className="btn btn-danger border-0 rounded me-2"
-              onClick={() => handleDelete(video.id)}
+              onClick={() => video && video.id && handleDelete(video.id)}
               disabled={isdeleting}
             >
               {isdeleting ? (
                 <div className="d-inline-flex align-items-center justify-content-center gap-2">
-                  <div>deleting Video</div>
+                  <div>Deleting Video</div>
                   <PulseLoader size={8} color={"#ffffff"} loading={true} />
                 </div>
               ) : (
@@ -355,7 +372,7 @@ const Videos = () => {
               )}
             </button>
             <button
-              className="btn btn-accent-secondary border-0 rounded"
+              className="btn btn-secondary border-0 rounded"
               onClick={closeModal}
             >
               Cancel

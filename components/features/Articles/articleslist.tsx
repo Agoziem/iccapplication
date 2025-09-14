@@ -1,5 +1,5 @@
 "use client";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import "./articles.css";
 import { MdOutlineRemoveRedEye } from "react-icons/md";
 import { BiSolidLike } from "react-icons/bi";
@@ -10,72 +10,48 @@ import ArticlePlaceholder from "../configuration/articles/ArticlePlaceholder";
 import BackButton from "../../custom/backbutton/BackButton";
 import Pagination from "../../custom/Pagination/Pagination";
 import CategoryTabs from "../Categories/Categoriestab";
-import {
-  articleAPIendpoint,
-} from "@/data/hooks/articles.hooks";
 import { useRouter } from "next/navigation";
-import { useFetchArticleCategories, useFetchArticles } from "@/data/hooks/articles.hooks";
+import { useArticleCategories, useArticles } from "@/data/hooks/articles.hooks";
+import { ArticlesError, CategoriesError } from "./ArticleErrorBoundary";
+import { Category } from "@/types/articles";
 
-/**
- * Error Component for Categories
- */
-const CategoriesError = ({ error, onRetry }) => (
-  <div className="alert alert-warning" role="alert">
-    <div className="d-flex align-items-center">
-      <i className="bi bi-exclamation-triangle-fill me-2"></i>
-      <div>
-        <strong>Failed to load categories</strong>
-        <p className="mb-0 small">{error?.message || "Could not fetch article categories"}</p>
-        <button className="btn btn-sm btn-outline-warning mt-1" onClick={onRetry}>
-          Retry
-        </button>
-      </div>
-    </div>
-  </div>
-);
+interface CategoryWithAll extends Category {
+  id: number;
+  category: string;
+}
 
-/**
- * Error Component for Articles List
- */
-const ArticlesError = ({ error, onRetry }) => (
-  <div className="alert alert-danger text-center" role="alert">
-    <i className="bi bi-exclamation-circle-fill mb-3" style={{ fontSize: "3rem" }}></i>
-    <h5>Failed to Load Articles</h5>
-    <p className="mb-3">{error?.message || "Could not fetch articles at this time"}</p>
-    <button className="btn btn-primary" onClick={onRetry}>
-      <i className="bi bi-arrow-clockwise me-1"></i>
-      Try Again
-    </button>
-  </div>
-);
-
-const ArticlesList = () => {
+const ArticlesList: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentCategory = searchParams.get("category") || "All";
   const page = searchParams.get("page") || "1";
   const pageSize = "10";
-  const [allCategories, setAllCategories] = useState([]);
-
-  const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
+  const [allCategories, setAllCategories] = useState<CategoryWithAll[]>([]);
   // Fetch categories with error handling
   const {
     data: categories,
     isLoading: loadingCategories,
     isError: categoryError,
     error: categoryErrorDetails,
-  } = useFetchArticleCategories();
+  } = useArticleCategories();
 
   // --------------------------------------
   // Add All categories once fetched with validation
   // -----------------------------------------
   useEffect(() => {
     if (categories && Array.isArray(categories) && categories.length > 0) {
-      const allCategoriesWithDefault = [{ id: 0, category: "All" }, ...categories];
+      const allCategoriesWithDefault: CategoryWithAll[] = [
+        { id: 0, category: "All", description: "All articles" }, 
+        ...categories.map(cat => ({
+          id: cat.id || 0,
+          category: cat.category,
+          description: cat.description
+        }))
+      ];
       setAllCategories(allCategoriesWithDefault);
     } else if (!loadingCategories && !categoryError) {
       // Set only "All" if no categories are available
-      setAllCategories([{ id: 0, category: "All" }]);
+      setAllCategories([{ id: 0, category: "All", description: "All articles" }]);
     }
   }, [categories, loadingCategories, categoryError]);
 
@@ -87,33 +63,35 @@ const ArticlesList = () => {
     isLoading: loadingArticles,
     isError: articleError,
     error: articleErrorDetails,
-  } = useFetchArticles(
-    `${articleAPIendpoint}/orgblogs/${Organizationid}/?category=${currentCategory}&page=${page}&page_size=${pageSize}`
-  );
+  } = useArticles(undefined, {
+    category: currentCategory !== "All" ? currentCategory : undefined,
+    page: page,
+    page_size: pageSize,
+  });
 
   // -----------------------------------------
   // Handle page change with validation
   // -----------------------------------------
-  /**  @param {string} newPage */
-  const handlePageChange = (newPage) => {
-    if (!newPage || isNaN(parseInt(newPage)) || parseInt(newPage) < 1) {
-      console.error("Invalid page number:", newPage);
+  const handlePageChange = useCallback((newPage: string | number) => {
+    const pageNumber = typeof newPage === 'string' ? newPage : newPage.toString();
+    
+    if (!pageNumber || isNaN(parseInt(pageNumber)) || parseInt(pageNumber) < 1) {
+      console.error("Invalid page number:", pageNumber);
       return;
     }
     
     router.push(
-      `?category=${encodeURIComponent(currentCategory)}&page=${newPage}&page_size=${pageSize}`,
+      `?category=${encodeURIComponent(currentCategory)}&page=${pageNumber}&page_size=${pageSize}`,
       {
         scroll: false,
       }
     );
-  };
+  }, [currentCategory, pageSize, router]);
 
   // -------------------------------
   // Handle category change with validation
   // -------------------------------
-  /**  @param {string} category */
-  const handleCategoryChange = (category) => {
+  const handleCategoryChange = useCallback((category: string) => {
     if (!category || typeof category !== 'string') {
       console.error("Invalid category:", category);
       return;
@@ -122,7 +100,18 @@ const ArticlesList = () => {
     router.push(`?category=${encodeURIComponent(category)}&page=1&page_size=${pageSize}`, {
       scroll: false,
     });
-  };
+  }, [pageSize, router]);
+
+  // Calculate total pages with memoization
+  const totalPages = useCallback(() => {
+    if (!articles?.count) return 0;
+    return Math.ceil(articles.count / parseInt(pageSize));
+  }, [articles?.count, pageSize]);
+
+  // Memoize pagination visibility
+  const shouldShowPagination = useCallback(() => {
+    return !loadingArticles && !articleError && articles?.count && totalPages() > 1;
+  }, [loadingArticles, articleError, articles?.count, totalPages]);
 
   return (
     <div>
@@ -173,7 +162,7 @@ const ArticlesList = () => {
                   <span className="visually-hidden">Loading...</span>
                 </div>
               </div>
-            ) : articles?.results?.length > 0 ? (
+            ) : articles && articles.results && articles.results.length > 0 ? (
               articles.results.map((item, index, articlesArray) => {
                 // Add null safety for each article item
                 if (!item || !item.id) {
@@ -198,7 +187,7 @@ const ArticlesList = () => {
                         {item.img_url ? (
                           <img
                             src={item.img_url}
-                            alt="article"
+                            alt={item.title || "Article image"}
                             width={90}
                             height={90}
                             className="object-fit-cover rounded"
@@ -244,17 +233,13 @@ const ArticlesList = () => {
               </div>
             )}
           </ul>
-          {!loadingArticles &&
-            !articleError &&
-            articles &&
-            articles.count &&
-            Math.ceil((articles.count || 0) / parseInt(pageSize)) > 1 && (
-              <Pagination
-                currentPage={page}
-                totalPages={Math.ceil((articles.count || 0) / parseInt(pageSize))}
-                handlePageChange={handlePageChange}
-              />
-            )}
+          {shouldShowPagination() && (
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages()}
+              handlePageChange={handlePageChange}
+            />
+          )}
         </div>
       </div>
     </div>

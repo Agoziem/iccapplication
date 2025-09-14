@@ -319,7 +319,7 @@ export const useEditTermsOfUse = (): UseMutationResult<Organization, Error, { or
 };
 
 // Staff Query Hooks
-export const useStaff = (organizationId: number, params?: Record<string, any>): UseQueryResult<PaginatedStaff, Error> => {
+export const useStaffs = (organizationId: number, params?: Record<string, any>): UseQueryResult<PaginatedStaff, Error> => {
   return useQuery({
     queryKey: [...ORGANIZATION_KEYS.staff(organizationId), params],
     queryFn: () => fetchStaff(organizationId),

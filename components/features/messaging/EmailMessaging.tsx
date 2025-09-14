@@ -1,21 +1,22 @@
 import React, { useMemo, useCallback } from "react";
-import { useFetchSentEmails } from "@/data/Emails/emails.hook";
 import EmailForm from "./EmailForm";
 import { TbMessageCancel } from "react-icons/tb";
 import { PulseLoader } from "react-spinners";
 import moment from "moment";
+import { useSentEmails } from "@/data/hooks/email.hooks";
 
 /**
  * Enhanced EmailMessaging component with comprehensive error handling and safety checks
  * Manages email template creation and displays sent email templates
+ * Optimized with React.memo for performance
  */
-const EmailMessaging = () => {
+const EmailMessaging: React.FC = React.memo(() => {
   // Fetch sent emails with error handling
   const { 
     data: sentemails, 
     isLoading, 
     error 
-  } = useFetchSentEmails();
+  } = useSentEmails();
 
   // Safe email data processing
   const emailsData = useMemo(() => {
@@ -26,14 +27,18 @@ const EmailMessaging = () => {
 
 
   // Safe text truncation
-  const truncateText = useCallback((text, maxLength = 100) => {
+  const truncateText = useCallback((text: string | undefined, maxLength = 100) => {
     if (!text || typeof text !== 'string') return 'No content';
     return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
   }, []);
 
   // Status component with proper validation
-  const statusComponent = useCallback((emailstatus) => {
-    const statusMap = {
+  const statusComponent = useCallback((emailstatus: string) => {
+    const statusMap: Record<string, {
+      className: string;
+      text: string;
+      icon: React.JSX.Element;
+    }> = {
       pending: {
         className: "bg-secondary-light text-secondary",
         text: "sending emails",
@@ -110,11 +115,17 @@ const EmailMessaging = () => {
           {emailsData.length > 0 ? (
             <div className="d-flex flex-column gap-3">
               {emailsData.map((sentemail) => {
-                const emailKey = sentemail.id || sentemail.created_at || Math.random();
+                // Create safe unique key
+                const emailKey = sentemail.id 
+                  ? String(sentemail.id)
+                  : sentemail.created_at
+                    ? new Date(sentemail.created_at).getTime().toString()
+                    : Math.random().toString();
+                
                 const emailSubject = sentemail.subject || 'No Subject';
-                const emailBody = sentemail.body || 'No content';
+                const emailBody = sentemail.message || 'No content'; // Use 'message' instead of 'body'
                 const emailDate = sentemail.created_at || '';
-                const emailStatus = sentemail.status || 'unknown';
+                const emailStatus = 'sent'; // Default status since it's sent emails
 
                 return (
                   <div key={emailKey} className="card p-4">
@@ -163,6 +174,9 @@ const EmailMessaging = () => {
       </div>
     </div>
   );
-};
+});
+
+// Add display name for debugging
+EmailMessaging.displayName = 'EmailMessaging';
 
 export default EmailMessaging;

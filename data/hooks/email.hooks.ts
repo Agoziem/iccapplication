@@ -105,7 +105,7 @@ export const getSentEmails = async (): Promise<Emails> => {
   return response.data;
 };
 
-export const createSendEmails = async (
+export const createEmailMessage = async (
   emailData: CreateEmailMessage
 ): Promise<EmailMessage> => {
   const response = await AxiosInstanceWithToken.post(
@@ -268,7 +268,7 @@ export const useSentEmails = (
   });
 };
 
-export const useCreateSendEmails = (): UseMutationResult<
+export const useCreateEmailMessage = (): UseMutationResult<
   EmailMessage,
   Error,
   CreateEmailMessage
@@ -276,7 +276,7 @@ export const useCreateSendEmails = (): UseMutationResult<
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: createSendEmails,
+    mutationFn: createEmailMessage,
     onSuccess: () => {
       queryClient.invalidateQueries(EMAIL_KEYS.sent());
       queryClient.invalidateQueries(EMAIL_KEYS.all);

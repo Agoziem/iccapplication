@@ -1,19 +1,25 @@
 import React, { useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import "./OrderTableItems.css";
+import { CustomerPaymentStatsArray } from '@/types/payments';
+
+type CustomerTableProps = {
+  currentItems?: CustomerPaymentStatsArray
+  setCustomerID: (id: number) => void;
+  toggleModal: () => void;
+};
 
 /**
  * Enhanced CustomersTable component with comprehensive error handling and safety checks
- * Displays customer payment statistics with safe data processing
- * 
- * @param {{ 
- *   currentItems?: CustomerPaymentStats[];
- *   setCustomerID: (id: number) => void;
- *   toggleModal: () => void;
- * }} props
+ * Displays customer payment statistics with proper validation and type safety
+ * Optimized with React.memo for performance
  */
-const CustomersTable = ({ currentItems = [], setCustomerID, toggleModal }) => {
-  
+const CustomersTable: React.FC<CustomerTableProps> = React.memo(({ 
+  currentItems = [], 
+  setCustomerID, 
+  toggleModal 
+}) => {
+
   // Safe data processing with validation
   const customersData = useMemo(() => {
     if (!Array.isArray(currentItems)) return [];
@@ -26,7 +32,7 @@ const CustomersTable = ({ currentItems = [], setCustomerID, toggleModal }) => {
   }, [currentItems]);
 
   // Safe amount formatting
-  const formatAmount = useCallback((value) => {
+  const formatAmount = useCallback((value: string | number | null | undefined) => {
     if (value === null || value === undefined) return '0.00';
     
     let numValue;
@@ -44,7 +50,7 @@ const CustomersTable = ({ currentItems = [], setCustomerID, toggleModal }) => {
   }, []);
 
   // Safe customer link handler
-  const handleCustomerClick = useCallback((e, customerId) => {
+  const handleCustomerClick = useCallback((e: React.MouseEvent<HTMLAnchorElement> | React.KeyboardEvent<HTMLAnchorElement>, customerId: number) => {
     e.preventDefault();
     
     if (!customerId || typeof customerId !== 'number') {
@@ -134,8 +140,9 @@ const CustomersTable = ({ currentItems = [], setCustomerID, toggleModal }) => {
       </table>
     </div>
   );
-};
+});
 
+// Add display name for debugging
+CustomersTable.displayName = 'CustomersTable';
 
-
-export default CustomersTable
+export default CustomersTable;

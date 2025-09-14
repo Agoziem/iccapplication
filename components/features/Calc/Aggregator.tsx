@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { BsCalculator } from "react-icons/bs";
 import { MdRefresh } from "react-icons/md";
 import { v4 as uuidv4 } from "uuid";
@@ -6,15 +6,31 @@ import AggregatorInst from "./AggregatorInst";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { aggregator_schema } from "@/schemas/calculators";
+import { OLevelGrade } from "@/types/calculators";
 
-const Aggregator = () => {
-  const [scores, setScores] = useState({
+interface ScoreState {
+  jamb: string;
+  postUTME: string;
+}
+
+interface OLevelSubject {
+  id: string;
+  subject: string;
+  grade: OLevelGrade | "";
+}
+
+interface GradeMap {
+  [key: string]: number;
+}
+
+const Aggregator: React.FC = () => {
+  const [scores, setScores] = useState<ScoreState>({
     jamb: "",
     postUTME: "",
   });
-  const [aggregate, setAggregate] = useState("0");
-  const [calculationError, setCalculationError] = useState("");
-  const [olevel, setOlevel] = useState([
+  const [aggregate, setAggregate] = useState<string>("0");
+  const [calculationError, setCalculationError] = useState<string>("");
+  const [olevel, setOlevel] = useState<OLevelSubject[]>([
     {
       id: uuidv4(),
       subject: "",
@@ -42,25 +58,25 @@ const Aggregator = () => {
     },
   ]);
 
-  const [showOlevelForm, setShowOlevelForm] = useState(false);
-  const [showPostUTMEForm, setShowPostUTMEForm] = useState(false);
-  const [isPostUTMEOver100, setIsPostUTMEOver100] = useState(true);
+  const [showOlevelForm, setShowOlevelForm] = useState<boolean>(false);
+  const [showPostUTMEForm, setShowPostUTMEForm] = useState<boolean>(false);
+  const [isPostUTMEOver100, setIsPostUTMEOver100] = useState<boolean>(true);
 
   //   ----------------------------------
   //   handle input changes with validation
   //  ----------------------------------
-  const handleChange = (e) => {
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setCalculationError(""); // Clear any previous errors
     setScores((prev) => {
       return { ...prev, [name]: value };
     });
-  };
+  }, []);
 
   //   ----------------------------------
   //   calculate aggregate function with validation
   //   ----------------------------------
-  const calculateAggregate = () => {
+  const calculateAggregate = useCallback(() => {
     try {
       setCalculationError("");
 
@@ -115,12 +131,12 @@ const Aggregator = () => {
       setCalculationError("An error occurred during calculation. Please check your inputs.");
       console.error("Calculation error:", error);
     }
-  };
+  }, [scores, showPostUTMEForm, showOlevelForm, isPostUTMEOver100, olevel]);
 
   //   ----------------------------------
   //   reset form
   //  ----------------------------------
-  const reset = () => {
+  const reset = useCallback(() => {
     setScores({
       jamb: "",
       postUTME: "",
@@ -154,11 +170,13 @@ const Aggregator = () => {
         grade: "",
       },
     ]);
-  };
+  }, []);
 
   // get the equivalent grade point for each subject, with proper fallback
-  const getGradePoint = (grade) => {
-    const gradeMap = {
+  const getGradePoint = useCallback((grade: OLevelGrade | ""): number => {
+    if (!grade) return 0;
+    
+    const gradeMap: GradeMap = {
       A1: showPostUTMEForm ? 4.0 : 10,
       B2: showPostUTMEForm ? 3.6 : 9,
       B3: showPostUTMEForm ? 3.2 : 8,
@@ -168,11 +186,11 @@ const Aggregator = () => {
     };
     
     return gradeMap[grade] || 0; // Return 0 for invalid grades instead of undefined
-  };
+  }, [showPostUTMEForm]);
 
   // handle toggling of PostUTME form
-  const handlePostUTMEToggle = () => {
-    setShowPostUTMEForm(!showPostUTMEForm);
+  const handlePostUTMEToggle = useCallback(() => {
+    setShowPostUTMEForm(prev => !prev);
     if (!showPostUTMEForm) {
       setShowOlevelForm(false);
     }
@@ -180,15 +198,15 @@ const Aggregator = () => {
       ...prev,
       postUTME: "",
     }));
-  };
+  }, [showPostUTMEForm]);
 
   // handle toggling of Olevel form
-  const handleOlevelToggle = () => {
-    setShowOlevelForm(!showOlevelForm);
+  const handleOlevelToggle = useCallback(() => {
+    setShowOlevelForm(prev => !prev);
     if (!showOlevelForm) {
       setShowPostUTMEForm(false);
     }
-  };
+  }, [showOlevelForm]);
 
   return (
     <div className="my-3">
@@ -334,7 +352,7 @@ const Aggregator = () => {
                               i === index
                                 ? {
                                     ...sub,
-                                    grade: e.target.value,
+                                    grade: e.target.value as OLevelGrade | "",
                                   }
                                 : sub
                             )

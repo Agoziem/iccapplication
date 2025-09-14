@@ -1,43 +1,61 @@
 import React, { useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import Modal from "@/components/custom/Modal/modal";
 import Alert from "@/components/custom/Alert/Alert";
+import { Subject, Test } from "@/types/cbt";
+import { useCreateSubject, useDeleteSubject, useUpdateSubject } from "@/data/hooks/cbt.hooks";
+import { createSubjectSchema } from "@/schemas/cbt";
 
-const SubjectDetails = ({ test, setTest, subjects, setCurrentSubject }) => {
-  const [alert, setAlert] = useState({
+type SubjectFormData = z.infer<typeof createSubjectSchema>;
+
+type SubjectDetailsProps = {
+  test: Test;
+  setTest: React.Dispatch<React.SetStateAction<Test>>;
+  subjects: Subject[];
+  setCurrentSubject: React.Dispatch<React.SetStateAction<Subject | null>>;
+};
+
+interface AlertState {
+  show: boolean;
+  message: string;
+  type: "success" | "danger" | "warning" | "info";
+}
+
+const SubjectDetails: React.FC<SubjectDetailsProps> = ({
+  test,
+  setTest,
+  subjects,
+  setCurrentSubject,
+}) => {
+  const [alert, setAlert] = useState<AlertState>({
     show: false,
     message: "",
-    type: "",
+    type: "info",
   });
   const [showModal, setShowModal] = useState(false);
-  const [subjectToDelete, setSubjectToDelete] = useState({
-    id: "",
-    subjectname: "",
-  });
+  const [subjectToDelete, setSubjectToDelete] = useState<Subject | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [subjectToEdit, setSubjectToEdit] = useState({
-    id: "",
-    subjectname: "",
-    subjectduration: 0,
-    questions: [],
+  const [editSubjectId, setEditSubjectId] = useState<number | null>(null);
+  const { mutateAsync: deleteSubjectMutation } = useDeleteSubject();
+  const { mutateAsync: updateSubjectMutation } = useUpdateSubject();
+  const { mutateAsync: createSubjectMutation } = useCreateSubject();
+
+  const form = useForm<SubjectFormData>({
+    resolver: zodResolver(createSubjectSchema),
+    defaultValues: {
+      subjectname: "",
+      subjectduration: 0,
+      questions: [],
+    },
   });
 
-//   delete subject
-  const deleteSubject = async (id) => {
+  // Delete subject
+  const deleteSubject = async (id: number) => {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/CBTapi/deletesubject/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Could not delete subject");
-      }
-      setTest({
-        ...test,
-        testSubject: test.testSubject.filter((subject) => subject.id !== id),
-      });
+      await deleteSubjectMutation(id);
       setAlert({
         show: true,
         message: "Subject deleted Successfully",
@@ -52,67 +70,66 @@ const SubjectDetails = ({ test, setTest, subjects, setCurrentSubject }) => {
       });
     } finally {
       toggleModal(false);
-      setCurrentSubject(test.testSubject.length > 0 ? test.testSubject[0] : {});
+      setCurrentSubject(test.testSubject.length > 0 ? test.testSubject[0] : null);
       setTimeout(() => {
-        setAlert({ show: false, message: "", type: "" });
+        setAlert({ show: false, message: "", type: "info" });
       }, 3000);
     }
   };
 
-
-//   toggle modal
-  const toggleModal = (show) => {
+  // Toggle modal
+  const toggleModal = (show: boolean) => {
     setShowDeleteModal(show);
     setShowModal(show);
     setEditMode(false);
-    setSubjectToEdit({
-      id: "",
-      subjectname: "",
-      subjectduration: 0,
-      questions: [],
-    });
-    setSubjectToDelete({
-      id: "",
-      subjectname: "",
-    });
+    setSubjectToDelete(null);
+    if (!show) {
+      form.reset();
+    }
   };
 
+  // Open edit modal
+  const openEditModal = (subject: Subject) => {
+    form.reset({
+      subjectname: subject.subjectname,
+      subjectduration: subject.subjectduration,
+      questions: subject.questions,
+    });
+    setEditSubjectId(subject.id || null);
+    setEditMode(true);
+    setShowModal(true);
+  };
 
-//   add or update subject
-  const addorUpdateSubject = async (e, url) => {
-    e.preventDefault();
+  // Submit form
+  const onSubmit = async (formData: SubjectFormData) => {
     try {
-      const response = await fetch(url, {
-        method: editMode ? "PUT" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(subjectToEdit),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || "Could not add subject");
-      } else {
-        if (editMode) {
-          // Update subject in the subjects array
-          const updatedSubjects = subjects.map((subject) => {
-            if (subject.id === data.id) {
-              return data;
-            }
-            return subject;
-          });
-          setTest({ ...test, testSubject: updatedSubjects });
-        } else {
-          setTest({ ...test, testSubject: [...test.testSubject, data] });
-        }
-        setAlert({
-          show: true,
-          message: editMode
-            ? "Subject updated Successfully"
-            : "Subject added Successfully",
-          type: "success",
-        });
+      if (!test.id || (editMode && !editSubjectId)) {
+        throw new Error("Invalid test or subject ID");
       }
+      const responseSubject = editMode
+        ? await updateSubjectMutation({ subjectId: editSubjectId!, subjectData: formData })
+        : await createSubjectMutation({ testId: test.id!, subjectData: formData });
+
+      if (editMode) {
+        // Update subject in the subjects array
+        const updatedSubjects = subjects.map((subject) => {
+          if (subject.id === responseSubject.id) {
+            return responseSubject;
+          }
+          return subject;
+        });
+        setTest({ ...test, testSubject: updatedSubjects });
+      } else {
+        setTest({ ...test, testSubject: [...test.testSubject, responseSubject] });
+      }
+
+      setAlert({
+        show: true,
+        message: editMode
+          ? "Subject updated Successfully"
+          : "Subject added Successfully",
+        type: "success",
+      });
     } catch (error) {
       console.error(error);
       setAlert({
@@ -125,7 +142,7 @@ const SubjectDetails = ({ test, setTest, subjects, setCurrentSubject }) => {
     } finally {
       toggleModal(false);
       setTimeout(() => {
-        setAlert({ show: false, message: "", type: "" });
+        setAlert({ show: false, message: "", type: "info" });
       }, 3000);
     }
   };
@@ -169,26 +186,14 @@ const SubjectDetails = ({ test, setTest, subjects, setCurrentSubject }) => {
                 </button>
                 <button
                   className="btn btn-sm btn-accent-secondary rounded py-1 shadow-none me-3"
-                  onClick={() => {
-                    setSubjectToEdit({
-                      id: subject.id,
-                      subjectname: subject.subjectname,
-                      subjectduration: parseInt(subject.subjectduration),
-                      questions: subject.questions,
-                    });
-                    setEditMode(true);
-                    setShowModal(true);
-                  }}
+                  onClick={() => openEditModal(subject)}
                 >
                   edit
                 </button>
                 <button
                   className="btn btn-sm btn-accent-danger rounded"
                   onClick={() => {
-                    setSubjectToDelete({
-                      id: subject.id,
-                      subjectname: subject.subjectname,
-                    });
+                    setSubjectToDelete(subject);
                     setShowDeleteModal(true);
                   }}
                 >
@@ -204,7 +209,7 @@ const SubjectDetails = ({ test, setTest, subjects, setCurrentSubject }) => {
       <Modal showmodal={showDeleteModal} toggleModal={() => toggleModal(false)}>
         <div className="p-3">
           <p className="mb-0">Are you sure you want to delete this subject?</p>
-          <h6 className="mb-3">{subjectToDelete.subjectname}</h6>
+          <h6 className="mb-3">{subjectToDelete?.subjectname}</h6>
           <div className="d-flex justify-content-end">
             <button
               className="btn btn-sm btn-accent-secondary rounded py-1 shadow-none me-3"
@@ -214,7 +219,11 @@ const SubjectDetails = ({ test, setTest, subjects, setCurrentSubject }) => {
             </button>
             <button
               className="btn btn-sm btn-danger rounded"
-              onClick={() => deleteSubject(subjectToDelete.id)}
+              onClick={() => {
+                if (subjectToDelete?.id) {
+                  deleteSubject(subjectToDelete.id);
+                }
+              }}
             >
               Yes
             </button>
@@ -230,62 +239,72 @@ const SubjectDetails = ({ test, setTest, subjects, setCurrentSubject }) => {
         <h5 className="mb-3">
           {editMode ? "Edit Subject" : "Add New Subject"}
         </h5>
-        <form
-          onSubmit={(e) => {
-            addorUpdateSubject(
-              e,
-              editMode
-                ? `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/CBTapi/updatesubject/${subjectToEdit.id}/`
-                : `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/CBTapi/addsubject/${test.id}/`
-            );
-          }}
-        >
+        <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="mb-3">
             <label htmlFor="subjectname" className="form-label">
               Subject Name
             </label>
-            <input
-              type="text"
-              className="form-control"
-              id="subjectname"
-              placeholder="Enter subject name"
-              value={subjectToEdit.subjectname}
-              onChange={(e) =>
-                setSubjectToEdit({
-                  ...subjectToEdit,
-                  subjectname: e.target.value,
-                })
-              }
+            <Controller
+              name="subjectname"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <>
+                  <input
+                    {...field}
+                    type="text"
+                    className={`form-control ${fieldState.error ? "is-invalid" : ""}`}
+                    id="subjectname"
+                    placeholder="Enter subject name"
+                  />
+                  {fieldState.error && (
+                    <div className="invalid-feedback">{fieldState.error.message}</div>
+                  )}
+                </>
+              )}
             />
           </div>
           <div className="mb-3">
             <label htmlFor="subjectduration" className="form-label">
-              Subject Duration
+              Subject Duration (minutes)
             </label>
-            <input
-              type="number"
-              className="form-control"
-              id="subjectduration"
-              placeholder="Enter subject duration"
-              value={subjectToEdit.subjectduration}
-              onChange={(e) =>
-                setSubjectToEdit({
-                  ...subjectToEdit,
-                  subjectduration: parseInt(e.target.value),
-                })
-              }
+            <Controller
+              name="subjectduration"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <>
+                  <input
+                    {...field}
+                    type="number"
+                    className={`form-control ${fieldState.error ? "is-invalid" : ""}`}
+                    id="subjectduration"
+                    placeholder="Enter subject duration"
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                  />
+                  {fieldState.error && (
+                    <div className="invalid-feedback">{fieldState.error.message}</div>
+                  )}
+                </>
+              )}
             />
           </div>
           <div className="d-flex justify-content-end mt-4">
             <button
+              type="button"
               className="btn btn-sm btn-accent-secondary rounded me-3"
-              onClick={() => {
-                toggleModal(false);
-              }}
+              onClick={() => toggleModal(false)}
             >
               Cancel
             </button>
-            <button type="submit" className="btn btn-sm btn-primary rounded">
+            <button
+              type="submit"
+              className="btn btn-sm btn-primary rounded"
+              disabled={form.formState.isSubmitting}
+            >
+              {form.formState.isSubmitting ? (
+                <div className="spinner-border spinner-border-sm me-2" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+              ) : null}
               {editMode ? "Update Subject" : "Add Subject"}
             </button>
           </div>

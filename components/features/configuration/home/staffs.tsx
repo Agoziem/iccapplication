@@ -1,304 +1,426 @@
-import React, { useState } from "react";
+"use client";
+import React, { useState, useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FiUsers, FiEdit, FiTrash2, FiMail, FiPhone, FiMapPin } from "react-icons/fi";
+import { FaFacebook, FaInstagram, FaTwitter, FaLinkedin } from "react-icons/fa";
+import { PulseLoader } from "react-spinners";
 import Modal from "@/components/custom/Modal/modal";
-import "./homeconfig.css";
+import Alert from "@/components/custom/Alert/Alert";
 import StaffForm from "./staffform";
-import { staffdefault } from "@/data/constants";
-import {
-  MainAPIendpoint,
-} from "@/data/hooks/organization.hooks";
-import { useSearchParams, useRouter } from "next/navigation";
 import Pagination from "@/components/custom/Pagination/Pagination";
-import { useCreateStaff, useDeleteStaff, useFetchStaffs, useUpdateStaff } from "@/data/organization/organization.hook";
-import toast from "react-hot-toast";
+import { useDeleteStaff, useStaffs } from "@/data/hooks/organization.hooks";
+import { Staff } from "@/types/organizations";
+import { ORGANIZATION_ID } from "@/data/constants";
+import "./homeconfig.css";
+
+type AlertState = {
+  show: boolean;
+  message: string;
+  type: "info" | "success" | "warning" | "danger";
+};
 
 const Staffs = () => {
-  const OrganizationID = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
-  const [staff, setStaff] = useState(staffdefault);
-  const [addorupdate, setAddorupdate] = useState({
-    mode: "add",
-    state: false,
-  });
+  const [staff, setStaff] = useState<Staff | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [showdeleteModal, setShowDeleteModal] = useState(false);
-  const [openIndex, setOpenIndex] = useState(0);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [alert, setAlert] = useState<AlertState>({ show: false, message: "", type: "info" });
+  const [addorupdate, setAddOrUpdate] = useState({ mode: "add", state: false });
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const router = useRouter();
   const searchParams = useSearchParams();
   const page = searchParams.get("page") || "1";
   const pageSize = "10";
+  const [isPending, startTransition] = useTransition();
+  const [isDeleting, startDeletion] = useTransition();
 
-  // for data fetching
-  const {
-    data: staffs,
-    isLoading: loadingstaffs,
-  } = useFetchStaffs(`${MainAPIendpoint}/staff/${OrganizationID}/?page=${page}&page_size=${pageSize}`)
- 
+  // Hooks
+  const { mutateAsync: deleteStaff } = useDeleteStaff();
 
-  // Handle page change
-  const handlePageChange = (newPage) => {
-    router.push(`?page=${newPage}&page_size=${pageSize}`);
+  // Fetch Staff
+  const { data: staffs, isLoading: loadingStaffs } = useStaffs(
+    parseInt(ORGANIZATION_ID || "0"),
+    {
+      page: parseInt(page, 10),
+      page_size: parseInt(pageSize, 10),
+    }
+  );
+
+  // Handle alert display
+  const handleAlert = (message: string, type: AlertState["type"]) => {
+    setAlert({ show: true, message, type });
+    setTimeout(() => {
+      setAlert({ show: false, message: "", type: "info" });
+    }, 5000);
   };
 
-  const handleToggle = (index) => {
+  // Handle page change
+  const handlePageChange = (newPage: string | number) => {
+    const pageNum = typeof newPage === "string" ? parseInt(newPage) : newPage;
+    router.push(`?page=${pageNum}&page_size=${pageSize}`, { scroll: false });
+  };
+
+  // Handle toggle accordion
+  const handleToggle = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
   };
 
-  // add a staff or edit a staff
-  const { mutateAsync: createStaff, isLoading:isCreating } = useCreateStaff();
-  const { mutateAsync: updateStaff, isLoading:isUpdating } = useUpdateStaff();
-  const addStaff = async (e) => {
-    e.preventDefault();
-    const { organization, ...restData } = staff;
-    const stafftosubmit = {
-      ...restData,
-      organization: parseInt(OrganizationID),
-    };
-    try {
-      if (addorupdate.mode === "add") {
-        await createStaff(stafftosubmit);
-      } else {
-        await updateStaff(stafftosubmit);
+  // Open modal for add/edit
+  const openModal = (editStaff?: Staff) => {
+    if (editStaff) {
+      setStaff(editStaff);
+      setAddOrUpdate({ mode: "update", state: true });
+    } else {
+      setStaff(null);
+      setAddOrUpdate({ mode: "add", state: false });
+    }
+    setShowModal(true);
+  };
+
+  // Handle staff deletion
+  const handleDelete = async (staffId: number) => {
+    startDeletion(async () => {
+      try {
+        await deleteStaff({
+          staffId,
+          organizationId: parseInt(ORGANIZATION_ID || "0"),
+        });
+        handleAlert("Staff member deleted successfully!", "success");
+        setShowDeleteModal(false);
+        setStaff(null);
+      } catch (error) {
+        handleAlert(
+          error instanceof Error ? error.message : "Failed to delete staff member",
+          "danger"
+        );
       }
-      toast.success(`Staff ${addorupdate.mode === "add" ? "added" : "updated"} successfully`);
-    } catch (error) {
-      console.log(error.message);
-      toast.error(`An error just occurred`);
-    } finally {
-      closeModal();
-    }
+    });
   };
 
+  // Handle staff edit
+  const handleEdit = (staff: Staff) => {
+    setStaff(staff);
+    setAddOrUpdate({ mode: "update", state: true });
+    setShowModal(true);
+  };
+
+  // Handle staff delete confirmation
+  const handleDeleteConfirm = (staff: Staff) => {
+    setStaff(staff);
+    setShowDeleteModal(true);
+  };
+
+  // Close modals
   const closeModal = () => {
-    setShowDeleteModal(false);
     setShowModal(false);
-    setStaff(staffdefault);
+    setShowDeleteModal(false);
+    setStaff(null);
+    setAddOrUpdate({ mode: "add", state: false });
   };
 
-  // remove a staff
-  const { mutateAsync: deleteStaff, isLoading:isDeleting } = useDeleteStaff();
-  /**
-   * @async
-   * @param {number} id
-   */
-  const deletestaff = async (id) => {
-    try {
-      await deleteStaff(id);
-      toast.success("Staff Deleted Successfully");
-    } catch (error) {
-      console.log(error.message);
-      toast.error("Error Deleting Staff");
-    } finally {
-      closeModal();
-    }
+  // Handle form success
+  const handleFormSuccess = () => {
+    handleAlert(
+      addorupdate.mode === "add" ? "Staff member created successfully!" : "Staff member updated successfully!",
+      "success"
+    );
+    closeModal();
   };
+
+  if (loadingStaffs) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "400px" }}>
+        <PulseLoader color="#0d6efd" size={15} />
+      </div>
+    );
+  }
 
   return (
-    <div className="px-0 px-md-4">
-      <div className="d-flex justify-content-end mb-3">
-        <button
-          className="btn btn-primary border-0 rounded mb-2 mb-md-0"
-          style={{ backgroundColor: "var(--bgDarkerColor)" }}
-          onClick={() => {
-            setAddorupdate({ mode: "add", state: true });
-            setShowModal(true);
-          }}
-        >
-          <i className="bi bi-plus-circle me-2 h5 mb-0"></i> Add Staff
-        </button>
-      </div>
-
-      {staffs && staffs.results?.length === 0 ? (
-        <div className="card">
-          <div className="card-body">
-            <h5>Staffs & Team</h5>
-            <p className="card-text">You have no staffs or team members yet.</p>
+    <div className="container-fluid">
+      {/* Header */}
+      <div className="row mb-4">
+        <div className="col-md-6">
+          <div className="d-flex align-items-center">
+            <FiUsers size={32} className="text-primary me-2" />
+            <h4 className="mb-0">Staff Management</h4>
           </div>
         </div>
-      ) : (
-        <div>
-          <div className="my-4">
-            <h4 className="mb-1">
-              {staffs?.count} Staff{staffs?.count > 1 ? "s" : ""}
-            </h4>
-            <p>in total</p>
-          </div>
+        <div className="col-md-6 text-end">
+          <button
+            className="btn btn-primary"
+            onClick={() => openModal()}
+            disabled={isPending}
+          >
+            Add New Staff Member
+          </button>
+        </div>
+      </div>
 
-          {staffs?.results?.map((staff, index) => (
-            <div key={staff.id}>
-              <div className="card my-3 p-3 px-md-4 py-4">
-                <div className="d-flex align-items-center">
-                  <div className="me-3 me-md-4">
-                    {staff.img_url ? (
-                      <img
-                        src={staff.img_url}
-                        alt={staff.first_name}
-                        className="rounded-circle object-fit-cover"
-                        height={75}
-                        width={75}
-                        style={{ objectPosition: "top center" }}
-                      />
-                    ) : (
-                      <div
-                        style={{
-                          width: "70px",
-                          height: "70px",
-                          borderRadius: "50%",
-                          backgroundColor: "var(--bgDarkColor)",
-                          color: "var(--primary)",
-                          display: "flex",
-                          justifyContent: "center",
-                          alignItems: "center",
-                          fontSize: "2rem",
-                        }}
-                      >
-                        {staff.first_name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <h6 className="mb-1">
-                      {staff.first_name} {staff.last_name} {""}
-                      {staff.other_names || ""}
-                    </h6>
-                    <p className="mb-3">{staff.role}</p>
-                    <div>
-                      <div
-                        className="badge text-primary bg-primary-light me-2 me-md-5 mb-3 mb-md-0 rounded p-2 px-3"
-                        style={{ cursor: "pointer" }}
-                        onClick={() => handleToggle(index)}
-                      >
-                        {openIndex === index ? (
-                          <span>
-                            {" "}
-                            Close details{" "}
-                            <i className="bi bi-chevron-up ms-2"></i>
-                          </span>
+      {/* Staff Header */}
+      <div className="row mb-3 align-items-center">
+        <div className="col-md-6">
+          <h5 className="mb-1">All Staff Members</h5>
+          <p className="mb-0 text-primary">
+            {(staffs?.count ?? 0)} Staff Member{(staffs?.count ?? 0) !== 1 ? "s" : ""} in Total
+          </p>
+        </div>
+      </div>
+
+      {/* Alert */}
+      {alert.show && <Alert type={alert.type}>{alert.message}</Alert>}
+
+      {/* Staff List */}
+      <div className="row">
+        {loadingStaffs ? (
+          <div className="col-12 d-flex justify-content-center">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        ) : staffs?.results?.length === 0 ? (
+          <div className="col-12 text-center py-5">
+            <FiUsers size={64} className="text-muted mb-3" />
+            <h5 className="text-muted">No staff members found</h5>
+            <p className="text-muted">Start by adding your first staff member</p>
+          </div>
+        ) : (
+          <div className="col-12">
+            {staffs?.results?.map((staffMember, index) => (
+              <div key={staffMember.id} className="mb-3">
+                {/* Staff Card */}
+                <div className="card border-0 shadow-sm">
+                  <div className="card-body p-4">
+                    <div className="d-flex align-items-center">
+                      {/* Avatar */}
+                      <div className="me-4">
+                        {staffMember.img_url ? (
+                          <img
+                            src={staffMember.img_url}
+                            alt={`${staffMember.first_name} ${staffMember.last_name}`}
+                            className="rounded-circle object-fit-cover"
+                            height={80}
+                            width={80}
+                            style={{ objectPosition: "top center" }}
+                          />
                         ) : (
-                          <span>
-                            {" "}
-                            View details{" "}
-                            <i className="bi bi-chevron-down ms-2"></i>
-                          </span>
+                          <div
+                            className="rounded-circle d-flex justify-content-center align-items-center text-white"
+                            style={{
+                              width: "80px",
+                              height: "80px",
+                              fontSize: "2rem",
+                              backgroundColor: "var(--bs-primary)",
+                            }}
+                          >
+                            {staffMember.first_name.charAt(0).toUpperCase()}
+                          </div>
                         )}
                       </div>
-                      <div
-                        className="badge text-secondary bg-secondary-light me-2 rounded p-2 px-3"
-                        onClick={() => {
-                          setAddorupdate({ mode: "update", state: true });
-                          setStaff(staff);
-                          setShowModal(true);
-                        }}
-                        style={{ cursor: "pointer" }}
-                      >
-                        Edit
-                      </div>
-                      <div
-                        className="badge text-white bg-danger rounded p-2 px-3"
-                        style={{ cursor: "pointer" }}
-                        onClick={() => {
-                          setStaff({
-                            ...staff,
-                            id: staff.id,
-                          });
-                          setShowDeleteModal(true);
-                        }}
-                      >
-                        Remove
+
+                      {/* Staff Info */}
+                      <div className="flex-grow-1">
+                        <h5 className="mb-1 fw-bold">
+                          {staffMember.first_name} {staffMember.last_name} {staffMember.other_names || ""}
+                        </h5>
+                        <p className="text-muted mb-3">{staffMember.role || "Staff Member"}</p>
+
+                        {/* Action Buttons */}
+                        <div className="d-flex flex-wrap gap-2">
+                          <button
+                            className="btn btn-sm btn-outline-info"
+                            onClick={() => handleToggle(index)}
+                          >
+                            {openIndex === index ? "Hide Details" : "View Details"}
+                          </button>
+                          <button
+                            className="btn btn-sm btn-outline-primary"
+                            onClick={() => handleEdit(staffMember)}
+                            title="Edit Staff"
+                          >
+                            <FiEdit size={14} className="me-1" />
+                            Edit
+                          </button>
+                          <button
+                            className="btn btn-sm btn-outline-danger"
+                            onClick={() => handleDeleteConfirm(staffMember)}
+                            title="Delete Staff"
+                          >
+                            <FiTrash2 size={14} className="me-1" />
+                            Delete
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
+
+                  {/* Collapsible Details */}
+                  {openIndex === index && (
+                    <div className="border-top bg-light">
+                      <div className="card-body p-4">
+                        <h6 className="mb-3 fw-bold">Contact Details</h6>
+                        <div className="row g-4">
+                          {/* Contact Information */}
+                          <div className="col-md-6">
+                            <div className="mb-3">
+                              <h6 className="mb-1 text-muted small">Staff ID</h6>
+                              <p className="mb-0">{staffMember.id || "Not available"}</p>
+                            </div>
+                            
+                            {staffMember.email && (
+                              <div className="mb-3">
+                                <h6 className="mb-1 text-muted small d-flex align-items-center">
+                                  <FiMail size={14} className="me-1" />
+                                  Email
+                                </h6>
+                                <a href={`mailto:${staffMember.email}`} className="text-decoration-none">
+                                  {staffMember.email}
+                                </a>
+                              </div>
+                            )}
+
+                            {staffMember.phone && (
+                              <div className="mb-3">
+                                <h6 className="mb-1 text-muted small d-flex align-items-center">
+                                  <FiPhone size={14} className="me-1" />
+                                  Phone
+                                </h6>
+                                <a href={`tel:${staffMember.phone}`} className="text-decoration-none">
+                                  {staffMember.phone}
+                                </a>
+                              </div>
+                            )}
+
+                            {staffMember.address && (
+                              <div className="mb-3">
+                                <h6 className="mb-1 text-muted small d-flex align-items-center">
+                                  <FiMapPin size={14} className="me-1" />
+                                  Address
+                                </h6>
+                                <p className="mb-0">{staffMember.address}</p>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Social Media Links */}
+                          <div className="col-md-6">
+                            <h6 className="mb-3 text-muted small">Social Media Links</h6>
+                            <div className="d-flex flex-wrap gap-2">
+                              {staffMember.facebooklink && (
+                                <a
+                                  href={staffMember.facebooklink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="btn btn-sm btn-outline-primary"
+                                  title="Facebook"
+                                >
+                                  <FaFacebook size={16} />
+                                </a>
+                              )}
+                              {staffMember.instagramlink && (
+                                <a
+                                  href={staffMember.instagramlink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="btn btn-sm btn-outline-danger"
+                                  title="Instagram"
+                                >
+                                  <FaInstagram size={16} />
+                                </a>
+                              )}
+                              {staffMember.twitterlink && (
+                                <a
+                                  href={staffMember.twitterlink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="btn btn-sm btn-outline-info"
+                                  title="Twitter"
+                                >
+                                  <FaTwitter size={16} />
+                                </a>
+                              )}
+                              {staffMember.linkedinlink && (
+                                <a
+                                  href={staffMember.linkedinlink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="btn btn-sm btn-outline-primary"
+                                  title="LinkedIn"
+                                >
+                                  <FaLinkedin size={16} />
+                                </a>
+                              )}
+                              {!staffMember.facebooklink && !staffMember.instagramlink && !staffMember.twitterlink && !staffMember.linkedinlink && (
+                                <p className="text-muted mb-0">No social media links available</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-              <div
-                className={`myaccordion-content my-0  ${
-                  openIndex === index ? "open px-4 py-4" : ""
-                }`}
-              >
-                <div className="">
-                  <h5>More details</h5>
-                  <hr />
-                  <div className="row">
-                    <div className="col-md-6">
-                      <h6 className="mb-1 text-secondary">Staff ID</h6>
-                      <p>{staff.id || "not available"}</p>
-                      <h6 className="mb-1 text-secondary">Email</h6>
-                      <p>{staff.email || "not available"}</p>
-                      <h6 className="mb-1 text-secondary">Phone</h6>
-                      <p>{staff.phone || "not available"}</p>
-                      <h6 className="mb-1 text-secondary">Address</h6>
-                      <p>{staff.address || "not available"}</p>
-                    </div>
-                    <div className="col-md-6">
-                      <h6 className="mb-1 text-secondary">facebook link</h6>
-                      <p>{staff.facebooklink || "not available"}</p>
-                      <h6 className="mb-1 text-secondary">instagram link</h6>
-                      <p>{staff.instagramlink || "not available"}</p>
-                      <h6 className="mb-1 text-secondary">twitter link</h6>
-                      <p>{staff.twitterlink || "not available"}</p>
-                      <h6 className="mb-1 text-secondary">linkedin link</h6>
-                      <p>{staff.linkedinlink || "not available"}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Pagination */}
+      {staffs && staffs.count > parseInt(pageSize) && (
+        <div className="row mt-4">
+          <div className="col-12">
+            <Pagination
+              currentPage={parseInt(page)}
+              totalPages={Math.ceil(staffs.count / parseInt(pageSize))}
+              handlePageChange={handlePageChange}
+            />
+          </div>
         </div>
       )}
 
-      {!loadingstaffs &&
-        staffs &&
-        Math.ceil(staffs.count / parseInt(pageSize)) > 1 && (
-          <Pagination
-            currentPage={page}
-            totalPages={Math.ceil(staffs.count / parseInt(pageSize))}
-            handlePageChange={handlePageChange}
-          />
-        )}
+      {/* Add/Edit Staff Modal */}
+      <Modal showmodal={showModal} toggleModal={closeModal} overlayclose={false}>
+        <StaffForm
+          staff={staff}
+          editMode={addorupdate.mode === "update"}
+          onSuccess={handleFormSuccess}
+          onCancel={closeModal}
+        />
+      </Modal>
 
-      <Modal
-        showmodal={showdeleteModal}
-        toggleModal={() => setShowDeleteModal(false)}
-      >
-        <div className="modal-body">
-          <p className="text-center mb-1">
-            Are you sure you want to delete this staff ?
-          </p>
-          <h5 className="text-center">
-            {staff.first_name} {staff.last_name} {""}
-            {staff.other_names || ""}
+      {/* Delete Confirmation Modal */}
+      <Modal showmodal={showDeleteModal} toggleModal={closeModal}>
+        <div className="p-3">
+          <p className="text-center">Delete Staff Member</p>
+          <hr />
+          <h5 className="text-center mb-4">
+            {staff?.first_name} {staff?.last_name}
           </h5>
-          <div className="d-flex justify-content-end mt-4">
+          <p className="text-center text-muted mb-4">
+            Are you sure you want to delete this staff member? This action cannot be undone.
+          </p>
+          <div className="d-flex justify-content-center gap-2">
             <button
-              className="btn btn-danger rounded me-3"
-              onClick={() => deletestaff(staff.id)}
+              className="btn btn-danger"
+              onClick={() => staff?.id && handleDelete(staff.id)}
               disabled={isDeleting}
             >
-              {isDeleting ? "Deleting..." : "Yes"}
+              {isDeleting ? (
+                <div className="d-inline-flex align-items-center justify-content-center gap-2">
+                  <div>Deleting...</div>
+                  <PulseLoader size={8} color={"#ffffff"} loading={true} />
+                </div>
+              ) : (
+                "Delete"
+              )}
             </button>
             <button
-              className="btn btn-accent-secondary rounded"
-              onClick={() => setShowDeleteModal(false)}
+              className="btn btn-secondary"
+              onClick={closeModal}
             >
-              No
+              Cancel
             </button>
           </div>
-        </div>
-      </Modal>
-      <Modal showmodal={showModal} toggleModal={() => closeModal()}>
-        <div className="">
-          <h4 className="">
-            {addorupdate.mode === "add" ? "Add" : "Update"} Staff
-          </h4>
-          <hr />
-          <StaffForm
-            addStaff={addStaff}
-            addorupdate={addorupdate}
-            staff={staff}
-            setStaff={setStaff}
-            closeModal={closeModal}
-            loading={isCreating || isUpdating}
-          />
         </div>
       </Modal>
     </div>

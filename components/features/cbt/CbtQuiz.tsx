@@ -1,25 +1,53 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { Test, Subject, Question, Answer } from "@/types/cbt";
 import CbtInstructions from "./CbtInstructions";
 import CbtTimer from "./CbtTimer";
 import CbtResult from "./CbtResult";
 import QuestionAndAnswers from "./CbtQuestionAndAnswers";
 
-const CbtQuiz = ({ Test, setTestMode }) => {
-  const [startTest, setStartTest] = useState(false);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [currentSubjectIndex, setCurrentSubjectIndex] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState({});
-  const [submitted, setSubmitted] = useState(false);
-  const [Score, setScore] = useState({
+interface QuestionWithIndex extends Question {
+  questionIndex: number;
+  correctAnswer?: Answer;
+}
+
+interface SelectedAnswers {
+  [subjectId: number]: {
+    [questionId: number]: number;
+  };
+}
+
+interface SubjectScore {
+  id: number;
+  subjectname: string;
+  score: number;
+}
+
+interface ScoreData {
+  subjectscores: SubjectScore[];
+  totalscore: number;
+}
+
+interface CbtQuizProps {
+  Test: Test;
+  setTest: (test: Test | null) => void;
+}
+
+const CbtQuiz: React.FC<CbtQuizProps> = ({ Test, setTest }) => {
+  const [startTest, setStartTest] = useState<boolean>(false);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
+  const [currentSubjectIndex, setCurrentSubjectIndex] = useState<number>(0);
+  const [selectedAnswers, setSelectedAnswers] = useState<SelectedAnswers>({});
+  const [submitted, setSubmitted] = useState<boolean>(false);
+  const [Score, setScore] = useState<ScoreData>({
     subjectscores: [],
     totalscore: 0,
   });
-  const [reviewAnswers, setReviewAnswers] = useState(false);
-  const [isCalculatingScore, setIsCalculatingScore] = useState(false);
+  const [reviewAnswers, setReviewAnswers] = useState<boolean>(false);
+  const [isCalculatingScore, setIsCalculatingScore] = useState<boolean>(false);
   
   // Refs to prevent memory leaks and race conditions
-  const isMountedRef = useRef(true);
-  const scoreCalculationRef = useRef(false);
+  const isMountedRef = useRef<boolean>(true);
+  const scoreCalculationRef = useRef<boolean>(false);
 
   // Validate Test data
   const isValidTest = useMemo(() => {
@@ -32,14 +60,14 @@ const CbtQuiz = ({ Test, setTestMode }) => {
   }, [Test]);
 
   // Safe access to current subject and question
-  const currentSubject = useMemo(() => {
+  const currentSubject = useMemo((): Subject | null => {
     if (!isValidTest || currentSubjectIndex >= Test.testSubject.length) {
       return null;
     }
     return Test.testSubject[currentSubjectIndex];
   }, [Test, currentSubjectIndex, isValidTest]);
 
-  const currentQuestion = useMemo(() => {
+  const currentQuestion = useMemo((): QuestionWithIndex | null => {
     if (!currentSubject || !Array.isArray(currentSubject.questions) || 
         currentQuestionIndex >= currentSubject.questions.length) {
       return null;
@@ -56,7 +84,7 @@ const CbtQuiz = ({ Test, setTestMode }) => {
     
     try {
       return Test.testSubject.reduce((acc, subject) => {
-        const duration = parseInt(subject?.subjectduration || 0);
+        const duration = subject?.subjectduration || 0;
         return acc + (isNaN(duration) ? 0 : duration);
       }, 0);
     } catch (error) {
@@ -130,7 +158,7 @@ const CbtQuiz = ({ Test, setTestMode }) => {
   }, [currentQuestionIndex, currentSubjectIndex, Test]);
 
   // Safe function to handle answer selection
-  const handleAnswerSelect = useCallback((subjectId, questionId, answerId) => {
+  const handleAnswerSelect = useCallback((subjectId: number, questionId: number, answerId: number) => {
     if (!subjectId || !questionId || !answerId || !isMountedRef.current) {
       console.warn('Invalid answer selection parameters');
       return;
@@ -150,7 +178,7 @@ const CbtQuiz = ({ Test, setTestMode }) => {
   }, []);
 
   // Safe function to handle subject selection
-  const handleSubjectSelect = useCallback((subjectIndex) => {
+  const handleSubjectSelect = useCallback((subjectIndex: number) => {
     if (!isValidTest || subjectIndex < 0 || subjectIndex >= Test.testSubject.length) {
       console.warn('Invalid subject index:', subjectIndex);
       return;
@@ -190,26 +218,30 @@ const CbtQuiz = ({ Test, setTestMode }) => {
     setIsCalculatingScore(true);
 
     try {
-      const subjectScores = [];
+      const subjectScores: SubjectScore[] = [];
       let totalScore = 0;
 
       Test.testSubject.forEach((subject) => {
-        if (!subject || !Array.isArray(subject.questions)) return;
+        if (!subject || !Array.isArray(subject.questions) || !subject.id) return;
 
-        let subjectScore = {
+        let subjectScore: SubjectScore = {
           id: subject.id,
           subjectname: subject.subjectname || 'Unknown Subject',
           score: 0,
         };
 
         subject.questions.forEach((question) => {
-          if (!question || !question.id || !question.correctAnswer) return;
+          if (!question || !question.id) return;
 
-          const selectedAnswerId = selectedAnswers[subject.id]?.[question.id];
-          const correctAnswerId = question.correctAnswer.id;
+          // Find the correct answer from the answers array
+          const correctAnswer = question.answers.find(answer => answer.isCorrect);
+          if (!correctAnswer) return;
+
+          const selectedAnswerId = selectedAnswers[subject.id!]?.[question.id!];
+          const correctAnswerId = correctAnswer.id;
           
           if (selectedAnswerId === correctAnswerId) {
-            const questionMark = parseInt(question.questionMark) || 1;
+            const questionMark = parseInt(String(question.questionMark)) || 1;
             subjectScore.score += questionMark;
           }
         });
@@ -277,10 +309,8 @@ const CbtQuiz = ({ Test, setTestMode }) => {
   // Function to take another test
   const takeanothertest = useCallback(() => {
     resetStates();
-    if (typeof setTestMode === 'function') {
-      setTestMode(false);
-    }
-  }, [resetStates, setTestMode]);
+    setTest(null);
+  }, [resetStates, setTest]);
 
   // Error boundary for invalid test data
   if (!isValidTest) {
@@ -288,9 +318,9 @@ const CbtQuiz = ({ Test, setTestMode }) => {
       <div className="alert alert-danger text-center">
         <h5>Invalid Test Data</h5>
         <p>The test data is not available or corrupted. Please try again.</p>
-        <button 
-          className="btn btn-primary" 
-          onClick={() => setTestMode?.(false)}
+        <button
+          className="btn btn-primary"
+          onClick={() => setTest(null)}
         >
           Back to Test Selection
         </button>

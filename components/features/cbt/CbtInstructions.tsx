@@ -1,27 +1,39 @@
-import React from "react";
+import React, { useCallback } from "react";
+import { Test } from "@/types/cbt";
 
-const CbtInstructions = ({ Test, setStartTest }) => {
+interface CbtInstructionsProps {
+  Test: Test;
+  setStartTest: (start: boolean) => void;
+}
+
+const CbtInstructions: React.FC<CbtInstructionsProps> = ({ Test, setStartTest }) => {
   // Safe property access with fallbacks
   const testType = Test?.texttype?.testtype || 'Unknown Test';
   const testYear = Test?.testYear?.year || 'Unknown Year';
   const subjects = Test?.testSubject || [];
   
   // Calculate total duration with error handling
-  const calculateTotalDuration = () => {
+  const calculateTotalDuration = useCallback(() => {
     if (!subjects.length) return 0;
     
     try {
       return subjects.reduce((acc, curr) => {
-        const duration = parseInt(curr?.subjectduration || 0);
+        const duration = parseInt(String(curr?.subjectduration || 0));
         return acc + (isNaN(duration) ? 0 : duration);
       }, 0);
     } catch (error) {
       console.error('Error calculating test duration:', error);
       return 0;
     }
-  };
+  }, [subjects]);
 
   const totalDuration = calculateTotalDuration();
+
+  const handleStartTest = useCallback(() => {
+    if (subjects.length && setStartTest) {
+      setStartTest(true);
+    }
+  }, [subjects.length, setStartTest]);
 
   return (
     <div>
@@ -70,7 +82,7 @@ const CbtInstructions = ({ Test, setStartTest }) => {
       <div>
         <button 
           className="btn btn-primary w-100 mt-4"
-          onClick={() => setStartTest?.(true)}
+          onClick={handleStartTest}
           disabled={!subjects.length}
         >
           Start Test

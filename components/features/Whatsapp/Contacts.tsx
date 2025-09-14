@@ -1,165 +1,267 @@
 "use client";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
+import { useQueryClient } from "react-query";
 import ContactCard from "./ContactCard";
 import SearchInput from "../../custom/Inputs/SearchInput";
-import "./whatsapp.css";
-import { useWhatsappAPIContext } from "@/providers/context/WhatsappContext";
-import { MdOutlineContacts } from "react-icons/md";
 import BackButton from "../../custom/backbutton/BackButton";
+import { useWhatsappAPIContext } from "@/providers/context/WhatsappContext";
+import { useWhatsAppContacts } from "@/data/hooks/whatsapp.hooks";
 import useWebSocket from "@/hooks/useWebSocket";
-import { WAContactWebsocketSchema } from "@/schemas/whatsapp";
-import { useFetchWAContacts } from "@/data/hooks/whatsapp.hooks";
-import { useQueryClient } from "react-query";
+import { WAContactEventSchema } from "@/schemas/whatsapp";
+import { Contact } from "@/types/whatsapp";
+import { WEBSOCKET_URL } from "@/data/constants";
+import { MdOutlineContacts } from "react-icons/md";
+import "./whatsapp.css";
+
+interface ContactsProps {
+  showlist: boolean;
+  setShowlist: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+// Loading Component
+const LoadingContacts: React.FC = React.memo(() => (
+  <div className="d-flex justify-content-center mt-4">
+    <div className="spinner-border text-primary" role="status">
+      <span className="visually-hidden">Loading contacts...</span>
+    </div>
+  </div>
+));
+
+LoadingContacts.displayName = 'LoadingContacts';
+
+// Error Component
+const ErrorContacts: React.FC = React.memo(() => (
+  <div className="alert alert-danger text-center mt-4">
+    <h6>Error Loading Contacts</h6>
+    <p className="mb-0">Please try refreshing the page.</p>
+  </div>
+));
+
+ErrorContacts.displayName = 'ErrorContacts';
+
+// Empty State Component
+interface EmptyContactsProps {
+  isFiltered: boolean;
+}
+
+const EmptyContacts: React.FC<EmptyContactsProps> = React.memo(({ isFiltered }) => (
+  <div className="text-center mt-4">
+    <div className="mb-3">
+      <MdOutlineContacts
+        style={{
+          fontSize: "3.5rem",
+          color: "var(--bgDarkerColor)",
+        }}
+        aria-hidden="true"
+      />
+    </div>
+    <h6 className="text-muted">
+      {isFiltered ? 'No contacts match your search' : 'No contacts found'}
+    </h6>
+    {!isFiltered && (
+      <p className="text-muted small">
+        Contacts will appear here once WhatsApp messages are received.
+      </p>
+    )}
+  </div>
+));
+
+EmptyContacts.displayName = 'EmptyContacts';
 
 /**
- * Holds all the
- * @param {{showlist:boolean,
- * setShowlist:(value:boolean)=> void,}} props
- * @returns {JSX.Element}
+ * Enhanced Contacts component with comprehensive type safety and WebSocket integration
+ * Displays WhatsApp contacts with search, filtering, and real-time updates
+ * Optimized with React.memo and proper TypeScript typing
  */
-
-const Contacts = ({ showlist, setShowlist }) => {
+const Contacts: React.FC<ContactsProps> = React.memo(({ showlist, setShowlist }) => {
   const { selectedContact, setSelectedContact } = useWhatsappAPIContext();
   const { isConnected, ws } = useWebSocket(
-    `${process.env.NEXT_PUBLIC_DJANGO_WEBSOCKET_URL}/ws/whatsappapiSocket/contacts/`
+    `${WEBSOCKET_URL}/ws/whatsappapiSocket/contacts/`
   );
-  const [showUnread, setShowUnread] = useState(false); // State to filter unread messages
-  const [searchQuery, setSearchQuery] = useState(""); // State for search input
+  const queryClient = useQueryClient();
+  
+  // State management
+  const [showUnread, setShowUnread] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
-  // fetch all the contacts
+  // Fetch contacts data
   const {
     data: contacts,
     isLoading,
     error,
-  } = useFetchWAContacts();
+  } = useWhatsAppContacts();
 
-  // ------------------------------------------
-  // Handling WebSocket onmessage event
-  // ------------------------------------------
-  const queryClient = useQueryClient();
+  // Safe contacts array
+  const safeContacts = useMemo(() => {
+    return Array.isArray(contacts) ? contacts : [];
+  }, [contacts]);
+
+  // Sort contacts by timestamp - since last_message is a string, we'll use a different approach
+  const sortContacts = useCallback((contactsToSort: Contact[]): Contact[] => {
+    return contactsToSort.sort((a, b) => {
+      // Sort by ID for now since timestamp is not available in the current schema
+      const aId = a.id ?? 0;
+      const bId = b.id ?? 0;
+      return bId - aId;
+    });
+  }, []);
+
+  // Handle WebSocket contact events
+  const processWebSocketMessage = useCallback((event: MessageEvent) => {
+    try {
+      const responseContact = JSON.parse(event.data);
+      const validatedcontact = WAContactEventSchema.safeParse(responseContact);
+
+      if (!validatedcontact.success) {
+        console.error("Invalid WebSocket contact data:", validatedcontact.error.issues);
+        return;
+      }
+
+      const newContact = validatedcontact.data;
+      const cacheKey = ["waContacts"];
+
+      if (newContact.operation === "update_seen_status" && newContact.contact) {
+        queryClient.setQueryData<Contact[]>(cacheKey, (existingContacts = []) => {
+          if (!Array.isArray(existingContacts)) return [newContact.contact];
+          
+          const contactExists = existingContacts.some(
+            (contact) => contact.id === newContact.contact.id
+          );
+
+          if (contactExists) {
+            return sortContacts([
+              newContact.contact,
+              ...existingContacts.filter(
+                (contact) => contact.id !== newContact.contact.id
+              ),
+            ]);
+          } else {
+            return sortContacts([newContact.contact, ...existingContacts]);
+          }
+        });
+      }
+
+      if (newContact.operation === "update_seen_status" && newContact.contact) {
+        queryClient.setQueryData<Contact[]>(cacheKey, (existingContacts = []) => {
+          if (!Array.isArray(existingContacts)) return [newContact.contact];
+          
+          return existingContacts.map((contact) =>
+            contact.id === newContact.contact.id
+              ? newContact.contact
+              : contact
+          );
+        });
+      }
+    } catch (error) {
+      console.error("Error processing WebSocket contact message:", error);
+    }
+  }, [queryClient, sortContacts]);
+
+  // WebSocket message handling
   useEffect(() => {
     if (isConnected && ws) {
-      ws.onmessage = (event) => {
-        const responseContact = JSON.parse(event.data);
-        const validatedcontact =
-          WAContactWebsocketSchema.safeParse(responseContact);
-  
-        // Validate the WebSocket data
-        if (!validatedcontact.success) {
-          console.log(validatedcontact.error.issues);
-          return;
-        }
-  
-        const newContact = validatedcontact.data;
-  
-        // Define cache key for contacts
-        const cacheKey = ["waContacts"];
-  
-        // Function to sort contacts by `last_message.timestamp`
-        const sortContacts = (contacts) =>
-          contacts.sort(
-            (a, b) =>
-              new Date(b.last_message.timestamp).getTime() -
-              new Date(a.last_message.timestamp).getTime()
-          );
-  
-        // Handle different operations
-        if (newContact.operation === "create") {
-          queryClient.setQueryData(cacheKey, (existingContacts = []) => {
-            const contactExists = existingContacts.some(
-              (contact) => contact.id === newContact.contact.id
-            );
-  
-            if (contactExists) {
-              return sortContacts([
-                newContact.contact,
-                ...existingContacts.filter(
-                  (contact) => contact.id !== newContact.contact.id
-                ),
-              ]);
-            } else {
-              // If the contact doesn't exist, just add it to the top
-              return sortContacts([newContact.contact, ...existingContacts]);
-            }
-          });
-        }
-  
-        if (newContact.operation === "update_seen_status") {
-          queryClient.setQueryData(cacheKey, (existingContacts = []) =>
-            existingContacts.map((contact) =>
-              contact.id === newContact.contact.id
-                ? newContact.contact
-                : contact
-            )
-          );
-        }
-      };
+      ws.onmessage = processWebSocketMessage;
     }
-  }, [isConnected, ws]);
+  }, [isConnected, ws, processWebSocketMessage]);
 
+  // Filter and search contacts
+  const filteredContacts = useMemo(() => {
+    let result = safeContacts;
 
+    // Filter by unread status
+    if (showUnread) {
+      result = result.filter((contact) => {
+        const unreadCount = contact.unread_message_count ?? 0;
+        return typeof unreadCount === 'number' && unreadCount > 0;
+      });
+    }
 
-  // Filter messages based on the `read` state
-  let filteredContacts = showUnread
-    ? contacts?.filter((contact) => contact.unread_message_count > 0) // Show only unread messages
-    : contacts;
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter((contact) => {
+        const profileName = contact.profile_name || '';
+        const waId = contact.wa_id || '';
+        return profileName.toLowerCase().includes(query) || 
+               waId.includes(query);
+      });
+    }
 
-  // Filter messages further based on search input
-  if (searchQuery) {
-    filteredContacts = filteredContacts?.filter((contact) =>
-      contact.profile_name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }
+    return result;
+  }, [safeContacts, showUnread, searchQuery]);
 
-  if (isLoading) {
-    return <p>Loading....</p>;
-  }
-
-  if (error) {
-    return <p>An error just occurred</p>;
-  }
-
-  // ----------------------------------------------------------
-  // update a Message and populate/update Cache from Websocket
-  // -----------------------------------------------------------
-  /** @param {WAContact} updatedContact */
-  const updateContact = async (updatedContact) => {
-    if (updatedContact.unread_message_count !== 0) {
+  // Update contact seen status
+  const updateContact = useCallback(async (updatedContact: Contact) => {
+    const unreadCount = updatedContact.unread_message_count;
+    
+    // Handle both string and number unread counts
+    const parsedCount = typeof unreadCount === 'string' 
+      ? parseInt(unreadCount, 10) 
+      : unreadCount || 0;
+    
+    if (parsedCount > 0) {
       if (ws && ws.readyState === WebSocket.OPEN) {
-        /**@type {WAContactSocket} */
-        const payload = {
-          operation: "update_seen_status",
-          contact: updatedContact,
-        };
-        ws.send(JSON.stringify(payload));
+        try {
+          const payload = {
+            operation: "update_seen_status",
+            contact: updatedContact,
+          };
+          ws.send(JSON.stringify(payload));
+        } catch (error) {
+          console.error("Error sending WebSocket message:", error);
+        }
       } else {
-        console.error("WebSocket is not connected.");
+        console.warn("WebSocket is not connected.");
       }
     }
-  };
+  }, [ws]);
+
+  // Handle filter button clicks
+  const handleShowAllContacts = useCallback(() => {
+    setShowUnread(false);
+  }, []);
+
+  const handleShowUnreadContacts = useCallback(() => {
+    setShowUnread(true);
+  }, []);
+
+  // Loading state
+  if (isLoading) {
+    return <LoadingContacts />;
+  }
+
+  // Error state
+  if (error) {
+    return <ErrorContacts />;
+  }
+
+  const hasFilters = showUnread || searchQuery.trim().length > 0;
 
   return (
     <div>
       <div className="mb-2">
         <BackButton />
       </div>
+      
       <div
         className={`${!showlist ? "d-none d-md-block" : "d-flex flex-column"} mt-4 mt-md-3`}
       >
-        <div className="d-flex flex-wrap">
-          <h4 className="flex-fill mb-3">WA Messages</h4>
-          <div className="d-flex bg-primary-light">
+        {/* Header with filter buttons */}
+        <div className="d-flex flex-wrap align-items-center">
+          <h4 className="flex-fill mb-3">WhatsApp Messages</h4>
+          <div className="d-flex bg-primary-light" role="group" aria-label="Contact filter options">
             <button
               className="btn btn-sm btn-primary rounded me-2"
               style={{
-                backgroundColor: showUnread
-                  ? "var(--bgDarkerColor)"
-                  : "var(--primary)",
-                borderColor: showUnread
-                  ? "var(--bgDarkerColor)"
-                  : "var(--primary)",
+                backgroundColor: !showUnread
+                  ? "var(--primary)"
+                  : "var(--bgDarkerColor)",
+                borderColor: !showUnread
+                  ? "var(--primary)"
+                  : "var(--bgDarkerColor)",
               }}
-              onClick={() => setShowUnread(false)} // Show all messages
+              onClick={handleShowAllContacts}
+              aria-pressed={!showUnread}
             >
               All Contacts
             </button>
@@ -173,46 +275,55 @@ const Contacts = ({ showlist, setShowlist }) => {
                   ? "var(--primary)"
                   : "var(--bgDarkerColor)",
               }}
-              onClick={() => setShowUnread(true)} // Show only unread messages
+              onClick={handleShowUnreadContacts}
+              aria-pressed={showUnread}
             >
-              Unread
+              Unread ({safeContacts.filter(c => {
+                const count = c.unread_message_count;
+                const parsed = typeof count === 'string' ? parseInt(count, 10) : count || 0;
+                return parsed > 0;
+              }).length})
             </button>
           </div>
         </div>
+        
         <hr />
+        
+        {/* Search input */}
         <div className="mb-4">
           <SearchInput
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
+            placeholder="Search contacts..."
+            aria-label="Search contacts by name or phone number"
           />
         </div>
-        <div className={`d-flex flex-column Contacts g-1 pe-2 `}>
+
+        {/* Contacts list */}
+        <div 
+          className="d-flex flex-column Contacts g-1 pe-2"
+          role="list"
+          aria-label={`${filteredContacts.length} contact${filteredContacts.length !== 1 ? 's' : ''}`}
+        >
           {filteredContacts.length > 0 ? (
             filteredContacts.map((contact) => (
-              <ContactCard
-                key={contact.id}
-                contact={contact}
-                updateContactfn={updateContact}
-                setShowlist={setShowlist}
-              />
-            ))
-          ) : (
-            <div className="text-center mt-4">
-              <div className="mb-2">
-                <MdOutlineContacts
-                  style={{
-                    fontSize: "3.5rem",
-                    color: "var(--bgDarkerColor)",
-                  }}
+              <div key={contact.id} role="listitem">
+                <ContactCard
+                  contact={contact}
+                  updateContactfn={updateContact}
+                  setShowlist={setShowlist}
                 />
               </div>
-              No contacts found
-            </div>
+            ))
+          ) : (
+            <EmptyContacts isFiltered={hasFilters} />
           )}
         </div>
       </div>
     </div>
   );
-};
+});
+
+Contacts.displayName = 'Contacts';
 
 export default Contacts;

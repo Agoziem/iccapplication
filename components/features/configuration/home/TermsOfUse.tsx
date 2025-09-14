@@ -1,57 +1,119 @@
+"use client";
+import React, { useTransition, useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { PulseLoader } from "react-spinners";
 import Tiptap from "@/components/custom/Richtexteditor/Tiptap";
-import React, { useEffect, useState } from "react";
-import { OrganizationDefault } from "@/data/constants";
-import { useUpdateOrganization } from "@/data/organization/organization.hook";
-import toast from "react-hot-toast";
+import { UpdateOrganizationSchema } from "@/schemas/organizations";
+import { UpdateOrganization, Organization } from "@/types/organizations";
+import { useUpdateOrganization } from "@/data/hooks/organization.hooks";
 
+type TermsOfUseFormData = {
+  terms_of_use: string;
+};
 
-/**
- * @param {{ OrganizationData: Organization }} param0
- */
-const TermsOfUse = ({ OrganizationData }) => {
-  const [organizationdata,setOrganizationData] = useState(OrganizationDefault)
+const TermsOfUse = ({
+  OrganizationData,
+}: {
+  OrganizationData: Organization;
+}) => {
+  const [isPending, startTransition] = useTransition();
+  const { mutateAsync: updateOrganization } = useUpdateOrganization();
 
+  // Form setup
+  const {
+    control,
+    handleSubmit: handleFormSubmit,
+    formState: { errors, isSubmitting },
+    setValue,
+    watch,
+  } = useForm<TermsOfUseFormData>({
+    defaultValues: {
+      terms_of_use: "",
+    },
+  });
 
+  // Initialize form with organization data
   useEffect(() => {
-    if (OrganizationData?.id) {
-      setOrganizationData(OrganizationData);
+    if (OrganizationData) {
+      setValue("terms_of_use", OrganizationData.terms_of_use || "");
     }
-  }, [OrganizationData]);
+  }, [OrganizationData, setValue]);
 
-  const { mutateAsync } = useUpdateOrganization();
-  const editTermsOfUse = async (e) => {
-    e.preventDefault();
-    try {
-      await mutateAsync(organizationdata)
-      toast.success("Terms of Use Updated Successfully")
-    } catch (error) {
-      console.log(error.message)
-      toast.error("Error Updating Terms of Use")
-    }
+  // Watch the terms_of_use value
+  const termsOfUseValue = watch("terms_of_use");
+
+  // Handle form submission
+  const onSubmit = async (data: TermsOfUseFormData) => {
+    startTransition(async () => {
+      try {
+        await updateOrganization({
+          organizationId: OrganizationData.id || 0,
+          updateData: {
+            terms_of_use: data.terms_of_use,
+          },
+        });
+        
+        // Show success feedback (you might want to add a toast notification here)
+        console.log("Terms of Use updated successfully");
+      } catch (error) {
+        console.error("Error updating Terms of Use:", error);
+      }
+    });
   };
 
   return (
     <div className="card p-4 py-5">
-      <h5>Terms of Use</h5>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h5 className="mb-0">Terms of Use</h5>
+        {isSubmitting && (
+          <div className="d-flex align-items-center text-muted">
+            <PulseLoader size={8} color={"#0d6efd"} loading={true} className="me-2" />
+            <small>Saving...</small>
+          </div>
+        )}
+      </div>
       <hr />
-      <p>Add or edit Terms of Use</p>
-      <Tiptap
-        item={organizationdata?.terms_of_use || ""}
-        setItem={(value) => {
-          setOrganizationData({
-            ...OrganizationData,
-            terms_of_use: value,
-          });
-        }}
-      />
-      <button
-        className="btn btn-primary mt-4 rounded"
-        onClick={(e) => {
-          editTermsOfUse(e);
-        }}
-      >
-        Save Changes
-      </button>
+      <p className="text-muted mb-4">Add or edit Terms of Use for your organization</p>
+      
+      <form onSubmit={handleFormSubmit(onSubmit)}>
+        <div className="mb-4">
+          <Controller
+            name="terms_of_use"
+            control={control}
+            render={({ field: { onChange, value } }) => (
+              <Tiptap
+                item={value || ""}
+                setItem={(newValue: string) => {
+                  onChange(newValue);
+                }}
+              />
+            )}
+          />
+          {errors.terms_of_use && (
+            <div className="text-danger mt-2">
+              <small>{errors.terms_of_use.message}</small>
+            </div>
+          )}
+        </div>
+
+        <div className="d-flex justify-content-end">
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <div className="d-inline-flex align-items-center justify-content-center gap-2">
+                <div>Saving Changes...</div>
+                <PulseLoader size={8} color={"#ffffff"} loading={true} />
+              </div>
+            ) : (
+              "Save Changes"
+            )}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

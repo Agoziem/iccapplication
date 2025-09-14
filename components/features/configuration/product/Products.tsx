@@ -1,10 +1,5 @@
 "use client";
-import React, {
-  useEffect,
-  useMemo,
-  useState,
-  useTransition,
-} from "react";
+import React, { useEffect, useMemo, useState, useTransition } from "react";
 import { useAdminContext } from "@/providers/context/Admincontextdata";
 import Modal from "@/components/custom/Modal/modal";
 import Alert from "@/components/custom/Alert/Alert";
@@ -14,32 +9,33 @@ import CategoryTabs from "@/components/features/Categories/Categoriestab";
 import CategoriesForm from "@/components/features/Categories/Categories";
 import Pagination from "@/components/custom/Pagination/Pagination";
 import { RiShoppingBasketFill } from "react-icons/ri";
-import SubCategoriesForm from "@/components/features/SubCategories/SubCategoriesForm";
-import { useSubCategoriesContext } from "@/data/categories/Subcategoriescontext";
-import { fetchCategories } from "@/data/categories/fetcher";
-import { defaultProduct } from "@/data/constants";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import {
-  createProduct,
-  deleteProduct,
-  fetchProducts,
-  productsAPIendpoint,
-  updateProduct,
+  useDeleteProduct,
+  useProductCategories,
+  useProducts,
+  useProductSubCategories,
 } from "@/data/hooks/product.hooks";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
 import { PulseLoader } from "react-spinners";
-import { useFetchCategories } from "@/data/categories/categories.hook";
-import { useCreateProduct, useDeleteProduct, useFetchProducts, useUpdateProduct } from "@/data/product/product.hook";
+import { Product, ProductCategory } from "@/types/items";
+import { ProductCategoryManager } from "../../Categories/CategoryManager";
+import ProductsSubCatForm from "../../SubCategories/productssub";
+import { ORGANIZATION_ID } from "@/data/constants";
 
-// /...
+type AlertState = {
+  show: boolean;
+  message: string;
+  type: "info" | "success" | "warning" | "danger";
+};
+
 const Products = () => {
-  const { openModal } = useAdminContext();
-  const { fetchProductsSubCategories } = useSubCategoriesContext();
-  const [product, setProduct] = useState(defaultProduct);
+  const adminctx = useAdminContext();
+  const [product, setProduct] = useState<Product | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showModal2, setShowModal2] = useState(false);
-  const [alert, setAlert] = useState({ show: false, message: "", type: "" });
+  const [alert, setAlert] = useState<AlertState>({ show: false, message: "", type: "info" });
   const [addorupdate, setAddorupdate] = useState({ mode: "add", state: false });
 
   const router = useRouter();
@@ -47,50 +43,33 @@ const Products = () => {
   const currentCategory = searchParams.get("category") || "All";
   const page = searchParams.get("page") || "1";
   const pageSize = "10";
-  const [allCategories, setAllCategories] = useState([]);
-  const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
-  const [searchQuery, setSearchQuery] = useState(""); // State for search input
+  const [allCategories, setAllCategories] = useState<ProductCategory[] | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<ProductCategory | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [isPending, startTransition] = useTransition();
   const [isdeleting, startDeletion] = useTransition();
 
-  const {
-    data: categories,
-    isLoading: loadingCategories,
-    error: categoryError,
-  } = useFetchCategories(
-    `${productsAPIendpoint}/categories/`,
+  // Hooks
+  const { mutateAsync: deleteProduct } = useDeleteProduct();
+  const { data: productCategories, isLoading: loadingCategories, error: categoryError } = useProductCategories();
+  const { data: subcategories, isLoading: loadingsubcategories } = useProductSubCategories(
+    product?.category?.id || selectedCategory?.id || 0
   );
 
-  // ----------------------------------------------------
-  // Add a new category to the list of categories
-  // ----------------------------------------------------
-  useEffect(() => {
-    if (!categories) return;
-    if (categories.length > 0)
-      setAllCategories([
-        { id: 0, category: "All", description: "All Categories" },
-        ...categories,
-      ]);
-  }, [categories]);
-
-  // ----------------------------------------
-  // Fetch Products based on category
-  // ----------------------------------------
+  // Fetch Products
   const {
     data: products,
     isLoading: loadingProducts,
-    error: error,
-  } = useFetchProducts(
-    `${productsAPIendpoint}/products/?category=${currentCategory}&page=${page}&page_size=${pageSize}`,
-  )
+    error: productsError,
+  } = useProducts(parseInt(ORGANIZATION_ID) || 0);
 
   // -----------------------------------------
   // Handle page change
   // -----------------------------------------
-  /**  @param {string} newPage */
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: string | number) => {
+    const pageNum = typeof newPage === "string" ? parseInt(newPage) : newPage;
     router.push(
-      `?category=${currentCategory}&page=${newPage}&page_size=${pageSize}`,
+      `?category=${currentCategory}&page=${pageNum}&page_size=${pageSize}`,
       {
         scroll: false,
       }
@@ -100,11 +79,13 @@ const Products = () => {
   // -------------------------------
   // Handle category change
   // -------------------------------
-  /**  @param {string} category */
-  const handleCategoryChange = (category) => {
-    router.push(`?category=${category}&page=${page}&page_size=${pageSize}`, {
-      scroll: false,
-    });
+  const handleCategoryChange = (category: ProductCategory | null) => {
+    router.push(
+      `?category=${category?.id || 0}&page=${page}&page_size=${pageSize}`,
+      {
+        scroll: false,
+      }
+    );
   };
 
   // Memoized filtered Products based on search query
@@ -123,92 +104,59 @@ const Products = () => {
   const closeModal = () => {
     setShowModal(false);
     setShowModal2(false);
-    setProduct(defaultProduct);
+    setProduct(null);
     setAddorupdate({ mode: "", state: false });
   };
 
-  const handleAlert = (message, type) => {
+  const handleAlert = (message: string, type: AlertState["type"]) => {
     setAlert({ show: true, message, type });
-    setTimeout(() => setAlert({ show: false, message: "", type: "" }), 3000);
-  };
-
-  //----------------------------------------------------
-  // Create a new product or update an existing product
-  //----------------------------------------------------
-  const { mutateAsync: createProduct } = useCreateProduct();
-  const { mutateAsync: updateProduct } = useUpdateProduct();
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    startTransition(async () => {
-      const { organization, category, subcategory, ...restData } = product;
-      const producttosubmit = {
-        ...restData,
-        organization: Organizationid,
-        category: category || "",
-        subcategory: subcategory
-          ? {
-              ...subcategory,
-              category: category.id,
-            }
-          : "",
-      };
-      try {
-        if (addorupdate.mode !== "add") {
-          await updateProduct(producttosubmit);
-        } else {
-          await createProduct(producttosubmit);
-        }
-        handleAlert(
-          `your Service have been ${
-            addorupdate.mode === "add" ? "added" : "updated"
-          } successfully `,
-          "success"
-        );
-      } catch (error) {
-        handleAlert("An error have occurred, please try again", "danger");
-      } finally {
-        closeModal();
-      }
-    });
+    setTimeout(() => setAlert({ show: false, message: "", type: "info" }), 3000);
   };
 
   //----------------------------------------------------
   // Delete a product
   //----------------------------------------------------
-  const { mutateAsync: deleteProduct } = useDeleteProduct();
-  /**
-   * @async
-   * @param {number} id
-   */
-  const handleDelete = async (id) => {
+
+  const handleDelete = async (id: number) => {
     startDeletion(async () => {
       try {
         await deleteProduct(id);
-        handleAlert("Service deleted Successfully", "success");
-      } catch (error) {
+        handleAlert("Product deleted Successfully", "success");
+        setShowModal2(false);
+        setProduct(null);
+      } catch (error: any) {
         console.log(error.message);
-        handleAlert("Error deleting Service", "danger");
-      } finally {
-        closeModal();
+        handleAlert("Error deleting Product", "danger");
       }
     });
   };
 
   //   ------------------------------------------------------
-  //   // Create a new service
+  //   // Edit a product
   //   // ------------------------------------------------------
-  const handleEdit = (product) => {
+  const handleEdit = (product: Product) => {
     setProduct(product);
     setAddorupdate({ mode: "update", state: true });
     setShowModal(true);
   };
 
   //   ------------------------------------------------------
-  //   // Delete a service
+  //   // Delete a product confirmation
   //   // ------------------------------------------------------
-  const handleDeleteConfirm = (product) => {
+  const handleDeleteConfirm = (product: Product) => {
     setProduct(product);
     setShowModal2(true);
+  };
+
+  //   ------------------------------------------------------
+  //   // Handle form success
+  //   // ------------------------------------------------------
+  const handleFormSuccess = () => {
+    handleAlert(
+      addorupdate.mode === "add" ? "Product created successfully!" : "Product updated successfully!", 
+      "success"
+    );
+    closeModal();
   };
 
   return (
@@ -216,22 +164,11 @@ const Products = () => {
       <hr />
       <div className="row">
         <div className="col-12 col-md-7">
-          <CategoriesForm
-            items={categories}
-            addUrl={`${productsAPIendpoint}/add_category/`}
-            updateUrl={`${productsAPIendpoint}/update_category`}
-            deleteUrl={`${productsAPIendpoint}/delete_category`}
-          />
+          <ProductCategoryManager />
         </div>
 
         <div className="col-12 col-md-5">
-          <SubCategoriesForm
-            categories={categories}
-            apiendpoint={productsAPIendpoint}
-            addUrl={`${productsAPIendpoint}/create_subcategory/`}
-            updateUrl={`${productsAPIendpoint}/update_subcategory`}
-            deleteUrl={`${productsAPIendpoint}/delete_subcategory`}
-          />
+          <ProductsSubCatForm />
         </div>
       </div>
 
@@ -252,9 +189,12 @@ const Products = () => {
           </div>
         ) : (
           <CategoryTabs
-            categories={allCategories}
+            categories={allCategories || []}
             currentCategory={currentCategory}
-            setCurrentCategory={handleCategoryChange}
+            setCurrentCategory={(categoryName: string) => {
+              const category = allCategories?.find(cat => cat.category === categoryName);
+              handleCategoryChange(category || null);
+            }}
           />
         )}
       </div>
@@ -274,7 +214,7 @@ const Products = () => {
         <div>
           <h5 className="mb-1">{currentCategory} Products</h5>
           <p className="mb-0 text-primary">
-            {products?.count} Product{products?.count > 1 ? "s" : ""} in Total
+            {(products?.count ?? 0)} Product{(products?.count ?? 0) !== 1 ? "s" : ""} in Total
           </p>
         </div>
         <div className="ms-0 ms-md-auto mb-4 mb-md-0">
@@ -291,7 +231,7 @@ const Products = () => {
       <div className="row">
         {
           // loading
-          loadingProducts && !error && (
+          loadingProducts && !productsError && (
             <div className="d-flex justify-content-center">
               {/* spinner */}
               <div className="spinner-border text-primary" role="status">
@@ -303,12 +243,10 @@ const Products = () => {
         {!loadingProducts && filteredProducts?.length > 0 ? (
           filteredProducts?.map((product) => (
             <ProductCard
-              openModal={openModal}
-              key={product.id}
-              tab={currentCategory}
-              item={product}
+              product={product}
               onEdit={handleEdit}
               onDelete={handleDeleteConfirm}
+              onView={adminctx?.openModal}
             />
           ))
         ) : (
@@ -342,11 +280,9 @@ const Products = () => {
       >
         <ProductForm
           product={product}
-          setProduct={setProduct}
-          handleSubmit={handleSubmit}
-          addorupdate={addorupdate}
-          categories={categories}
-          isSubmitting={isPending}
+          editMode={addorupdate.mode === "update"}
+          onSuccess={handleFormSuccess}
+          onCancel={closeModal}
         />
       </Modal>
 
@@ -354,16 +290,16 @@ const Products = () => {
         <div className="p-3">
           <p className="text-center">Delete Product</p>
           <hr />
-          <h5 className="text-center mb-4">{product.name}</h5>
+          <h5 className="text-center mb-4">{product?.name}</h5>
           <div className="d-flex justify-content-center">
             <button
               className="btn btn-danger border-0 rounded me-2"
-              onClick={() => handleDelete(product.id)}
+              onClick={() => product && handleDelete(product.id)}
               disabled={isdeleting}
             >
               {isdeleting ? (
                 <div className="d-inline-flex align-items-center justify-content-center gap-2">
-                  <div>deleting Service</div>
+                  <div>deleting Product</div>
                   <PulseLoader size={8} color={"#ffffff"} loading={true} />
                 </div>
               ) : (

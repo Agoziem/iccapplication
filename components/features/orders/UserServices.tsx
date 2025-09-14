@@ -1,27 +1,24 @@
-import { useSession } from "next-auth/react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { PiEmptyBold } from "react-icons/pi";
 import ServicesPlaceholder from "../../custom/ImagePlaceholders/ServicesPlaceholder";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { servicesAPIendpoint } from "@/data/hooks/service.hooks";
+import { servicesAPIendpoint, useServices } from "@/data/hooks/service.hooks";
 import Pagination from "@/components/custom/Pagination/Pagination";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
-import { useMemo, useState, useCallback, useEffect } from "react";
-import { useFetchServices } from "@/data/services/service.hook";
+import { useMyProfile } from "@/data/hooks/user.hooks";
+import { ORGANIZATION_ID } from "@/data/constants";
+import { Service } from "@/types/items";
 
 /**
- * Enhanced UserServices component with comprehensive error handling and validation
- * Displays user purchased services with search, pagination, and status tracking
- * 
- * @component
+ * Enhanced UserServices component with comprehensive error handling and safety checks
+ * Manages user service browsing with pagination, search, and category filtering
+ * Optimized with React.memo for performance
  */
-const UserServices = () => {
-  const { data: session } = useSession();
+const UserServices: React.FC = React.memo(() => {
+  const { data: user } = useMyProfile();
   const router = useRouter();
   const searchParams = useSearchParams();
-  
-  // Safe environment variable handling
-  const organizationId = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
   
   // Safe URL parameter extraction
   const currentCategory = searchParams?.get("category") || "All";
@@ -29,20 +26,9 @@ const UserServices = () => {
   const pageSize = "10";
   
   // Safe state management
-  const [searchQuery, setSearchQuery] = useState("");
-  const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
 
-  // Memoized user ID validation
-  const validUserId = useMemo(() => {
-    const userId = session?.user?.id;
-    if (!userId) return null;
-    
-    const numericId = typeof userId === 'string' 
-      ? parseInt(userId, 10) 
-      : userId;
-    
-    return (!isNaN(numericId) && numericId > 0) ? numericId : null;
-  }, [session?.user?.id]);
 
 
   // Safe data fetching with validation
@@ -51,7 +37,8 @@ const UserServices = () => {
     isLoading: loadingServices,
     error: queryError,
     isError
-  } = useFetchServices(
+  } = useServices(
+    parseInt(ORGANIZATION_ID) || 0,
     {
       page: page,
       page_size: pageSize,
@@ -69,13 +56,15 @@ const UserServices = () => {
   }, [isError, queryError]);
 
   // Safe page change handler
-  const handlePageChange = useCallback((newPage) => {
-    if (!newPage || typeof newPage !== 'string') {
+  const handlePageChange = useCallback((newPage: string | number) => {
+    const pageValue = typeof newPage === 'number' ? newPage.toString() : newPage;
+    
+    if (!pageValue || typeof pageValue !== 'string') {
       console.error('Invalid page number:', newPage);
       return;
     }
 
-    const pageNum = parseInt(newPage, 10);
+    const pageNum = parseInt(pageValue, 10);
     if (isNaN(pageNum) || pageNum < 1) {
       console.error('Invalid page number:', newPage);
       return;
@@ -91,7 +80,7 @@ const UserServices = () => {
   }, [currentCategory, pageSize, router]);
 
   // Safe category change handler
-  const handleCategoryChange = useCallback((category) => {
+  const handleCategoryChange = useCallback((category: string) => {
     if (!category || typeof category !== 'string') {
       console.error('Invalid category:', category);
       return;
@@ -142,9 +131,9 @@ const UserServices = () => {
   }, [services, searchQuery]);
 
   // Safe service status determination
-  const getServiceStatus = useCallback((service) => {
+  const getServiceStatus = useCallback((service: Service) => {
     try {
-      if (!service || !validUserId) {
+      if (!service || !user || !user.id) {
         return (
           <div className="badge bg-secondary bg-opacity-10 text-secondary py-2">
             Unknown
@@ -157,10 +146,10 @@ const UserServices = () => {
 
       // Ensure arrays and safe includes check
       const inProgress = Array.isArray(inProgressIds) && 
-        inProgressIds.some(id => parseInt(id, 10) === validUserId);
+        inProgressIds.some(id => id === user.id);
       
       const completed = Array.isArray(completedIds) && 
-        completedIds.some(id => parseInt(id, 10) === validUserId);
+        completedIds.some(id => id === user.id);
 
       if (completed) {
         return (
@@ -194,24 +183,24 @@ const UserServices = () => {
         </div>
       );
     }
-  }, [validUserId]);
+  }, [user?.id]);
 
   // Safe service link check
-  const shouldShowViewLink = useCallback((service) => {
+  const shouldShowViewLink = useCallback((service: Service) => {
     try {
-      if (!service || !validUserId) return false;
+      if (!service || !user || !user.id) return false;
       
       const completedIds = service.userIDs_whose_services_have_been_completed || [];
-      return !Array.isArray(completedIds) || 
-        !completedIds.some(id => parseInt(id, 10) === validUserId);
+      return !Array.isArray(completedIds) ||
+        !completedIds.some(id => id === user.id);
     } catch (error) {
       console.error('Error checking view link visibility:', error);
       return false;
     }
-  }, [validUserId]);
+  }, [user?.id]);
 
   // Safe description truncation
-  const getTruncatedDescription = useCallback((description, maxLength = 80) => {
+  const getTruncatedDescription = useCallback((description: string | undefined, maxLength = 80) => {
     if (!description || typeof description !== 'string') return 'No description available';
     
     if (description.length <= maxLength) return description;
@@ -255,7 +244,7 @@ const UserServices = () => {
   }
 
   // No session state
-  if (!session?.user) {
+  if (!user) {
     return (
       <div className="alert alert-warning d-flex align-items-center" role="alert">
         <i className="bi bi-person-exclamation me-2"></i>
@@ -302,7 +291,7 @@ const UserServices = () => {
             const serviceToken = service.service_token;
             const serviceName = service.name || 'Unnamed Service';
             const serviceCategory = service.category?.category || 'Uncategorized';
-            const serviceDescription = getTruncatedDescription(service.description);
+            const serviceDescription = getTruncatedDescription(service.description || '');
             const hasPreview = service.preview && service.img_url;
 
             return (
@@ -398,6 +387,9 @@ const UserServices = () => {
       )}
     </div>
   );
-};
+});
+
+// Add display name for debugging
+UserServices.displayName = 'UserServices';
 
 export default UserServices;

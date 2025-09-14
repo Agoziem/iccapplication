@@ -1,21 +1,25 @@
 import React, { useMemo, useCallback } from "react";
 import "./OrderTableItems.css";
-import { useSession } from "next-auth/react";
 import moment from "moment";
+import { useMyProfile } from "@/data/hooks/user.hooks";
+import { PaymentResponse, PaymentStatus } from "@/types/payments";
+
+type OrderTableItemsProps = {
+  currentItems?: PaymentResponse[]
+}
 
 /**
- * Enhanced OrderTableItems component with comprehensive error handling
- * Displays order information with safe data processing
- * 
- * @param {{
- *   currentItems?: Order[];
- * }} props
+ * Enhanced OrderTableItems component with comprehensive error handling and safety checks
+ * Displays order payment data with proper validation and type safety
+ * Optimized with React.memo for performance
  */
-const OrderTableItems = ({ currentItems = [] }) => {
-  const { data: session } = useSession();
-
+const OrderTableItems: React.FC<OrderTableItemsProps> = React.memo(({ 
+  currentItems = [] 
+}) => {
+  const { data: user } = useMyProfile();
+  
   // Safe status badge handler
-  const handleStatus = useCallback((status) => {
+  const handleStatus = useCallback((status: PaymentStatus | undefined) => {
     if (!status || typeof status !== 'string') return 'secondary';
     
     switch (status.toLowerCase()) {
@@ -25,8 +29,6 @@ const OrderTableItems = ({ currentItems = [] }) => {
         return 'warning';
       case 'failed':
         return 'danger';
-      case 'cancelled':
-        return 'secondary';
       default:
         return 'secondary';
     }
@@ -44,7 +46,7 @@ const OrderTableItems = ({ currentItems = [] }) => {
   }, [currentItems]);
 
   // Safe amount formatting
-  const formatAmount = useCallback((amount) => {
+  const formatAmount = useCallback((amount: number | string | null | undefined) => {
     if (amount === null || amount === undefined) return '0.00';
     
     let numValue;
@@ -65,24 +67,10 @@ const OrderTableItems = ({ currentItems = [] }) => {
   }, []);
 
 
-  // Safe customer name extraction
-  const getCustomerName = useCallback((customer) => {
-    if (!customer || typeof customer !== 'object') return 'Unknown Customer';
-    
-    if (customer.name) return customer.name;
-    if (customer.username) return customer.username;
-    if (customer.email) return customer.email;
-    if (customer.first_name && customer.last_name) {
-      return `${customer.first_name} ${customer.last_name}`;
-    }
-    if (customer.first_name) return customer.first_name;
-    
-    return 'Unknown Customer';
-  }, []);
 
   // Dynamic column span calculation
   const getColSpan = () => {
-    return session?.user?.is_staff ? 6 : 5;
+    return user?.is_staff ? 6 : 5;
   };
 
   return (
@@ -91,7 +79,7 @@ const OrderTableItems = ({ currentItems = [] }) => {
         <thead>
           <tr>
             <th scope="col">Order ID</th>
-            {session?.user?.is_staff && <th scope="col">Customer</th>}
+            {user?.is_staff && <th scope="col">Customer</th>}
             <th scope="col">Total Amount</th>
             <th scope="col">Payment Ref</th>
             <th scope="col">Date</th>
@@ -102,11 +90,11 @@ const OrderTableItems = ({ currentItems = [] }) => {
           {ordersData.length > 0 ? (
             ordersData.map((item) => {
               const orderId = item.id || 'N/A';
-              const customerName = getCustomerName(item.customer);
+              const customerName = (item.customer?.first_name || item.customer?.last_name || 'Unknown Customer');
               const amount = formatAmount(item.amount);
               const reference = item.reference || 'N/A';
               const date = moment(item.last_updated_date || item.created_at).format("MMM D, YYYY h:mm A");
-              const status = item.status || 'Unknown';
+              const status = item.status;
               const statusClass = handleStatus(status);
 
               return (
@@ -114,7 +102,7 @@ const OrderTableItems = ({ currentItems = [] }) => {
                   <td>
                     <span className="fw-medium">{orderId}</span>
                   </td>
-                  {session?.user?.is_staff && (
+                  {user?.is_staff && (
                     <td>
                       <span className="text-secondary">{customerName}</span>
                     </td>
@@ -155,6 +143,9 @@ const OrderTableItems = ({ currentItems = [] }) => {
       </table>
     </div>
   );
-};
+});
+
+// Add display name for debugging
+OrderTableItems.displayName = 'OrderTableItems';
 
 export default OrderTableItems;

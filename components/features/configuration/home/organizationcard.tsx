@@ -1,41 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { converttoformData } from "@/utils/formutils";
 import OrganizationalForm from "./organizationalform";
-import { OrganizationDefault } from "@/data/constants";
-import { useUpdateOrganization } from "@/data/organization/organization.hook";
-import toast from "react-hot-toast";
+import { Organization } from "@/types/organizations";
 
-/**
- * @param {{ OrganizationData: Organization; }} param0
- */
-const OrganizationCard = ({ OrganizationData }) => {
-  const [Organization, setOrganizationData] = useState(OrganizationDefault);
-  const [alert, setAlert] = useState({
-    show: false,
-    message: "",
-    type: "",
-  });
+const OrganizationCard = ({
+  OrganizationData,
+}: {
+  OrganizationData: Organization;
+}) => {
   const [editMode, setEditMode] = useState(false);
-
-  useEffect(() => {
-    if (OrganizationData?.id){
-      setOrganizationData(OrganizationData)
-    }
-  }, [OrganizationData]);
-
-  const { mutateAsync } = useUpdateOrganization();
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await mutateAsync(Organization);
-      toast.success("Organization Details Updated Successfully");
-    } catch (error) {
-      console.log(error);
-      toast.error("Error Updating Organization Details");
-    } finally {
-      setEditMode(false);
-    }
-  };
 
   return (
     <div className="card px-5 py-5">
@@ -50,9 +22,7 @@ const OrganizationCard = ({ OrganizationData }) => {
           </div>
           <h3 className="text-center mb-4">Edit Organization Details</h3>
           <OrganizationalForm
-            handleSubmit={handleSubmit}
-            OrganizationData={Organization}
-            setOrganizationData={setOrganizationData}
+            OrganizationData={OrganizationData}
             setEditMode={setEditMode}
           />
         </div>

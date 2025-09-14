@@ -1,290 +1,456 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import "./cbtconfig.css";
 import Modal from "@/components/custom/Modal/modal";
 import { TiTimesOutline } from "react-icons/ti";
+import { TiTimes } from "react-icons/ti";
 import QuestionsGrid from "./QuestionsGrid";
 import Alert from "@/components/custom/Alert/Alert";
+import { Question, Subject, Test, CreateQuestion, AnswerCreate } from "@/types/cbt";
+import { createQuestionSchema } from "@/schemas/cbt";
+import { useCreateQuestion, useUpdateQuestion } from "@/data/hooks/cbt.hooks";
 
-const QuestionForm = ({ test, setTest, currentSubject, setCurrentSubject }) => {
-  const [alert, setAlert] = useState({ show: false, message: "", type: "" });
+interface QuestionFormProps {
+  test: Test | null;
+  setTest: React.Dispatch<React.SetStateAction<Test | null>>;
+  currentSubject: Subject | null;
+  setCurrentSubject: React.Dispatch<React.SetStateAction<Subject | null>>;
+}
+
+interface QuestionFormData {
+  questiontext: string;
+  questionMark: number;
+  correctAnswerdescription: string;
+  answers: Array<{
+    answertext: string;
+    isCorrect: boolean;
+  }>;
+}
+
+interface AlertState {
+  show: boolean;
+  message: string;
+  type: "success" | "danger" | "warning" | "info";
+}
+
+const QuestionForm: React.FC<QuestionFormProps> = ({ test, setTest, currentSubject, setCurrentSubject }) => {
+  const [alert, setAlert] = useState<AlertState>({ show: false, message: "", type: "info" });
   const [editMode, setEditMode] = useState(false);
-  const [correctAnswer, setCorrectAnswer] = useState("");
-  const [question, setQuestion] = useState({
-    id: "",
-    questiontext: "",
-    questionMark: "",
-    answers: [
-      {
-        answertext: "",
-        isCorrect: false,
-      },
-    ],
-    correctAnswerdescription: "",
-  });
+  const [correctAnswer, setCorrectAnswer] = useState<string | null>(null);
+  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const { mutateAsync: addQuestionMutation } = useCreateQuestion();
+  const { mutateAsync: updateQuestionMutation } = useUpdateQuestion();
 
-  const closeModal = () => {
-    setEditMode(false);
-    setShowModal(false);
-    setQuestion({
-      id: "",
+  const form = useForm<QuestionFormData>({
+    resolver: zodResolver(
+      createQuestionSchema.pick({
+        questiontext: true,
+        questionMark: true,
+        correctAnswerdescription: true,
+      }).extend({
+        answers: createQuestionSchema.shape.answers,
+      })
+    ),
+    defaultValues: {
       questiontext: "",
-      questionMark: "",
-      answers: [
-        {
-          answertext: "",
-          isCorrect: false,
-        },
-      ],
+      questionMark: 1,
       correctAnswerdescription: "",
-    });
-    setCorrectAnswer("");
-  };
+      answers: [
+        { answertext: "", isCorrect: false },
+        { answertext: "", isCorrect: false },
+      ],
+    },
+  });
 
-  const handleCheckboxChange = (index) => {
-    const updatedAnswers = question.answers.map((answer, i) => ({
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "answers",
+  });
+
+  // Show alert with timeout
+  const showAlert = useCallback((message: string, type: AlertState["type"]) => {
+    setAlert({ show: true, message, type });
+    setTimeout(() => {
+      setAlert({ show: false, message: "", type: "info" });
+    }, 3000);
+  }, []);
+
+  // Handle correct answer selection
+  const handleCorrectAnswerChange = useCallback((index: number) => {
+    const currentAnswers = form.getValues("answers");
+    const updatedAnswers = currentAnswers.map((answer, i) => ({
       ...answer,
       isCorrect: i === index,
     }));
+    
+    form.setValue("answers", updatedAnswers);
+    
+    const selectedAnswer = updatedAnswers[index];
+    setCorrectAnswer(selectedAnswer.answertext || null);
+  }, [form]);
 
-    setQuestion({
-      ...question,
-      answers: updatedAnswers,
-    });
-    setCorrectAnswer(updatedAnswers[index].answertext);
-  };
+  // Add new answer
+  const addAnswer = useCallback(() => {
+    append({ answertext: "", isCorrect: false });
+  }, [append]);
 
-  const handleSubmit = async (e, url) => {
-    e.preventDefault();
-    try {
-      const response = await fetch(url, {
-        method: editMode ? "PUT" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(question),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error("An error occurred while saving the question");
+  // Remove answer
+  const removeAnswer = useCallback((index: number) => {
+    if (fields.length > 2) {
+      remove(index);
+      // Update correct answer if the removed answer was selected
+      const currentAnswers = form.getValues("answers");
+      const wasCorrect = currentAnswers[index]?.isCorrect;
+      if (wasCorrect) {
+        setCorrectAnswer(null);
       }
-      setAlert({
-        show: true,
-        message: "Question saved successfully",
-        type: "success",
-      });
-      setCurrentSubject({
-        ...currentSubject,
-        questions: editMode
-          ? currentSubject.questions.map((q) => (q.id === data.id ? data : q))
-          : [...currentSubject.questions, data],
-      });
-      setTest({
-        ...test,
-        testSubject: test.testSubject.map((subject) =>
-          subject.id === currentSubject.id
-            ? {
-                ...subject,
-                questions: editMode
-                  ? subject.questions.map((q) =>
-                      q.id === data.id ? data : q
-                    )
-                  : [...subject.questions, data],
-            }
-            : subject
-        ),
-      });
-    } catch (error) {
-      setAlert({
-        show: true,
-        message: error.message || "An error occurred while saving the question",
-        type: "danger",
-      });
-    } finally {
+    }
+  }, [fields.length, remove, form]);
+
+  // Open modal for new question
+  const openModal = useCallback(() => {
+    setEditMode(false);
+    setCurrentQuestion(null);
+    setCorrectAnswer(null);
+    form.reset({
+      questiontext: "",
+      questionMark: 1,
+      correctAnswerdescription: "",
+      answers: [
+        { answertext: "", isCorrect: false },
+        { answertext: "", isCorrect: false },
+      ],
+    });
+    setShowModal(true);
+  }, [form]);
+
+  // Open modal for editing question
+  const openEditModal = useCallback((question: Question) => {
+    setEditMode(true);
+    setCurrentQuestion(question);
+    
+    // Find correct answer by checking which answer has isCorrect = true
+    const correctAnswerObj = question.answers.find(answer => answer.isCorrect);
+    const correctAnswerText = correctAnswerObj?.answertext || null;
+    setCorrectAnswer(correctAnswerText);
+    
+    const formattedAnswers = question.answers.map((answer) => ({
+      answertext: answer.answertext,
+      isCorrect: answer.isCorrect || false,
+    }));
+
+    form.reset({
+      questiontext: question.questiontext,
+      questionMark: question.questionMark,
+      correctAnswerdescription: question.correctAnswerdescription || "",
+      answers: formattedAnswers,
+    });
+    
+    setShowModal(true);
+  }, [form]);
+
+  const closeModal = useCallback(() => {
+    setShowModal(false);
+    setEditMode(false);
+    setCurrentQuestion(null);
+    setCorrectAnswer(null);
+    form.reset();
+  }, [form]);
+
+  // Submit form
+  const onSubmit = async (data: QuestionFormData) => {
+    try {
+      if (!currentSubject?.id) {
+        showAlert("No subject selected", "danger");
+        return;
+      }
+
+      // Find the correct answer
+      const correctAnswerIndex = data.answers.findIndex(answer => answer.isCorrect);
+      if (correctAnswerIndex === -1) {
+        showAlert("Please select a correct answer", "danger");
+        return;
+      }
+
+      if (editMode && currentQuestion?.id) {
+        await updateQuestionMutation({
+          questionId: currentQuestion.id,
+          questionData: {
+            questiontext: data.questiontext,
+            questionMark: data.questionMark,
+            answers: data.answers,
+            correctAnswerdescription: data.correctAnswerdescription,
+          },
+        });
+        showAlert("Question updated successfully", "success");
+      } else {
+        await addQuestionMutation({
+          subjectId: currentSubject.id,
+          questionData: {
+            questiontext: data.questiontext,
+            questionMark: data.questionMark,
+            answers: data.answers,
+            correctAnswerdescription: data.correctAnswerdescription,
+          },
+        });
+        showAlert("Question created successfully", "success");
+      }
+
       closeModal();
-      setTimeout(() => {
-        setAlert({ show: false, message: "", type: "" });
-      }, 3000);
+    } catch (error) {
+      console.error("Error saving question:", error);
+      showAlert(
+        editMode ? "Failed to update question" : "Failed to create question",
+        "danger"
+      );
     }
   };
 
+  // Update correct answer when answers change
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name?.includes("answers")) {
+        const answers = value.answers || [];
+        const correctIndex = answers.findIndex(answer => answer?.isCorrect);
+        if (correctIndex >= 0) {
+          setCorrectAnswer(answers[correctIndex]?.answertext || null);
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
+
   return (
     <div className="mt-3">
-      <div className="d-flex justify-content-end align-items-center">
-        <h6 className="me-3 mb-0">
-          ({currentSubject?.questions?.length} question
-          {currentSubject?.questions?.length > 1 && "s"})
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h6 className="mb-0">
+          Questions Management
+          {currentSubject?.questions?.length !== undefined && (
+            <span className="text-muted ms-2">
+              ({currentSubject.questions.length} question{currentSubject.questions.length !== 1 ? 's' : ''})
+            </span>
+          )}
         </h6>
         <button
-          className="btn btn-primary border-0 rounded mb-2 mb-md-0 me-3 me-md-5"
-          style={{ backgroundColor: "var(--bgDarkerColor)" }}
-          onClick={() => {
-            setShowModal(true);
-          }}
+          className="btn btn-primary rounded"
+          onClick={openModal}
+          disabled={!currentSubject}
         >
-          <i className="bi bi-plus-circle me-2 h5 mb-0"></i> Add Question
+          <i className="bi bi-plus-circle me-2"></i>
+          Add Question
         </button>
       </div>
-      <div className="my-2">
-        {alert.show && <Alert type={alert.type}>{alert.message}</Alert>}
-      </div>
-      {/* The QuestionsGrid */}
-      <QuestionsGrid
-        currentSubject={currentSubject}
-        setQuestion={setQuestion}
-        setEditMode={setEditMode}
-        setShowModal={setShowModal}
-        setCorrectAnswer={setCorrectAnswer}
-        test={test}
-        setTest={setTest}
-        setCurrentSubject={setCurrentSubject}
-      />
 
-      <Modal
-        showmodal={showModal}
-        toggleModal={() => {
-          closeModal();
-        }}
-      >
-        <div className="mt-3">
-          <div className="pb-4 px-3 px-md-4">
-            <p className="mb-1">{currentSubject?.subjectname}</p>
-            <h5>{editMode ? "Edit" : "Add"} Question</h5>
-            <hr />
-            <form
-              onSubmit={(e) => {
-                handleSubmit(
-                  e,
-                  editMode
-                    ? `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/CBTapi/updateQuestion/${question.id}/`
-                    : `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/CBTapi/addQuestion/${currentSubject?.id}/`
-                );
-              }}
-            >
+      {alert.show && <Alert type={alert.type}>{alert.message}</Alert>}
+
+      {!currentSubject ? (
+        <div className="card p-4 text-center">
+          <p className="mb-0 text-muted">Please select a subject to manage questions</p>
+        </div>
+      ) : (
+        <QuestionsGrid
+          currentSubject={currentSubject}
+          setQuestion={openEditModal}
+          setEditMode={setEditMode}
+          setShowModal={setShowModal}
+          setCorrectAnswer={() => {}}
+          test={test}
+          setTest={setTest}
+          setCurrentSubject={setCurrentSubject}
+        />
+      )}
+
+      <Modal showmodal={showModal} toggleModal={closeModal}>
+        <div className="p-4">
+          <h5 className="mb-4">
+            {editMode ? "Edit Question" : "Add New Question"}
+          </h5>
+
+          <form onSubmit={form.handleSubmit(onSubmit)} className="row">
+            <div className="col-12">
               <div className="mb-3">
-                <label htmlFor="questionMark">Question Mark</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  id="questionMark"
-                  value={question.questionMark}
-                  onChange={(e) =>
-                    setQuestion({ ...question, questionMark: e.target.value })
-                  }
-                />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="question">Question Text</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="question"
-                  value={question.questiontext}
-                  onChange={(e) =>
-                    setQuestion({ ...question, questiontext: e.target.value })
-                  }
+                <label htmlFor="questionMark" className="form-label fw-bold">
+                  Mark for Question
+                </label>
+                <Controller
+                  name="questionMark"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <>
+                      <input
+                        {...field}
+                        type="number"
+                        className={`form-control ${fieldState.error ? "is-invalid" : ""}`}
+                        id="questionMark"
+                        min="1"
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                      />
+                      {fieldState.error && (
+                        <div className="invalid-feedback">
+                          {fieldState.error.message}
+                        </div>
+                      )}
+                    </>
+                  )}
                 />
               </div>
 
-              {question?.answers.map((answer, index) => (
-                <div className="mb-3" key={index}>
-                  <label htmlFor={`answer${index}`}>Answer {index + 1}</label>
-                  <div className="d-flex">
-                    <input
-                      type="text"
-                      className="form-control"
-                      id={`answer${index}`}
-                      value={answer.answertext}
-                      onChange={(e) => {
-                        let answers = question.answers;
-                        answers[index].answertext = e.target.value;
-                        setQuestion({ ...question, answers });
-                      }}
-                    />
-                    <TiTimesOutline
-                      className="ms-2 h3 text-danger"
-                      style={{ cursor: "pointer" }}
-                      onClick={() => {
-                        let answers = question.answers;
-                        answers.splice(index, 1);
-                        setQuestion({ ...question, answers });
-                      }}
-                    />
-                  </div>
-
-                  <div className="form-check mt-2">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id={`flexCheckDefault${index}`}
-                      checked={answer.isCorrect}
-                      onChange={() => handleCheckboxChange(index)}
-                    />
-                    <label
-                      className="form-check-label"
-                      htmlFor={`flexCheckDefault${index}`}
-                    >
-                      Correct Answer
-                    </label>
-                  </div>
-                </div>
-              ))}
               <div className="mb-3">
+                <label htmlFor="question" className="form-label fw-bold">
+                  Question
+                </label>
+                <Controller
+                  name="questiontext"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <>
+                      <textarea
+                        {...field}
+                        className={`form-control ${fieldState.error ? "is-invalid" : ""}`}
+                        id="question"
+                        rows={3}
+                        placeholder="Enter the question text here..."
+                      />
+                      {fieldState.error && (
+                        <div className="invalid-feedback">
+                          {fieldState.error.message}
+                        </div>
+                      )}
+                    </>
+                  )}
+                />
+              </div>
+
+              <div className="mb-3">
+                <label className="form-label fw-bold">Answers</label>
+                {fields.map((field, index) => (
+                  <div key={field.id} className="mb-3 p-3 border rounded">
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <label htmlFor={`answer-${index}`} className="form-label">
+                        Answer {index + 1}
+                      </label>
+                      {fields.length > 2 && (
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-danger"
+                          onClick={() => removeAnswer(index)}
+                          title="Remove answer"
+                        >
+                          <TiTimes />
+                        </button>
+                      )}
+                    </div>
+                    
+                    <Controller
+                      name={`answers.${index}.answertext`}
+                      control={form.control}
+                      render={({ field: answerField, fieldState }) => (
+                        <>
+                          <input
+                            {...answerField}
+                            type="text"
+                            className={`form-control ${fieldState.error ? "is-invalid" : ""}`}
+                            id={`answer-${index}`}
+                            placeholder="Enter answer text..."
+                          />
+                          {fieldState.error && (
+                            <div className="invalid-feedback">
+                              {fieldState.error.message}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    />
+
+                    <div className="form-check mt-2">
+                      <input
+                        className="form-check-input"
+                        type="radio"
+                        name="correctAnswer"
+                        id={`correct-${index}`}
+                        checked={form.watch(`answers.${index}.isCorrect`)}
+                        onChange={() => handleCorrectAnswerChange(index)}
+                      />
+                      <label className="form-check-label" htmlFor={`correct-${index}`}>
+                        Correct Answer
+                      </label>
+                    </div>
+                  </div>
+                ))}
+
                 <button
-                  className="btn btn-accent-primary shadow-none"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    let answers = question.answers;
-                    answers.push({
-                      answertext: "",
-                      isCorrect: false,
-                    });
-                    setQuestion({ ...question, answers });
-                  }}
+                  type="button"
+                  className="btn btn-outline-primary btn-sm"
+                  onClick={addAnswer}
                 >
-                  <i className="bi bi-plus-circle me-2 h5 mb-0"></i> Add Answer
+                  <i className="bi bi-plus-circle me-2"></i>
+                  Add Answer
                 </button>
               </div>
 
-              <div className="mb-3">
-                <p className="fw-bold mb-1">Correct Answer</p>
-                <p>{correctAnswer || "No answer selected yet"}</p>
-              </div>
+              {correctAnswer && (
+                <div className="mb-3">
+                  <p className="fw-bold mb-1 text-success">Selected Correct Answer:</p>
+                  <p className="text-muted">{correctAnswer}</p>
+                </div>
+              )}
+
               <div className="mb-4">
-                <label htmlFor="correctAnswerdescription">
+                <label htmlFor="correctAnswerdescription" className="form-label fw-bold">
                   Correct Answer Description
                 </label>
-                <textarea
-                  className="form-control"
-                  id="correctAnswerdescription"
-                  value={question.correctAnswerdescription}
-                  onChange={(e) =>
-                    setQuestion({
-                      ...question,
-                      correctAnswerdescription: e.target.value,
-                    })
-                  }
+                <Controller
+                  name="correctAnswerdescription"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <>
+                      <textarea
+                        {...field}
+                        className={`form-control ${fieldState.error ? "is-invalid" : ""}`}
+                        id="correctAnswerdescription"
+                        rows={3}
+                        placeholder="Explain why this is the correct answer..."
+                      />
+                      {fieldState.error && (
+                        <div className="invalid-feedback">
+                          {fieldState.error.message}
+                        </div>
+                      )}
+                    </>
+                  )}
                 />
               </div>
 
-              <div className="d-flex justify-content-end">
+              <div className="d-flex justify-content-end gap-2">
                 <button
                   type="button"
-                  className="btn btn-accent-secondary border-0 rounded me-2"
-                  onClick={() => closeModal()}
+                  className="btn btn-secondary"
+                  onClick={closeModal}
+                  disabled={form.formState.isSubmitting}
                 >
-                  {" "}
-                  Cancel{" "}
+                  Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn btn-primary border-0 rounded"
+                  className="btn btn-primary"
+                  disabled={form.formState.isSubmitting}
                 >
-                  Save
+                  {form.formState.isSubmitting ? (
+                    <>
+                      <div className="spinner-border spinner-border-sm me-2" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                      </div>
+                      {editMode ? "Updating..." : "Creating..."}
+                    </>
+                  ) : (
+                    <>{editMode ? "Update Question" : "Create Question"}</>
+                  )}
                 </button>
               </div>
-            </form>
-          </div>
+            </div>
+          </form>
         </div>
       </Modal>
     </div>
@@ -292,36 +458,4 @@ const QuestionForm = ({ test, setTest, currentSubject, setCurrentSubject }) => {
 };
 
 export default QuestionForm;
-
-//   {
-//     "id": 8,
-//     "answers": [
-//         {
-//             "id": 14,
-//             "answertext": "True"
-//         },
-//         {
-//             "id": 15,
-//             "answertext": "False"
-//         }
-//     ],
-//     "correctAnswer": null,
-//     "questiontext": "The Lord is Good",
-//     "questionMark": 2,
-//     "required": true,
-//     "correctAnswerdescription": "The Lord is indeed Good"
-// } from the database
-
-// {
-//   id: "",
-//   questiontext: "",
-//   questionMark: "",
-//   answers: [
-//     {
-//       answertext: "",
-//       isCorrect: false,
-//     },
-//   ],
-//   correctAnswerdescription: "",
-// } for the form
 

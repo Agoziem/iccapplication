@@ -1,66 +1,151 @@
+import React, { useState, useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import ImageUploader from "@/components/custom/Imageuploader/ImageUploader";
 import FileUploader from "@/components/custom/Fileuploader/FileUploader";
-import { productsAPIendpoint } from "@/data/hooks/product.hooks";
+import {
+  useAddProduct,
+  useProductCategories,
+  useProductSubCategories,
+  useUpdateProduct,
+} from "@/data/hooks/product.hooks";
 import { PulseLoader } from "react-spinners";
-import { useFetchSubCategories } from "@/data/categories/categories.hook";
+import { Product } from "@/types/items";
+import { ORGANIZATION_ID } from "@/data/constants";
+import { createProductSchema, updateProductSchema } from "@/schemas/items";
 
-/**
- * @param {{ product: Product; setProduct: (value:Product) => void; handleSubmit: any; addorupdate: any; categories: Categories;isSubmitting:boolean; }} param0
- */
-const ProductForm = ({
+type ProductFormData =
+  | z.infer<typeof createProductSchema>
+  | z.infer<typeof updateProductSchema>;
+
+interface ProductFormProps {
+  product?: Product | null;
+  editMode: boolean;
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+const ProductForm: React.FC<ProductFormProps> = ({
   product,
-  setProduct,
-  handleSubmit,
-  addorupdate,
-  categories: productcategories,
-  isSubmitting,
+  editMode = false,
+  onSuccess,
+  onCancel,
 }) => {
+  const { data: productcategories } = useProductCategories();
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number>(0);
   const { data: subcategories, isLoading: loadingsubcategories } =
-    useFetchSubCategories(
-      `${productsAPIendpoint}/subcategories/${product.category.id}/`,
-      product.category?.id
-    );
-  // ------------------------------
-  // Handle category change
-  // -------------------------------
-  const handleCategoryChange = (e) => {
-    const selectedCategory = productcategories?.find(
-      (category) => category.category === e.target.value
-    );
-    setProduct({ ...product, category: selectedCategory, subcategory: null });
+    useProductSubCategories(selectedCategoryId);
+  const { mutateAsync: createProduct, isLoading: isCreating } = useAddProduct();
+  const { mutateAsync: updateProduct, isLoading: isUpdating } =
+    useUpdateProduct();
+
+  const isSubmitting = isCreating || isUpdating;
+
+  // Setup form with appropriate schema based on edit mode
+  const form = useForm<ProductFormData>({
+    resolver: zodResolver(createProductSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      price: 0,
+      category: 0,
+      subcategory: 0,
+      organization: ORGANIZATION_ID || "",
+      digital: false,
+      free: false,
+      preview: "",
+      product: "",
+    },
+  });
+
+  // Update form when product prop changes
+  useEffect(() => {
+    if (editMode && product) {
+      form.reset({
+        name: product.name,
+        description: product.description,
+        price: parseFloat(product.price || "0"),
+        category: product.category?.id || 0,
+        subcategory: product.subcategory?.id || 0,
+        organization: ORGANIZATION_ID || "",
+        digital: product.digital || false,
+        free: product.free || false,
+        preview: product.img_url || "",
+        product: product.product || "",
+      });
+      setSelectedCategoryId(product.category?.id || 0);
+    }
+  }, [editMode, product, form]);
+
+  // Set initial selected category for subcategory loading
+  useEffect(() => {
+    if (product?.category?.id) {
+      setSelectedCategoryId(product.category.id);
+    }
+  }, [product]);
+
+  // Handle category change for subcategory loading
+  const handleCategoryChange = (categoryId: number) => {
+    setSelectedCategoryId(categoryId);
+    form.setValue("subcategory", 0); // Reset subcategory when category changes
   };
 
-  // - -------------------------------
-  // Handle subcategory change
-  //  -------------------------------
-  const handleSubCategoryChange = (e) => {
-    const selectedSubCategory = subcategories?.find(
-      (subcategory) => subcategory.subcategory === e.target.value
-    );
-    setProduct({ ...product, subcategory: selectedSubCategory });
+  // Submit form
+  const onSubmit = async (formData: ProductFormData) => {
+    try {
+      if (editMode && product?.id) {
+        await updateProduct({
+          productId: product.id,
+          productData: formData,
+        });
+      } else {
+        await createProduct({
+          organizationId: parseInt(ORGANIZATION_ID || "0"),
+          productData: {
+            name: formData.name ?? "",
+            description: formData.description ?? "",
+            price: formData.price ?? 0,
+            category: formData.category ?? 0,
+            subcategory: formData.subcategory ?? 0,
+            organization: ORGANIZATION_ID || "",
+            digital: formData.digital || false,
+            free: formData.free || false,
+            preview: formData.preview ?? "",
+            product: formData.product ?? "",
+          },
+        });
+      }
+      onSuccess();
+    } catch (error) {
+      console.error("Error saving product:", error);
+    }
   };
 
   return (
     <div className="p-3">
       <h5 className="text-center mb-4">
-        {addorupdate.mode === "add" ? "Add Product" : `Edit ${product.name}`}
+        {editMode ? `Edit ${product?.name}` : "Add Product"}
       </h5>
       <hr />
-      <form
-        onSubmit={(e) => {
-          handleSubmit(e);
-        }}
-      >
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        {/* Product Preview Image */}
         <div className="mb-2">
           <label htmlFor="preview" className="form-label">
             Product Preview image
           </label>
-          <ImageUploader
-            imagekey={"preview"}
-            imageurlkey={"img_url"}
-            imagename={"img_name"}
-            formData={product}
-            setFormData={setProduct}
+          <Controller
+            name="preview"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <>
+                <ImageUploader
+                  {...field}
+                  placeholder="Upload product preview image"
+                  error={fieldState.error?.message}
+                />
+              </>
+            )}
           />
         </div>
 
@@ -69,14 +154,27 @@ const ProductForm = ({
           <label htmlFor="name" className="form-label">
             Name
           </label>
-          <input
-            type="text"
-            className="form-control"
-            id="name"
+          <Controller
             name="name"
-            value={product.name}
-            onChange={(e) => setProduct({ ...product, name: e.target.value })}
-            required
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <>
+                <input
+                  {...field}
+                  type="text"
+                  className={`form-control ${
+                    fieldState.error ? "is-invalid" : ""
+                  }`}
+                  id="name"
+                  placeholder="Enter product name"
+                />
+                {fieldState.error && (
+                  <div className="invalid-feedback">
+                    {fieldState.error.message}
+                  </div>
+                )}
+              </>
+            )}
           />
         </div>
 
@@ -85,17 +183,28 @@ const ProductForm = ({
           <label htmlFor="description" className="form-label">
             Description
           </label>
-          <textarea
-            className="form-control"
-            id="description"
+          <Controller
             name="description"
-            value={product.description}
-            onChange={(e) =>
-              setProduct({ ...product, description: e.target.value })
-            }
-            rows={4}
-            required
-          ></textarea>
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <>
+                <textarea
+                  {...field}
+                  className={`form-control ${
+                    fieldState.error ? "is-invalid" : ""
+                  }`}
+                  id="description"
+                  placeholder="Enter product description"
+                  rows={4}
+                />
+                {fieldState.error && (
+                  <div className="invalid-feedback">
+                    {fieldState.error.message}
+                  </div>
+                )}
+              </>
+            )}
+          />
         </div>
 
         {/* Price */}
@@ -103,14 +212,31 @@ const ProductForm = ({
           <label htmlFor="price" className="form-label">
             Price
           </label>
-          <input
-            type="number"
-            className="form-control"
-            id="price"
+          <Controller
             name="price"
-            value={product.price}
-            onChange={(e) => setProduct({ ...product, price: e.target.value })}
-            required
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <>
+                <input
+                  {...field}
+                  type="number"
+                  step="0.01"
+                  className={`form-control ${
+                    fieldState.error ? "is-invalid" : ""
+                  }`}
+                  id="price"
+                  placeholder="Enter product price"
+                  onChange={(e) =>
+                    field.onChange(parseFloat(e.target.value) || 0)
+                  }
+                />
+                {fieldState.error && (
+                  <div className="invalid-feedback">
+                    {fieldState.error.message}
+                  </div>
+                )}
+              </>
+            )}
           />
         </div>
 
@@ -119,21 +245,38 @@ const ProductForm = ({
           <label htmlFor="category" className="form-label">
             Category
           </label>
-          <select
-            className="form-select"
-            id="category"
+          <Controller
             name="category"
-            value={product.category.category}
-            onChange={handleCategoryChange}
-            required
-          >
-            <option value="">Select category</option>
-            {productcategories?.map((category) => (
-              <option key={category.id} value={category.category}>
-                {category.category}
-              </option>
-            ))}
-          </select>
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <>
+                <select
+                  {...field}
+                  className={`form-select ${
+                    fieldState.error ? "is-invalid" : ""
+                  }`}
+                  id="category"
+                  onChange={(e) => {
+                    const categoryId = parseInt(e.target.value);
+                    field.onChange(categoryId);
+                    handleCategoryChange(categoryId);
+                  }}
+                >
+                  <option value={0}>Select category</option>
+                  {productcategories?.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.category}
+                    </option>
+                  ))}
+                </select>
+                {fieldState.error && (
+                  <div className="invalid-feedback">
+                    {fieldState.error.message}
+                  </div>
+                )}
+              </>
+            )}
+          />
         </div>
 
         {/* Subcategory */}
@@ -141,86 +284,136 @@ const ProductForm = ({
           <label htmlFor="subcategory" className="form-label">
             Sub-Category
           </label>
-          <select
-            className="form-select"
-            id="subcategory"
+          <Controller
             name="subcategory"
-            value={product.subcategory?.subcategory || ""}
-            onChange={handleSubCategoryChange}
-            // required
-          >
-            {loadingsubcategories ? (
-              <option>Loading...</option>
-            ) : (
+            control={form.control}
+            render={({ field, fieldState }) => (
               <>
-                <option value="">Select subcategory</option>
-                {subcategories?.map((subcategory) => (
-                  <option key={subcategory.id} value={subcategory.subcategory}>
-                    {subcategory.subcategory}
-                  </option>
-                ))}
+                <select
+                  {...field}
+                  className={`form-select ${
+                    fieldState.error ? "is-invalid" : ""
+                  }`}
+                  id="subcategory"
+                  disabled={loadingsubcategories || selectedCategoryId === 0}
+                >
+                  {loadingsubcategories ? (
+                    <option>Loading...</option>
+                  ) : (
+                    <>
+                      <option value={0}>Select subcategory</option>
+                      {subcategories?.map((subcategory) => (
+                        <option key={subcategory.id} value={subcategory.id}>
+                          {subcategory.subcategory}
+                        </option>
+                      ))}
+                    </>
+                  )}
+                </select>
+                {fieldState.error && (
+                  <div className="invalid-feedback">
+                    {fieldState.error.message}
+                  </div>
+                )}
               </>
             )}
-          </select>
+          />
         </div>
 
-        {/* digital */}
+        {/* Digital */}
         <div className="mb-3">
-          <label htmlFor="digital" className="form-label me-2">
-            Digital
-          </label>
-          <input
-            type="checkbox"
-            className="form-check-input"
-            id="digital"
-            name="digital"
-            checked={product.digital}
-            onChange={(e) =>
-              setProduct({ ...product, digital: e.target.checked })
-            }
-          />
+          <div className="form-check">
+            <Controller
+              name="digital"
+              control={form.control}
+              render={({ field }) => (
+                <input
+                  type="checkbox"
+                  className="form-check-input"
+                  id="digital"
+                  name={field.name}
+                  ref={field.ref}
+                  checked={field.value || false}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                />
+              )}
+            />
+            <label className="form-check-label" htmlFor="digital">
+              Digital Product
+            </label>
+          </div>
         </div>
 
-        {/* free */}
-        <div className="mb-2">
-          <label htmlFor="free" className="form-label me-2">
-            Free
-          </label>
-          <input
-            type="checkbox"
-            className="form-check-input"
-            id="free"
-            name="free"
-            checked={product.free}
-            onChange={(e) => setProduct({ ...product, free: e.target.checked })}
-          />
+        {/* Free */}
+        <div className="mb-3">
+          <div className="form-check">
+            <Controller
+              name="free"
+              control={form.control}
+              render={({ field }) => (
+                <input
+                  type="checkbox"
+                  className="form-check-input"
+                  id="free"
+                  name={field.name}
+                  ref={field.ref}
+                  checked={field.value || false}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                />
+              )}
+            />
+            <label className="form-check-label" htmlFor="free">
+              Free Product
+            </label>
+          </div>
         </div>
 
-        {/* fileinput */}
-        {product.digital && (
+        {/* File Upload for Digital Products */}
+        {form.watch("digital") && (
           <div className="mb-3">
-            <FileUploader
-              filekey={"product"}
-              fileurlkey={"product_url"}
-              filename={"product_name"}
-              formData={product}
-              setFormData={setProduct}
+            <label className="form-label">Product File</label>
+            <Controller
+              name="product"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <FileUploader
+                  {...field}
+                  placeholder="Upload digital product file"
+                  error={fieldState.error?.message}
+                />
+              )}
             />
           </div>
         )}
 
-        <button type="submit" className="btn btn-primary rounded px-5 mt-3">
-          {isSubmitting ? (
-            <div className="d-inline-flex align-items-center justify-content-center gap-2">
-              <div>Submitting Product</div>
-              <PulseLoader size={8} color={"#12000d"} loading={true} />
-            </div>
-          ) : addorupdate.mode === "add" ? (
-            "Add Product"
-          ) : (
-            "Update Product"
-          )}
-        </button>
+        <div className="d-flex justify-content-end gap-2 mt-4">
+          <button
+            type="button"
+            className="btn btn-accent-secondary rounded px-4"
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="btn btn-primary rounded px-4"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <div className="d-inline-flex align-items-center justify-content-center gap-2">
+                <div>{editMode ? "Updating" : "Adding"} Product</div>
+                <PulseLoader size={8} color={"#ffffff"} loading={true} />
+              </div>
+            ) : editMode ? (
+              "Update Product"
+            ) : (
+              "Add Product"
+            )}
+          </button>
+        </div>
       </form>
     </div>
   );

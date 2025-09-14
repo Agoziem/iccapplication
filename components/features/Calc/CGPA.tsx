@@ -1,10 +1,24 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { BsCalculator } from "react-icons/bs";
 import { TiTimes } from "react-icons/ti";
 import { v4 as uuidv4 } from "uuid";
+import { CgpaCourse, CgpaGrade } from "@/types/calculators";
 
-const CGPA = () => {
-  const [courses, setCourses] = useState([
+interface CGPAState {
+  _id: string;
+  CourseCode: string;
+  CreditUnit: string;
+  Grade: CgpaGrade | "";
+}
+
+interface ClassificationInfo {
+  min: number;
+  max: number;
+  label: string;
+}
+
+const CGPA: React.FC = () => {
+  const [courses, setCourses] = useState<CGPAState[]>([
     {
       _id: uuidv4(),
       CourseCode: "",
@@ -12,41 +26,44 @@ const CGPA = () => {
       Grade: "",
     },
   ]);
-  const [cgpa, setCGPA] = useState("0");
-  const [calculationError, setCalculationError] = useState("");
+  const [cgpa, setCGPA] = useState<string>("0");
+  const [calculationError, setCalculationError] = useState<string>("");
 
-  const handleChange = (e, id) => {
+  const handleChange = useCallback((
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>, 
+    id: string
+  ) => {
     const { name, value } = e.target;
     setCalculationError(""); // Clear any previous errors
     setCourses((prev) => {
       return prev.map((course) => {
         if (course._id === id) {
-          return { ...course, [name]: value };
+          return { ...course, [name]: value } as CGPAState;
         }
         return course;
       });
     });
-  };
+  }, []);
 
   //   ----------------------------------
   //   add course
   //  ----------------------------------
-  const addCourse = () => {
-    setCourses([
-      ...courses,
+  const addCourse = useCallback(() => {
+    setCourses(prev => [
+      ...prev,
       {
         _id: uuidv4(),
         CourseCode: "",
         CreditUnit: "",
-        Grade: "",
+        Grade: "" as const,
       },
     ]);
-  };
+  }, []);
 
   // ----------------------------------
   // calculate CGPA function with validation
   // ----------------------------------
-  const calculateCGPA = () => {
+  const calculateCGPA = useCallback(() => {
     try {
       setCalculationError("");
 
@@ -103,23 +120,51 @@ const CGPA = () => {
       setCalculationError("An error occurred during calculation. Please check your inputs.");
       console.error("CGPA calculation error:", error);
     }
-  };
+  }, [courses]);
 
   //   ----------------------------------
   //  reset form
   //  ----------------------------------
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setCourses([
       {
         _id: uuidv4(),
         CourseCode: "",
         CreditUnit: "",
-        Grade: "",
+        Grade: "" as const,
       },
     ]);
     setCGPA("0");
     setCalculationError("");
-  };
+  }, []);
+
+  // ----------------------------------
+  // Get CGPA classification
+  // ----------------------------------
+  const getClassification = useCallback((cgpaValue: number): string => {
+    const classifications: ClassificationInfo[] = [
+      { min: 4.5, max: 5.0, label: "First Class" },
+      { min: 3.5, max: 4.49, label: "Second Class Upper" },
+      { min: 2.4, max: 3.49, label: "Second Class Lower" },
+      { min: 1.5, max: 2.39, label: "Third Class" },
+      { min: 0.0, max: 1.49, label: "Pass" },
+    ];
+
+    const classification = classifications.find(
+      (cls) => cgpaValue >= cls.min && cgpaValue <= cls.max
+    );
+    
+    return classification?.label || "";
+  }, []);
+
+  // ----------------------------------
+  // Remove course handler
+  // ----------------------------------
+  const removeCourse = useCallback((courseId: string) => {
+    if (courses.length > 1) {
+      setCourses(prev => prev.filter(course => course._id !== courseId));
+    }
+  }, [courses.length]);
 
   return (
     <div className="my-3">
@@ -140,7 +185,7 @@ const CGPA = () => {
         </p>
         <hr />
         <form
-          onSubmit={(e) => {
+          onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
             e.preventDefault();
             calculateCGPA();
           }}
@@ -172,9 +217,7 @@ const CGPA = () => {
                   className="form-control me-2"
                   placeholder="Course Code"
                   value={course.CourseCode}
-                  onChange={(e) => {
-                    handleChange(e, course._id);
-                  }}
+                  onChange={(e) => handleChange(e, course._id)}
                   name="CourseCode"
                   maxLength={10}
                 />
@@ -183,9 +226,7 @@ const CGPA = () => {
                   className="form-control me-2"
                   placeholder="Credit Unit (1-6)"
                   value={course.CreditUnit}
-                  onChange={(e) => {
-                    handleChange(e, course._id);
-                  }}
+                  onChange={(e) => handleChange(e, course._id)}
                   name="CreditUnit"
                   min="1"
                   max="6"
@@ -195,9 +236,7 @@ const CGPA = () => {
                 <select
                   className="form-select"
                   value={course.Grade}
-                  onChange={(e) => {
-                    handleChange(e, course._id);
-                  }}
+                  onChange={(e) => handleChange(e, course._id)}
                   name="Grade"
                 >
                   <option value="">Grade</option>
@@ -213,15 +252,7 @@ const CGPA = () => {
                   <TiTimes
                     className="ms-2 text-danger h4"
                     style={{ cursor: "pointer" }}
-                    onClick={() => {
-                      // Prevent deleting the last course
-                      if (courses.length > 1) {
-                        const newCourses = courses.filter(
-                          (c) => c._id !== course._id
-                        );
-                        setCourses(newCourses);
-                      }
-                    }}
+                    onClick={() => removeCourse(course._id)}
                   />
                 </div>
               </div>
@@ -240,19 +271,17 @@ const CGPA = () => {
 
             <div className="d-flex flex-md-row flex-column flex-md-fill">
               <button
-                className="btn btn-primary rounded me-0 me-md-3 "
-                onClick={() => {
-                  addCourse();
-                }}
+                type="button"
+                className="btn btn-primary rounded me-0 me-md-3"
+                onClick={addCourse}
               >
                 Add Course
               </button>
 
               <button
-                className="btn btn-secondary rounded mt-3 mt-md-0 me-0 me-md-3 "
-                onClick={() => {
-                  resetForm();
-                }}
+                type="button"
+                className="btn btn-secondary rounded mt-3 mt-md-0 me-0 me-md-3"
+                onClick={resetForm}
               >
                 Reset form
               </button>
@@ -272,11 +301,7 @@ const CGPA = () => {
               {cgpa !== "0" && (
                 <div className="text-center mt-2">
                   <small className="text-muted">
-                    {parseFloat(cgpa) >= 4.5 && "First Class"}
-                    {parseFloat(cgpa) >= 3.5 && parseFloat(cgpa) < 4.5 && "Second Class Upper"}
-                    {parseFloat(cgpa) >= 2.4 && parseFloat(cgpa) < 3.5 && "Second Class Lower"}
-                    {parseFloat(cgpa) >= 1.5 && parseFloat(cgpa) < 2.4 && "Third Class"}
-                    {parseFloat(cgpa) < 1.5 && "Pass"}
+                    {getClassification(parseFloat(cgpa))}
                   </small>
                 </div>
               )}

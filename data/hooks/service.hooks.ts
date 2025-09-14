@@ -32,6 +32,8 @@ export const SERVICE_KEYS = {
   usersCompleted: (serviceId: number) => [...SERVICE_KEYS.users(serviceId), 'completed'] as const,
   usersInProgress: (serviceId: number) => [...SERVICE_KEYS.users(serviceId), 'inProgress'] as const,
   categories: () => [...SERVICE_KEYS.all, 'categories'] as const,
+  subcategories: (categoryId: number | null) => [...SERVICE_KEYS.categories(), 'subcategories', categoryId] as const,
+  subcategory: (subcategoryId: number) => [...SERVICE_KEYS.categories(), 'subcategory', subcategoryId] as const
 } as const;
 
 
@@ -278,11 +280,11 @@ export const useAddServiceToCompleted = (): UseMutationResult<SuccessResponse, E
   
   return useMutation({
     mutationFn: ({ serviceId, userId }) => addServiceToCompleted(serviceId, userId),
-    onSuccess: (_, { serviceId, userId }) => {
-      queryClient.invalidateQueries(SERVICE_KEYS.usersCompleted(serviceId));
-      queryClient.invalidateQueries(SERVICE_KEYS.usersInProgress(serviceId));
-      queryClient.invalidateQueries(SERVICE_KEYS.users(serviceId));
-    },
+    // onSuccess: (_, { serviceId, userId }) => {
+    // //   queryClient.invalidateQueries(SERVICE_KEYS.usersCompleted(serviceId));
+    // //   queryClient.invalidateQueries(SERVICE_KEYS.usersInProgress(serviceId));
+    // //   queryClient.invalidateQueries(SERVICE_KEYS.users(serviceId));
+    // },
     onError: (error: Error) => {
       console.error('Error adding service to completed:', error);
       throw error;
@@ -295,10 +297,10 @@ export const useAddServiceToProgress = (): UseMutationResult<SuccessResponse, Er
   
   return useMutation({
     mutationFn: ({ serviceId, userId }) => addServiceToProgress(serviceId, userId),
-    onSuccess: (_, { serviceId, userId }) => {
-      queryClient.invalidateQueries(SERVICE_KEYS.usersInProgress(serviceId));
-      queryClient.invalidateQueries(SERVICE_KEYS.users(serviceId));
-    },
+    // onSuccess: (_, { serviceId, userId }) => {
+    //   queryClient.invalidateQueries(SERVICE_KEYS.usersInProgress(serviceId));
+    //   queryClient.invalidateQueries(SERVICE_KEYS.users(serviceId));
+    // },
     onError: (error: Error) => {
       console.error('Error adding service to progress:', error);
       throw error;
@@ -311,10 +313,10 @@ export const useRemoveServiceFromCompleted = (): UseMutationResult<SuccessRespon
   
   return useMutation({
     mutationFn: ({ serviceId, userId }) => removeServiceFromCompleted(serviceId, userId),
-    onSuccess: (_, { serviceId, userId }) => {
-      queryClient.invalidateQueries(SERVICE_KEYS.usersCompleted(serviceId));
-      queryClient.invalidateQueries(SERVICE_KEYS.users(serviceId));
-    },
+    // onSuccess: (_, { serviceId, userId }) => {
+    //   queryClient.invalidateQueries(SERVICE_KEYS.usersCompleted(serviceId));
+    //   queryClient.invalidateQueries(SERVICE_KEYS.users(serviceId));
+    // },
     onError: (error: Error) => {
       console.error('Error removing service from completed:', error);
       throw error;
@@ -327,10 +329,10 @@ export const useRemoveServiceFromProgress = (): UseMutationResult<SuccessRespons
   
   return useMutation({
     mutationFn: ({ serviceId, userId }) => removeServiceFromProgress(serviceId, userId),
-    onSuccess: (_, { serviceId, userId }) => {
-      queryClient.invalidateQueries(SERVICE_KEYS.usersInProgress(serviceId));
-      queryClient.invalidateQueries(SERVICE_KEYS.users(serviceId));
-    },
+    // onSuccess: (_, { serviceId, userId }) => {
+    //   queryClient.invalidateQueries(SERVICE_KEYS.usersInProgress(serviceId));
+    //   queryClient.invalidateQueries(SERVICE_KEYS.users(serviceId));
+    // },
     onError: (error: Error) => {
       console.error('Error removing service from progress:', error);
       throw error;
@@ -431,3 +433,78 @@ export const useDeleteServiceCategory = (): UseMutationResult<DeleteResponse, Er
     },
   });
 };
+
+export const useServiceSubCategories = (categoryId: number): UseQueryResult<ServiceSubCategory[], Error> => {
+  return useQuery({
+    queryKey: [...SERVICE_KEYS.categories(), 'subcategories', categoryId],
+    queryFn: () => fetchServiceSubCategories(categoryId),
+    enabled: !!categoryId,
+    onError: (error: Error) => {
+      console.error('Error fetching service subcategories:', error);
+      throw error;
+    }
+  });
+}
+
+export const useServiceSubCategory = (subcategoryId: number): UseQueryResult<ServiceSubCategory, Error> => {
+  return useQuery({
+    queryKey: [...SERVICE_KEYS.categories(), 'subcategory', subcategoryId],
+    queryFn: () => fetchServiceSubCategory(subcategoryId),
+    enabled: !!subcategoryId,
+    onError: (error: Error) => {
+      console.error('Error fetching service subcategory:', error);
+      throw error;
+    }
+  });
+}
+
+export const useCreateServiceSubCategory = (): UseMutationResult<ServiceSubCategory, Error, CreateServiceSubCategory> => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createServiceSubCategory,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(SERVICE_KEYS.categories());
+      queryClient.invalidateQueries(SERVICE_KEYS.subcategories(data.category && data.category.id ? data.category.id : null));
+
+    },
+    onError: (error: Error) => {
+      console.error('Error creating service subcategory:', error);
+      throw error;
+    },
+  });
+};
+
+export const useUpdateServiceSubCategory = (): UseMutationResult<ServiceSubCategory, Error, { subcategoryId: number; updateData: Partial<CreateServiceSubCategory> }> => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ subcategoryId, updateData }) => updateServiceSubCategory(subcategoryId, updateData),
+    onSuccess: (data) => {
+      // Invalidate all subcategories queries
+      queryClient.invalidateQueries(SERVICE_KEYS.categories());
+      queryClient.invalidateQueries(SERVICE_KEYS.subcategories(data.category && data.category.id ? data.category.id : null));
+    },
+    onError: (error: Error) => {
+      console.error('Error updating service subcategory:', error);
+      throw error;
+    },
+  });
+};
+
+export const useDeleteServiceSubCategory = (): UseMutationResult<DeleteResponse, Error, number> => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: deleteServiceSubCategory,
+    onSuccess: (_, subcategoryId) => {
+      queryClient.removeQueries(SERVICE_KEYS.subcategory(subcategoryId));
+      queryClient.invalidateQueries(SERVICE_KEYS.subcategories(null));
+    },
+    onError: (error: Error) => {
+      console.error('Error deleting service subcategory:', error);
+      throw error;
+    },
+  });
+};
+
+

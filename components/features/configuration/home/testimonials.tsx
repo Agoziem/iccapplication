@@ -1,257 +1,329 @@
-import StarRating from "@/components/custom/StarRating/StarRating";
-import React, { useEffect, useState } from "react";
-import Modal from "@/components/custom/Modal/modal";
+"use client";
+import React, { useState, useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FiMessageSquare, FiEdit, FiTrash2, FiStar } from "react-icons/fi";
 import { BiSolidQuoteAltRight } from "react-icons/bi";
+import { PulseLoader } from "react-spinners";
+import Modal from "@/components/custom/Modal/modal";
+import Alert from "@/components/custom/Alert/Alert";
+import StarRating from "@/components/custom/StarRating/StarRating";
 import TestimonialForm from "./TestimonialForm";
-
-import { MainAPIendpoint } from "@/data/hooks/organization.hooks";
-import { testimonialDefault } from "@/data/constants";
-import { useSearchParams, useRouter } from "next/navigation";
 import Pagination from "@/components/custom/Pagination/Pagination";
-import {
-  useCreateTestimonial,
-  useDeleteTestimonial,
-  useFetchTestimonials,
-  useUpdateTestimonial,
-} from "@/data/organization/organization.hook";
-import toast from "react-hot-toast";
+import { useDeleteTestimonial, useTestimonials } from "@/data/hooks/organization.hooks";
+import { Testimonial } from "@/types/organizations";
+import { ORGANIZATION_ID } from "@/data/constants";
+
+type AlertState = {
+  show: boolean;
+  message: string;
+  type: "info" | "success" | "warning" | "danger";
+};
 
 const Testimonials = () => {
-  const OrganizationID = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
+  const [testimonial, setTestimonial] = useState<Testimonial | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [testimonial, setTestimonial] = useState(testimonialDefault);
+  const [alert, setAlert] = useState<AlertState>({ show: false, message: "", type: "info" });
+  const [addorupdate, setAddOrUpdate] = useState({ mode: "add", state: false });
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const page = searchParams.get("page") || "1";
   const pageSize = "10";
+  const [isPending, startTransition] = useTransition();
+  const [isDeleting, startDeletion] = useTransition();
 
-  const [addorupdate, setAddOrUpdate] = useState({
-    type: "add",
-    state: false,
-  });
+  // Hooks
+  const { mutateAsync: deleteTestimonial } = useDeleteTestimonial();
 
-  // for fetching
-  const { data: testimonials, isLoading: loadingtestimonials } =
-    useFetchTestimonials(
-      `${MainAPIendpoint}/testimonial/${OrganizationID}/?page=${page}&page_size=${pageSize}`
-    );
+  // Fetch Testimonials
+  const { data: testimonials, isLoading: loadingTestimonials } = useTestimonials(
+    parseInt(ORGANIZATION_ID || "0"),
+    {
+      page: parseInt(page, 10),
+      page_size: parseInt(pageSize, 10),
+    }
+  );
+
+  // Handle alert display
+  const handleAlert = (message: string, type: AlertState["type"]) => {
+    setAlert({ show: true, message, type });
+    setTimeout(() => {
+      setAlert({ show: false, message: "", type: "info" });
+    }, 5000);
+  };
 
   // Handle page change
-  const handlePageChange = (newPage) => {
-    router.push(`?page=${newPage}&page_size=${pageSize}`);
+  const handlePageChange = (newPage: string | number) => {
+    const pageNum = typeof newPage === "string" ? parseInt(newPage) : newPage;
+    router.push(`?page=${pageNum}&page_size=${pageSize}`, { scroll: false });
   };
 
-  // -------------------------------------------------------------
-  // Function to handle form submission
-  // -------------------------------------------------------------
-
-  const { mutateAsync: createTestimonial , isLoading: isCreating } = useCreateTestimonial();
-  const { mutateAsync: updateTestimonial, isLoading: isUpdating } = useUpdateTestimonial();
-
-  const handleFormSubmit = async (formData) => {
-    try {
-      if (addorupdate.type === "add") {
-        await createTestimonial(formData);
-      } else {
-        await updateTestimonial(formData);
-      }
-      toast.success("Testimonial added successfully");
-    } catch (error) {
-      console.log(error.message);
-      toast.error("Error adding testimonial");
-    } finally {
-      closeModal();
+  // Open modal for add/edit
+  const openModal = (editTestimonial?: Testimonial) => {
+    if (editTestimonial) {
+      setTestimonial(editTestimonial);
+      setAddOrUpdate({ mode: "update", state: true });
+    } else {
+      setTestimonial(null);
+      setAddOrUpdate({ mode: "add", state: false });
     }
+    setShowModal(true);
   };
 
-  // -------------------------------------------------------------
-  // Function to close the modal
-  // -------------------------------------------------------------
+  // Handle testimonial deletion
+  const handleDelete = async (testimonialId: number) => {
+    startDeletion(async () => {
+      try {
+        await deleteTestimonial({
+          testimonialId,
+          organizationId: parseInt(ORGANIZATION_ID || "0"),
+        });
+        handleAlert("Testimonial deleted successfully!", "success");
+        setShowDeleteModal(false);
+        setTestimonial(null);
+      } catch (error) {
+        handleAlert(
+          error instanceof Error ? error.message : "Failed to delete testimonial",
+          "danger"
+        );
+      }
+    });
+  };
 
+  // Handle testimonial edit
+  const handleEdit = (testimonial: Testimonial) => {
+    setTestimonial(testimonial);
+    setAddOrUpdate({ mode: "update", state: true });
+    setShowModal(true);
+  };
+
+  // Handle testimonial delete confirmation
+  const handleDeleteConfirm = (testimonial: Testimonial) => {
+    setTestimonial(testimonial);
+    setShowDeleteModal(true);
+  };
+
+  // Close modals
   const closeModal = () => {
     setShowModal(false);
-    setAddOrUpdate({
-      type: "add",
-      state: false,
-    });
-    setTestimonial(testimonialDefault);
+    setShowDeleteModal(false);
+    setTestimonial(null);
+    setAddOrUpdate({ mode: "add", state: false });
   };
 
-  // -------------------------------------------------------------
-  // Function to delete a testimonial
-  // -------------------------------------------------------------
-  /**
-   * @async
-   * @param {number} id
-   */
-  const { mutateAsync: deleteTestimonial,isLoading: isDeleting } = useDeleteTestimonial();
-  const deletetestimonial = async (id) => {
-    try {
-      await deleteTestimonial(id);
-      toast.success("Testimonial deleted successfully");
-    } catch (error) {
-      console.error("Error deleting testimonial data:", error);
-      toast.error("An error occured while deleting testimonial");
-    } finally {
-      setTestimonial(testimonialDefault);
-      setShowDeleteModal(false);
-    }
+  // Handle form success
+  const handleFormSuccess = () => {
+    handleAlert(
+      addorupdate.mode === "add" ? "Testimonial created successfully!" : "Testimonial updated successfully!",
+      "success"
+    );
+    closeModal();
   };
+
+  if (loadingTestimonials) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "400px" }}>
+        <PulseLoader color="#0d6efd" size={15} />
+      </div>
+    );
+  }
 
   return (
-    <div className="px-1 px-md-4">
-      <div className="mb-5 mb-md-0">
-        <div className="d-flex justify-content-end mb-2">
-          <button
-            className="btn btn-primary border-0 rounded"
-            style={{ backgroundColor: "var(--bgDarkerColor)" }}
-            onClick={() => {
-              setAddOrUpdate({
-                type: "add",
-                state: true,
-              });
-              setShowModal(true);
-            }}
-          >
-            <i className="bi bi-plus-circle me-2 h5 mb-0"></i> Add Testimonial
-          </button>
+    <div className="container-fluid">
+      {/* Header */}
+      <div className="row mb-4">
+        <div className="col-md-6">
+          <div className="d-flex align-items-center">
+            <FiMessageSquare size={32} className="text-primary me-2" />
+            <h4 className="mb-0">Testimonials Management</h4>
+          </div>
         </div>
-        <div>
-          <h4 className="mb-1">
-            {testimonials?.count} Testimonial
-            {testimonials?.count > 1 ? "s" : ""}
-          </h4>
-          <p>in total</p>
+        <div className="col-md-6 text-end">
+          <button
+            className="btn btn-primary"
+            onClick={() => openModal()}
+            disabled={isPending}
+          >
+            Add New Testimonial
+          </button>
         </div>
       </div>
 
-      {/* set of horizontal Cards that are clickable */}
-      <div className="mt-4">
-        {testimonials && testimonials?.results?.length === 0 ? (
-          <p>No testimonials available</p>
-        ) : (
-          testimonials?.results?.map((testimonial) => (
-            <div key={testimonial.id} className="card my-3 p-3">
-              <div className="card-body">
-                <div>
-                  <BiSolidQuoteAltRight
-                    className="float-end text-primary"
-                    style={{ fontSize: "35px" }}
-                  />
-                </div>
-                <p className="card-text">{testimonial.content}</p>
-                <div className="d-flex align-items-center">
-                  {testimonial.img_url ? (
-                    <img
-                      src={testimonial.img_url}
-                      alt="testimonial"
-                      className="rounded-circle object-fit-cover"
-                      height={75}
-                      width={75}
-                      style={{ objectPosition: "top center" }}
-                    />
-                  ) : (
-                    <div
-                      className="rounded-circle text-white d-flex justify-content-center align-items-center"
-                      style={{
-                        width: 75,
-                        height: 75,
-                        fontSize: "30px",
-                        backgroundColor: "var(--bgDarkerColor)",
-                      }}
-                    >
-                      {testimonial.name?.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <div className="ms-3">
-                    <h6 className="mb-1">{testimonial.name}</h6>
-                    <p className="my-0 small">{testimonial.role}</p>
-                    <StarRating rating={testimonial.rating} />
-                  </div>
-                </div>
-                <div className="d-flex flex-wrap justify-content-between align-items-center mt-3">
-                  <div className="text-primary small">
-                    {new Date(testimonial.created_at).toDateString()}
-                  </div>
-                  <div className="mt-3 mt-md-0">
-                    <button
-                      className="btn btn-accent-secondary rounded small mx-0 me-2 mx-md-3"
-                      style={{ cursor: "pointer" }}
-                      onClick={() => {
-                        setAddOrUpdate({
-                          type: "update",
-                          state: true,
-                        });
-                        setTestimonial(testimonial);
-                        setShowModal(true);
-                      }}
-                    >
-                      edit review
-                    </button>
+      {/* Testimonials Header */}
+      <div className="row mb-3 align-items-center">
+        <div className="col-md-6">
+          <h5 className="mb-1">All Testimonials</h5>
+          <p className="mb-0 text-primary">
+            {(testimonials?.count ?? 0)} Testimonial{(testimonials?.count ?? 0) !== 1 ? "s" : ""} in Total
+          </p>
+        </div>
+      </div>
 
-                    <button
-                      className="btn btn-sm btn-danger rounded px-3"
-                      onClick={() => {
-                        setTestimonial(testimonial);
-                        setShowDeleteModal(true);
-                      }}
-                    >
-                      delete
-                    </button>
+      {/* Alert */}
+      {alert.show && <Alert type={alert.type}>{alert.message}</Alert>}
+
+      {/* Testimonials List */}
+      <div className="row">
+        {loadingTestimonials ? (
+          <div className="col-12 d-flex justify-content-center">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        ) : testimonials?.results?.length === 0 ? (
+          <div className="col-12 text-center py-5">
+            <FiMessageSquare size={64} className="text-muted mb-3" />
+            <h5 className="text-muted">No testimonials found</h5>
+            <p className="text-muted">Start by adding your first testimonial</p>
+          </div>
+        ) : (
+          <div className="col-12">
+            {testimonials?.results?.map((testimonial) => (
+              <div key={testimonial.id} className="card my-3 border-0 shadow-sm">
+                <div className="card-body p-4">
+                  {/* Quote Icon */}
+                  <div className="d-flex justify-content-end mb-2">
+                    <BiSolidQuoteAltRight
+                      className="text-primary opacity-50"
+                      style={{ fontSize: "35px" }}
+                    />
+                  </div>
+
+                  {/* Testimonial Content */}
+                  <p className="card-text fs-6 mb-4 text-muted" style={{ lineHeight: "1.6" }}>
+                    "{testimonial.content}"
+                  </p>
+
+                  {/* User Info & Actions */}
+                  <div className="d-flex flex-column flex-md-row justify-content-between align-items-start">
+                    {/* User Details */}
+                    <div className="d-flex align-items-center mb-3 mb-md-0">
+                      {/* Avatar */}
+                      {testimonial.img_url ? (
+                        <img
+                          src={testimonial.img_url}
+                          alt={testimonial.name}
+                          className="rounded-circle object-fit-cover me-3"
+                          height={60}
+                          width={60}
+                          style={{ objectPosition: "top center" }}
+                        />
+                      ) : (
+                        <div
+                          className="rounded-circle text-white d-flex justify-content-center align-items-center me-3"
+                          style={{
+                            width: 60,
+                            height: 60,
+                            fontSize: "24px",
+                            backgroundColor: "var(--bs-primary)",
+                          }}
+                        >
+                          {testimonial.name?.charAt(0).toUpperCase() || "U"}
+                        </div>
+                      )}
+
+                      {/* User Info */}
+                      <div>
+                        <h6 className="mb-1 fw-bold">{testimonial.name || "Anonymous"}</h6>
+                        <p className="mb-1 small text-muted">{testimonial.role || "Customer"}</p>
+                        <div className="d-flex align-items-center">
+                          <StarRating rating={testimonial.rating || 5} />
+                          <small className="text-muted ms-2">
+                            {testimonial.rating || 5}/5 stars
+                          </small>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Meta Info & Actions */}
+                    <div className="d-flex flex-column align-items-md-end">
+                      {/* Date */}
+                      <div className="text-muted small mb-3">
+                        {testimonial.created_at 
+                          ? new Date(testimonial.created_at).toDateString()
+                          : "No date"
+                        }
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="btn-group" role="group">
+                        <button
+                          className="btn btn-sm btn-outline-primary"
+                          onClick={() => handleEdit(testimonial)}
+                          title="Edit Testimonial"
+                        >
+                          <FiEdit size={14} />
+                        </button>
+                        <button
+                          className="btn btn-sm btn-outline-danger"
+                          onClick={() => handleDeleteConfirm(testimonial)}
+                          title="Delete Testimonial"
+                        >
+                          <FiTrash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </div>
 
-      {!loadingtestimonials &&
-        testimonials &&
-        Math.ceil(testimonials.count / parseInt(pageSize)) > 1 && (
-          <Pagination
-            currentPage={page}
-            totalPages={Math.ceil(testimonials.count / parseInt(pageSize))}
-            handlePageChange={handlePageChange}
-          />
-        )}
-
-      {/* Modal for adding a new testimonial */}
-      <Modal showmodal={showModal} toggleModal={() => closeModal()}>
-        <div className="modal-body">
-          {addorupdate.state ? (
-            <TestimonialForm
-              addorupdate={addorupdate}
-              testimonial={testimonial}
-              setTestimonial={setTestimonial}
-              onSubmit={handleFormSubmit}
-              onClose={closeModal}
-              loading={isCreating || isUpdating}
+      {/* Pagination */}
+      {testimonials && testimonials.count > parseInt(pageSize) && (
+        <div className="row mt-4">
+          <div className="col-12">
+            <Pagination
+              currentPage={parseInt(page)}
+              totalPages={Math.ceil(testimonials.count / parseInt(pageSize))}
+              handlePageChange={handlePageChange}
             />
-          ) : null}
+          </div>
         </div>
+      )}
+
+      {/* Add/Edit Testimonial Modal */}
+      <Modal showmodal={showModal} toggleModal={closeModal} overlayclose={false}>
+        <TestimonialForm
+          testimonial={testimonial}
+          editMode={addorupdate.mode === "update"}
+          onSuccess={handleFormSuccess}
+          onCancel={closeModal}
+        />
       </Modal>
-      <Modal
-        showmodal={showDeleteModal}
-        toggleModal={() => setShowDeleteModal(false)}
-      >
-        <div className="modal-body">
-          <div className="mt-4">
-            <h4>Delete Testimonial</h4>
-            <p>Are you sure you want to delete this testimonial?</p>
+
+      {/* Delete Confirmation Modal */}
+      <Modal showmodal={showDeleteModal} toggleModal={closeModal}>
+        <div className="p-3">
+          <p className="text-center">Delete Testimonial</p>
+          <hr />
+          <h5 className="text-center mb-4">{testimonial?.name || "Anonymous"}</h5>
+          <p className="text-center text-muted mb-4">
+            Are you sure you want to delete this testimonial? This action cannot be undone.
+          </p>
+          <div className="d-flex justify-content-center gap-2">
             <button
-              className="btn btn-accent-secondary border-0 text-secondary mt-3 rounded"
-              onClick={() => {
-                deletetestimonial(testimonial.id);
-              }}
+              className="btn btn-danger"
+              onClick={() => testimonial?.id && handleDelete(testimonial.id)}
               disabled={isDeleting}
             >
               {isDeleting ? (
-                <div className="spinner-border text-secondary" role="status">
-                  <span className="visually-hidden">Loading...</span>
+                <div className="d-inline-flex align-items-center justify-content-center gap-2">
+                  <div>Deleting...</div>
+                  <PulseLoader size={8} color={"#ffffff"} loading={true} />
                 </div>
-              ) : "Delete"}
+              ) : (
+                "Delete"
+              )}
+            </button>
+            <button
+              className="btn btn-secondary"
+              onClick={closeModal}
+            >
+              Cancel
             </button>
           </div>
         </div>

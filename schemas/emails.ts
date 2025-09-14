@@ -37,11 +37,9 @@ export const EmailResponseSchema = z.object({
 
 
 export const CreateEmailResponseSchema = z.object({
-  id: z.number().optional(),
   recipient_email: z.string().email().min(1).max(254),
   response_subject: z.string().min(1).max(100),
   response_message: z.string().min(1),
-  created_at: z.coerce.date().optional(),
   message: z.number().optional(),
 });
 
@@ -122,3 +120,4 @@ export const EmailWebsocketSchema = z.object({
   operation: z.enum(["create", "update", "delete"]),
   message: EmailSchema,
 });
+

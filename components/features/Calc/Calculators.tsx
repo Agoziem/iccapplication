@@ -1,11 +1,18 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import Aggregator from "./Aggregator";
 import CGPA from "./CGPA";
 
-const Calculators = () => {
-  const categories = ["Aggregator", "CGPA Calculator"];
-  const [activeTab, setActiveTab] = useState(categories[0]);
+type CalculatorCategory = "Aggregator" | "CGPA Calculator";
+
+const Calculators: React.FC = () => {
+  const categories: CalculatorCategory[] = ["Aggregator", "CGPA Calculator"];
+  const [activeTab, setActiveTab] = useState<CalculatorCategory>(categories[0]);
+
+  const handleTabChange = useCallback((category: CalculatorCategory) => {
+    setActiveTab(category);
+  }, []);
+
   return (
     <div className="py-3">
       {/* Category Tabs */}
@@ -24,7 +31,7 @@ const Calculators = () => {
                 : "1.5px solid var(--bgDarkerColor)",
             cursor: "pointer",
           }}
-          onClick={() => setActiveTab(category)}
+          onClick={() => handleTabChange(category)}
         >
           {category}
         </div>

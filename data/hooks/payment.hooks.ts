@@ -5,7 +5,9 @@ import {
   CreatePayment,
   UpdatePayment,
   VerifyPayment,
-  PaymentArray
+  PaymentArray,
+  CustomerPaymentStatsArray,
+  PaymentStats
 } from "@/types/payments";
 
 export const paymentsAPIendpoint = "/paymentsapi";
@@ -14,6 +16,7 @@ export const paymentsAPIendpoint = "/paymentsapi";
 export const PAYMENT_KEYS = {
   all: ['payments'] as const,
   lists: () => [...PAYMENT_KEYS.all, 'list'] as const,
+  listsbyUser: (userId: number) => [...PAYMENT_KEYS.all, 'listbyUser', userId] as const,
   list: (organizationId: number) => [...PAYMENT_KEYS.lists(), organizationId] as const,
   details: () => [...PAYMENT_KEYS.all, 'detail'] as const,
   detail: (id: number) => [...PAYMENT_KEYS.details(), id] as const,
@@ -58,6 +61,17 @@ export const verifyPayment = async (paymentData: VerifyPayment): Promise<{ verif
   return response.data;
 };
 
+export const getOrderReport = async (organizationId: number): Promise<PaymentStats> => {
+  const response = await AxiosInstanceWithToken.get(`${paymentsAPIendpoint}/getorderreport/${organizationId}/`);
+  return response.data;
+};
+
+export const getPaymentsByUser = async (userId: number): Promise<PaymentArray> => {
+  const response = await AxiosInstanceWithToken.get(`${paymentsAPIendpoint}/paymentsbyuser/${userId}/`);
+  return response.data;
+};
+
+
 // React Query Hooks
 export const usePayments = (organizationId: number): UseQueryResult<PaymentArray, Error> => {
   return useQuery({
@@ -65,6 +79,29 @@ export const usePayments = (organizationId: number): UseQueryResult<PaymentArray
     queryFn: () => fetchPayments(organizationId),
     onError: (error: Error) => {
       console.error('Error fetching payments:', error);
+      throw error;
+    },
+  });
+};
+
+export const useOrderReport = (organizationId: number): UseQueryResult<PaymentStats, Error> => {
+  return useQuery({
+    queryKey: ['payments', 'orderReport', organizationId],
+    queryFn: () => getOrderReport(organizationId),
+    onError: (error: Error) => {
+      console.error('Error fetching order report:', error);
+      throw error;
+    },
+  });
+};
+
+export const usePaymentsByUser = (userId: number): UseQueryResult<PaymentArray, Error> => {
+  return useQuery({
+    queryKey: PAYMENT_KEYS.listsbyUser(userId),
+    queryFn: () => getPaymentsByUser(userId),
+    enabled: !!userId,
+    onError: (error: Error) => {
+      console.error('Error fetching payments by user:', error);
       throw error;
     },
   });
@@ -155,12 +192,3 @@ export const useVerifyPayment = (): UseMutationResult<{ verified: boolean; messa
 export const addPayment = createPayment;
 export const useAddPayment = useCreatePayment;
 
-export const getOrderReport = async (organizationId: number): Promise<any> => {
-  const response = await AxiosInstanceWithToken.get(`${paymentsAPIendpoint}/getorderreport/${organizationId}/`);
-  return response.data;
-};
-
-export const getPaymentsByUser = async (userId: number): Promise<PaymentArray> => {
-  const response = await AxiosInstanceWithToken.get(`${paymentsAPIendpoint}/paymentsbyuser/${userId}/`);
-  return response.data;
-};

@@ -1,98 +1,123 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import ArticleComments from "./articlecomments";
 import ShareButtons from "./sharebuttons";
 import Link from "next/link";
 import { FaLongArrowAltRight } from "react-icons/fa";
 import ArticleLikes from "./ArticleLikes";
 import ArticleCommentsForm from "./ArticleCommentsForm";
-import { useSession } from "next-auth/react";
 import { MdOutlineArticle } from "react-icons/md";
-import ArticleErrorBoundary, { ArticleLoadingSkeleton, CommentsErrorBoundary } from "./ArticleErrorBoundary";
+import ArticleErrorBoundary, {
+  ArticleLoadingSkeleton,
+  CommentsErrorBoundary,
+} from "./ArticleErrorBoundary";
 import NextBreadcrumb from "../../custom/Breadcrumb/breadcrumb";
 import BackButton from "../../custom/backbutton/BackButton";
 import Pagination from "../../custom/Pagination/Pagination";
-import { useSearchParams } from "next/navigation";
-import { articleAPIendpoint } from "@/data/hooks/articles.hooks";
+import { useParams, useSearchParams } from "next/navigation";
 import {
-  useFetchArticleBySlug,
-  useFetchArticles,
-  useFetchComments,
-  useIncrementView,
+  useAddViews,
+  useArticleBySlug,
+  useArticles,
+  useComments,
 } from "@/data/hooks/articles.hooks";
+import { useMyProfile } from "@/data/hooks/user.hooks";
+import { ArticleResponse } from "@/types/articles";
 
-const Article = ({ params }) => {
-  const { slug } = params;
-  const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
+interface ArticleProps {
+  className?: string;
+  style?: React.CSSProperties;
+  showRelatedArticles?: boolean;
+  maxRelatedArticles?: number;
+}
+
+const Article: React.FC<ArticleProps> = ({
+  className = "",
+  style = {},
+  showRelatedArticles = true,
+  maxRelatedArticles = 5
+}) => {
+  const { slug } = useParams();
   const searchParams = useSearchParams();
   const page = searchParams.get("page") || "1";
   const pageSize = "10";
-  const [commentpage, setCommentPage] = useState("1");
-  const [otherArticles, setOtherArticles] = useState([]);
-  const { data: session } = useSession();
-  const { mutateAsync: incrementView } = useIncrementView();
+  const [commentpage, setCommentPage] = useState<string>("1");
+  const [otherArticles, setOtherArticles] = useState<ArticleResponse[]>([]);
+  const { data: user } = useMyProfile();
+  const { mutateAsync: addView } = useAddViews();
+  
+  // Ref to track which articles have had their views incremented
+  const viewsIncrementedRef = useRef<Set<number>>(new Set());
+
+  // Ensure slug is a string
+  const articleSlug = Array.isArray(slug) ? slug[0] : slug;
 
   // ------------------------------------------------------------
   // fetch article by slug with error handling
   // ------------------------------------------------------------
-  const { data: article, isLoading: articleLoading, isError: articleError, error } = useFetchArticleBySlug(slug);
+  const {
+    data: article,
+    isLoading: articleLoading,
+    isError: articleError,
+    error,
+  } = useArticleBySlug(articleSlug as string);
 
-  // ----------------------------------------------------------
-  // fetch articles by Categories
-  // ----------------------------------------------------------
-  const { data: articles } = useFetchArticles(
-    article?.category.id
-      ? `${articleAPIendpoint}/orgblogs/${Organizationid}/?category=${article?.category.category}&page=${page}&page_size=${pageSize}`
-      : null
+  const { data: articles } = useArticles(
+    undefined,
+    { page: page, page_size: pageSize },
   );
 
   // ------------------------------------------------------------
   // Filter the main article from the other articles
   // ------------------------------------------------------------
-  useEffect(() => {
-    if (!articles) return;
-    if (articles.results.length > 0) {
-      setOtherArticles(
-        articles.results.filter((blog) => blog.id !== article?.id)
-      );
+  useMemo(() => {
+    if (!articles?.results || !article?.id) return;
+    
+    const filteredArticles = articles.results
+      .filter((blog) => blog.id !== article.id)
+      .slice(0, maxRelatedArticles);
+    
+    setOtherArticles(filteredArticles);
+  }, [articles, article?.id, maxRelatedArticles]);
+
+  const {
+    data: comments,
+    isLoading: loadingComments,
+    isError: commentsError,
+    error: commentsErrorMessage,
+  } = useComments(article?.id, { page: commentpage, page_size: pageSize });
+
+
+  const handleCommentPageChange = useCallback((page: string | number) => {
+    setCommentPage(page.toString());
+  }, []);
+
+  const incrementViews = useCallback(async () => {
+    if (!article?.id) return;
+    
+    // Check if we've already incremented views for this article
+    if (viewsIncrementedRef.current.has(article.id)) {
+      return;
     }
-  }, [articles]);
-
-  // ------------------------------------------------------------
-  // Fetch comments and paginate them with error handling
-  // ------------------------------------------------------------
-  const { data: comments, isLoading: loadingComments, isError: commentsError } = useFetchComments(
-    article?.id,
-    { page: commentpage, page_size: pageSize }
-  );
-
-  // ------------------------------------------------------------
-  // handle comment page change
-  // ------------------------------------------------------------
-
-  /** @param {string} page */
-  const handleCommentPageChange = (page) => {
-    setCommentPage(page);
-  };
-
-  // ------------------------------------------------------------
-  // Increment views
-  // ------------------------------------------------------------
-
-  const incrementViews = () => {
-    if (article && article.id) {
-      incrementView(article.id);
+    
+    try {
+      await addView(article.id);
+      // Mark this article as having views incremented
+      viewsIncrementedRef.current.add(article.id);
+    } catch (error) {
+      console.error("Failed to increment views:", error);
+      // Don't mark as incremented if the request failed
     }
-  };
+  }, [article?.id, addView]);
 
   // ------------------------------------------------------------
-  // Fetch comments and increment views on article load
+  // Increment views on article load (only once per article)
   // ------------------------------------------------------------
   useEffect(() => {
-    if (article) {
+    if (article?.id) {
       incrementViews();
     }
-  }, []);
+  }, [article?.id, incrementViews]);
 
   // Loading state
   if (articleLoading) {
@@ -100,17 +125,17 @@ const Article = ({ params }) => {
   }
 
   // Error state
-  if (articleError || !article) {
+  if (articleError || !article || error) {
     return (
-      <ArticleErrorBoundary 
-        error={error} 
-        resetError={() => window.location.reload()} 
+      <ArticleErrorBoundary
+        error={error || new Error("Article not found")}
+        resetError={() => window.location.reload()}
       />
     );
   }
 
   return (
-    <>
+    <div className={`article-container ${className}`} style={style}>
       {article && (
         <section
           className="px-4 px-md-5 mx-auto mb-5"
@@ -121,7 +146,9 @@ const Article = ({ params }) => {
             <BackButton />
           </div>
           <div className="article-header pb-4">
-            <h1 className="text-wrap text-break">{article?.title || 'Untitled Article'}</h1>
+            <h1 className="text-wrap text-break">
+              {article?.title || "Untitled Article"}
+            </h1>
             <div className="d-flex my-4">
               <div>
                 {article.author?.img ? (
@@ -143,14 +170,16 @@ const Article = ({ params }) => {
                       backgroundColor: "var(--bgDarkerColor)",
                     }}
                   >
-                    {article.author?.username?.length > 0 
-                      ? article.author.username[0].toUpperCase() 
-                      : 'A'}
+                    {article.author?.username?.length > 0
+                      ? article.author.username[0].toUpperCase()
+                      : "A"}
                   </div>
                 )}
               </div>
               <div className="ms-3">
-                <p className="mb-0 fw-bold">{article.author?.username || 'Anonymous'}</p>
+                <p className="mb-0 fw-bold">
+                  {article.author?.username || "Anonymous"}
+                </p>
                 <div>
                   <span>
                     <small>{article.category?.category}</small>
@@ -158,9 +187,9 @@ const Article = ({ params }) => {
                   {" . "}
                   <span className="me-3">
                     <small>
-                      {article.date 
-                        ? new Date(article.date).toDateString() 
-                        : 'Unknown Date'}
+                      {article.date
+                        ? new Date(article.date).toDateString()
+                        : "Unknown Date"}
                     </small>
                   </span>
                   {article.tags?.length > 0 &&
@@ -199,7 +228,7 @@ const Article = ({ params }) => {
             <div style={{ width: "100%" }}>
               <div
                 dangerouslySetInnerHTML={{
-                  __html: article.body || '<p>No content available.</p>',
+                  __html: article.body || "<p>No content available.</p>",
                 }}
                 style={{
                   fontSize: "1.1rem",
@@ -219,8 +248,8 @@ const Article = ({ params }) => {
                   <i
                     className={`bi ${
                       article.likes?.includes(
-                        session?.user?.id && !isNaN(parseInt(session.user.id)) 
-                          ? parseInt(session.user.id) 
+                        user?.id && !isNaN(user.id)
+                          ? user.id
                           : -1
                       )
                         ? "bi-heart-fill text-danger"
@@ -232,8 +261,8 @@ const Article = ({ params }) => {
                 </span>
                 <span className="me-3">
                   <i className="bi bi-chat-fill me-1"></i>
-                  {comments ? comments.count : "0"} comment
-                  {comments?.count > 1 && "s"}
+                  {comments?.count || 0} comment
+                  {(comments?.count || 0) > 1 && "s"}
                 </span>
               </div>
 
@@ -246,21 +275,24 @@ const Article = ({ params }) => {
             <div className="share-post my-4">
               <h5 className="mb-3">Share this post</h5>
               <ShareButtons
-                url={`${process.env.NEXT_PUBLIC_URL}/articles/${article.slug || slug}`}
-                title={article.title || 'Untitled Article'}
+                url={`${process.env.NEXT_PUBLIC_URL}/articles/${
+                  article.slug || slug
+                }`}
+                title={article.title || "Untitled Article"}
               />
             </div>
             {/* Comments Section with Error Handling */}
             {commentsError ? (
-              <CommentsErrorBoundary 
-                error={commentsError} 
+              <CommentsErrorBoundary
+                error={commentsErrorMessage || new Error("Failed to load comments")}
                 onRetry={() => window.location.reload()}
               />
             ) : comments ? (
               <div className="comments mt-5">
                 <hr />
                 <h5 className="my-4">
-                  {comments?.count || 0} Comment{(comments?.count || 0) > 1 ? "s" : ""}
+                  {comments?.count || 0} Comment
+                  {(comments?.count || 0) > 1 ? "s" : ""}
                 </h5>
                 <div>
                   {(comments.count || 0) > 0 ? (
@@ -299,11 +331,12 @@ const Article = ({ params }) => {
         </section>
       )}
 
-      <section className="bg-primary-light mt-5">
-        <div className="px-5 py-4 mx-auto" style={{ maxWidth: "1200px" }}>
-          <div className="text-center">
-            <h4 className="fw-bold mb-4">Related Articles</h4>
-            <div className="row justify-content-center">
+      {showRelatedArticles && (
+        <section className="bg-primary-light mt-5">
+          <div className="px-5 py-4 mx-auto" style={{ maxWidth: "1200px" }}>
+            <div className="text-center">
+              <h4 className="fw-bold mb-4">Related Articles</h4>
+              <div className="row justify-content-center">
               {otherArticles.length > 0 ? (
                 otherArticles.map((blog, index) => (
                   <div
@@ -350,10 +383,10 @@ const Article = ({ params }) => {
                       <div className="px-4 py-3">
                         <div className="text-center">
                           <h6 className="text-primary mb-2">{blog.title}</h6>
-                          <p className="mb-1 small ">
-                            {blog.subtitle.length > 100
+                          <p className="mb-1 small">
+                            {blog.subtitle && blog.subtitle.length > 100
                               ? blog.subtitle.slice(0, 100) + "..."
-                              : blog.subtitle}
+                              : blog.subtitle || "No description available"}
                           </p>
                         </div>
                         <div
@@ -384,20 +417,12 @@ const Article = ({ params }) => {
                   <p className="mt-3 mb-3">No Related Articles found</p>
                 </div>
               )}
-              {otherArticles && otherArticles.length > 1 && (
-                <div>
-                  <div className="d-flex justify-content-center mt-0 mb-5">
-                    <Link href="/articles" className="btn btn-primary px-5">
-                      View articles
-                    </Link>
-                  </div>
-                </div>
-              )}
+              </div>
             </div>
           </div>
-        </div>
-      </section>
-    </>
+        </section>
+      )}
+    </div>
   );
 };
 

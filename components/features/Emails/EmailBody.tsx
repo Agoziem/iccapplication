@@ -1,40 +1,42 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, memo } from "react";
 import ProfileimagePlaceholders from "../../custom/ImagePlaceholders/ProfileimagePlaceholders";
 import EmailInput from "./EmailInput";
 import { MdOutlineMessage } from "react-icons/md";
 import { BsThreeDotsVertical } from "react-icons/bs";
-import { useFetchOrganization } from "@/data/organization/organization.hook";
-import { useFetchResponses } from "@/data/Emails/emails.hook";
 import moment from "moment";
+import { Email } from "@/types/emails";
+import { useOrganization } from "@/data/hooks/organization.hooks";
+import { useEmailResponses } from "@/data/hooks/email.hooks";
 
-/**
- * Enhanced EmailBody component with comprehensive error handling and safety checks
- *
- * @param {{
- * message : Email,
- * selectMessage:(value:Email)=> void,
- * showlist:boolean,
- * setShowlist:(value:boolean)=> void,
- * }} props
- * @returns {JSX.Element}
- */
-const EmailBody = ({ message, selectMessage, showlist, setShowlist }) => {
+type EmailBodyProps = {
+  message: Email | null;
+  selectMessage: (message: Email) => void;
+  showlist: boolean;
+  setShowlist: (show: boolean) => void;
+};
+
+const EmailBody: React.FC<EmailBodyProps> = memo(({ 
+  message, 
+  selectMessage, 
+  showlist, 
+  setShowlist 
+}) => {
   // Fetch organization data with error handling
   const { 
     data: OrganizationData, 
     isLoading: orgLoading, 
     error: orgError 
-  } = useFetchOrganization();
+  } = useOrganization(message?.organization || 0);
 
   // Safely get message ID for responses query
-  const messageId = message?.id || null;
+  const messageId = message?.id || 0;
 
   // Fetch responses with conditional querying
   const {
     data: emailresponses,
     error: responseerror,
     isLoading: loadingresponse,
-  } = useFetchResponses(messageId);
+  } = useEmailResponses(messageId);
 
   // Safe property extraction from message
   const messageData = useMemo(() => {
@@ -247,7 +249,7 @@ const EmailBody = ({ message, selectMessage, showlist, setShowlist }) => {
         {messageData && renderResponses()}
 
         {/* Reply input */}
-        {messageData && (
+        {messageData && message && (
           <div className="mt-3">
             <EmailInput message={message} />
           </div>
@@ -255,6 +257,8 @@ const EmailBody = ({ message, selectMessage, showlist, setShowlist }) => {
       </div>
     </>
   );
-};
+});
+
+EmailBody.displayName = 'EmailBody';
 
 export default EmailBody;

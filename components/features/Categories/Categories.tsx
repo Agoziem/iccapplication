@@ -1,68 +1,101 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { TiTimes } from "react-icons/ti";
 import Alert from "@/components/custom/Alert/Alert";
 import Modal from "@/components/custom/Modal/modal";
-import {
-  createCategory,
-  deleteCategory,
-  updateCategory,
-} from "@/data/categories/fetcher";
-import { useCreateCategory, useDeleteCategory, useUpdateCategory } from "@/data/categories/categories.hook";
-import { useUpdateComment } from "@/data/hooks/articles.hooks";
+import { Category, CreateCategory, UpdateCategory } from "@/types/categories";
+import { UseMutationResult } from "react-query";
+import { DeleteResponse, SuccessResponse } from "@/types/items";
 
-/**
- * @type {Category}
- */
-const categoryDefault = { id: null, category: "", description: "" };
+interface AlertState {
+  show: boolean;
+  message: string;
+  type: "success" | "danger" | "warning" | "info";
+}
 
-/**
- * @param {{ items: Categories; addUrl: string; updateUrl: string; deleteUrl: string; renderListItem?: (value: any) => JSX.Element; }} param0
- */
-const CategoriesForm = ({
+interface CategoryFormProps {
+  items: Category[];
+  contentType: "service" | "product" | "video" | "article";
+  addMutation: UseMutationResult<Category, Error, CreateCategory>;
+  updateMutation: UseMutationResult<Category, Error, { categoryId: number; updateData: UpdateCategory }>;
+  deleteMutation: UseMutationResult<DeleteResponse, Error, number>;
+}
+
+const categoryDefault: Partial<Category> = { 
+  id: undefined, 
+  category: "", 
+  description: "" 
+};
+
+const CategoriesForm: React.FC<CategoryFormProps> = ({
   items,
-  addUrl,
-  updateUrl,
-  deleteUrl,
+  contentType,
+  addMutation,
+  updateMutation,
+  deleteMutation,
 }) => {
-  const [item, setItem] = useState(categoryDefault);
-  const [edit, setEdit] = useState(false);
-  const [alert, setAlert] = useState({
+  const [item, setItem] = useState<Partial<Category>>(categoryDefault);
+  const [edit, setEdit] = useState<boolean>(false);
+  const [alert, setAlert] = useState<AlertState>({
     show: false,
     message: "",
-    type: "",
+    type: "success",
   });
-  const [modal, setModal] = useState(false);
+  const [modal, setModal] = useState<boolean>(false);
 
   // -----------------------------------------
   // close modal
   // -----------------------------------------
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setItem(categoryDefault);
     setModal(false);
-  };
+  }, []);
 
   // -----------------------------------------
-  // handle create and edit item
+  // clear alert after timeout
   // -----------------------------------------
-  const { mutateAsync:createCategory } = useCreateCategory();
-  const { mutateAsync: updateCategory } = useUpdateCategory();
+  const clearAlert = useCallback(() => {
+    setTimeout(() => {
+      setAlert({ show: false, message: "", type: "success" });
+    }, 3000);
+  }, []);
 
-  const handleItem = async (e) => {
+  const handleItem = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    if (!item.category?.trim()) {
+      setAlert({
+        show: true,
+        message: "Category name is required",
+        type: "warning",
+      });
+      clearAlert();
+      return;
+    }
+
     try {
-      if (edit) {
-        await updateCategory({updateUrl, data: item});
+      if (edit && item.id) {
+        await updateMutation.mutateAsync({
+          categoryId: item.id,
+          updateData: {
+            category: item.category,
+            description: item.description,
+          }
+        });
       } else {
-        await createCategory({createUrl: addUrl, data: item});
+        await addMutation.mutateAsync({
+          category: item.category,
+          description: item.description,
+        });
       }
+      
       setItem(categoryDefault);
       setAlert({
         show: true,
-        message: edit ? `Category Updated` : `Category Created`,
+        message: edit ? `${contentType} Category Updated` : `${contentType} Category Created`,
         type: "success",
       });
     } catch (error) {
-      console.log(error);
+      console.error("Category operation error:", error);
       setAlert({
         show: true,
         message: "Something went wrong",
@@ -70,34 +103,53 @@ const CategoriesForm = ({
       });
     } finally {
       setEdit(false);
-      setTimeout(() => {
-        setAlert({ show: false, message: "", type: "" });
-      }, 3000);
+      clearAlert();
     }
-  };
+  }, [item, edit, updateMutation, addMutation, contentType, clearAlert]);
 
   // -----------------------------------------
   // delete item
   // -----------------------------------------
-  const { mutateAsync: deleteCategory } = useDeleteCategory();
-  /**
-   * @async
-   * @param {number} id
-   */
-  const deleteItem = async (id) => {
+  const deleteItem = useCallback(async (id: number) => {
     try {
-      await deleteCategory({deleteUrl, id});
+      await deleteMutation.mutateAsync(id);
+      setAlert({
+        show: true,
+        message: `${contentType} Category deleted successfully`,
+        type: "success",
+      });
+      clearAlert();
     } catch (error) {
-      console.log(error);
+      console.error("Delete category error:", error);
+      setAlert({
+        show: true,
+        message: "Failed to delete category",
+        type: "danger",
+      });
+      clearAlert();
     }
-  };
+  }, [deleteMutation, contentType, clearAlert]);
+
+  const handleEditClick = useCallback((categoryItem: Category) => {
+    setItem(categoryItem);
+    setEdit(true);
+  }, []);
+
+  const handleDeleteClick = useCallback((categoryItem: Category) => {
+    setItem(categoryItem);
+    setModal(true);
+  }, []);
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setItem(prev => ({ ...prev, category: e.target.value }));
+  }, []);
 
   return (
     <div className="card p-4">
-      <h6 className="mb-3">Create Category</h6>
+      <h6 className="mb-3">Create {contentType} Category</h6>
       {alert.show && (
         <div>
-          <Alert type={alert.type}>{alert.message} </Alert>
+          <Alert type={alert.type}>{alert.message}</Alert>
         </div>
       )}
       {/* form */}
@@ -108,10 +160,17 @@ const CategoriesForm = ({
             className="form-control"
             required
             value={item.category || ""}
-            onChange={(e) => setItem({ ...item, category : e.target.value })}
-            placeholder={"Category Name"}
+            onChange={handleInputChange}
+            placeholder={`${contentType} Category Name`}
           />
-          <button className="btn btn-primary rounded text-nowrap ms-2">
+          <button 
+            className="btn btn-primary rounded text-nowrap ms-2"
+            type="submit"
+            disabled={addMutation.isLoading || updateMutation.isLoading}
+          >
+            {(addMutation.isLoading || updateMutation.isLoading) && (
+              <span className="spinner-border spinner-border-sm me-2" role="status" />
+            )}
             {edit ? `Update Category` : `Add Category`}
           </button>
         </div>
@@ -119,49 +178,50 @@ const CategoriesForm = ({
 
       {/* list items */}
       <div>
-        {items?.map((item, i) => (
+        {items?.map((categoryItem, i) => (
           <div
-            key={item.id}
+            key={categoryItem.id}
             className={`badge bg-secondary-light text-secondary mt-2 p-2 px-3 ${
               items.length === i + 1 ? "" : "me-2"
             }`}
           >
             <span
-              onClick={() => {
-                setItem(item);
-                setEdit(true);
-              }}
+              onClick={() => handleEditClick(categoryItem)}
               style={{ cursor: "pointer" }}
             >
-              {item.category}
+              {categoryItem.category}
             </span>
             <TiTimes
               className="ms-2"
               style={{ cursor: "pointer" }}
-              onClick={() => {
-                setItem(item);
-                setModal(true);
-              }}
+              onClick={() => handleDeleteClick(categoryItem)}
             />
           </div>
         ))}
       </div>
-      <Modal showmodal={modal} toggleModal={() => closeModal()}>
-        <p>Are you sure you want to delete this Category?</p>
+      
+      <Modal showmodal={modal} toggleModal={closeModal}>
+        <p>Are you sure you want to delete this {contentType} Category?</p>
         <h6>{item.category}</h6>
         <div className="d-flex justify-content-end">
           <button
             className="btn btn-danger rounded"
             onClick={() => {
-              deleteItem(item.id);
+              if (item.id) {
+                deleteItem(item.id);
+              }
               closeModal();
             }}
+            disabled={deleteMutation.isLoading}
           >
+            {deleteMutation.isLoading && (
+              <span className="spinner-border spinner-border-sm me-2" role="status" />
+            )}
             Yes
           </button>
           <button
             className="btn btn-primary rounded ms-2"
-            onClick={() => closeModal()}
+            onClick={closeModal}
           >
             No
           </button>

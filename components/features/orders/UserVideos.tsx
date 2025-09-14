@@ -1,26 +1,24 @@
-import { useSession } from "next-auth/react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { PiEmptyBold } from "react-icons/pi";
 import VideosPlaceholder from "../../custom/ImagePlaceholders/Videosplaceholder";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import Pagination from "@/components/custom/Pagination/Pagination";
-import { useMemo, useState, useCallback, useEffect } from "react";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
-import { useGetVideos } from "@/data/hooks/video.hooks";
+import { useMyProfile } from "@/data/hooks/user.hooks";
+import { useVideos } from "@/data/hooks/video.hooks";
+import { ORGANIZATION_ID } from "@/data/constants";
+import { Video } from "@/types/items";
 
 /**
- * Enhanced UserVideos component with comprehensive error handling and validation
- * Displays user purchased videos with search, pagination, and safe data handling
- * 
- * @component
+ * Enhanced UserVideos component with comprehensive error handling and safety checks
+ * Manages user video browsing with pagination, search, and category filtering
+ * Optimized with React.memo for performance
  */
-const UserVideos = () => {
-  const { data: session } = useSession();
+const UserVideos: React.FC = React.memo(() => {
+  const { data: user } = useMyProfile();
   const router = useRouter();
   const searchParams = useSearchParams();
-  
-  // Safe environment variable handling
-  const organizationId = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
   
   // Safe URL parameter extraction
   const currentCategory = searchParams?.get("category") || "All";
@@ -28,22 +26,8 @@ const UserVideos = () => {
   const pageSize = "10";
   
   // Safe state management
-  const [searchQuery, setSearchQuery] = useState("");
-  const [error, setError] = useState(null);
-
-  // Memoized user ID validation
-  const validUserId = useMemo(() => {
-    const userId = session?.user?.id;
-    if (!userId) return null;
-    
-    const numericId = typeof userId === 'string' 
-      ? parseInt(userId, 10) 
-      : userId;
-    
-    return (!isNaN(numericId) && numericId > 0) ? numericId : null;
-  }, [session?.user?.id]);
-
-
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [error, setError] = useState<string | null>(null)
 
   // Safe data fetching with validation
   const {
@@ -51,11 +35,14 @@ const UserVideos = () => {
     isLoading: loadingVideos,
     error: queryError,
     isError
-  } = useGetVideos({
-    page: page,
-    page_size: pageSize,
-    category: currentCategory !== "All" ? currentCategory : null,
-  });
+  } = useVideos(
+    parseInt(ORGANIZATION_ID) || 0,
+    {
+      page: page,
+      page_size: pageSize,
+      category: currentCategory !== "All" ? currentCategory : null,
+    }
+  );
 
   // Effect to handle query errors
   useEffect(() => {
@@ -67,13 +54,15 @@ const UserVideos = () => {
   }, [isError, queryError]);
 
   // Safe page change handler
-  const handlePageChange = useCallback((newPage) => {
-    if (!newPage || typeof newPage !== 'string') {
+  const handlePageChange = useCallback((newPage: string | number) => {
+    const pageValue = typeof newPage === 'number' ? newPage.toString() : newPage;
+    
+    if (!pageValue || typeof pageValue !== 'string') {
       console.error('Invalid page number:', newPage);
       return;
     }
 
-    const pageNum = parseInt(newPage, 10);
+    const pageNum = parseInt(pageValue, 10);
     if (isNaN(pageNum) || pageNum < 1) {
       console.error('Invalid page number:', newPage);
       return;
@@ -89,7 +78,7 @@ const UserVideos = () => {
   }, [currentCategory, pageSize, router]);
 
   // Safe category change handler
-  const handleCategoryChange = useCallback((category) => {
+  const handleCategoryChange = useCallback((category: string) => {
     if (!category || typeof category !== 'string') {
       console.error('Invalid category:', category);
       return;
@@ -140,7 +129,7 @@ const UserVideos = () => {
   }, [videos, searchQuery]);
 
   // Safe description truncation
-  const getTruncatedDescription = useCallback((description, maxLength = 80) => {
+  const getTruncatedDescription = useCallback((description: string | undefined, maxLength = 80) => {
     if (!description || typeof description !== 'string') return 'No description available';
     
     if (description.length <= maxLength) return description;
@@ -149,7 +138,7 @@ const UserVideos = () => {
   }, []);
 
   // Safe video token extraction
-  const getVideoToken = useCallback((video) => {
+  const getVideoToken = useCallback((video: Video) => {
     const token = video?.video_token;
     if (!token || typeof token !== 'string') return null;
     return token;
@@ -190,8 +179,8 @@ const UserVideos = () => {
     );
   }
 
-  // No session state
-  if (!session?.user) {
+  // No user state
+  if (!user) {
     return (
       <div className="alert alert-warning d-flex align-items-center" role="alert">
         <i className="bi bi-person-exclamation me-2"></i>
@@ -337,6 +326,9 @@ const UserVideos = () => {
       )}
     </div>
   );
-};
+});
+
+// Add display name for debugging
+UserVideos.displayName = 'UserVideos';
 
 export default UserVideos;

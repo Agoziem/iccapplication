@@ -1,57 +1,72 @@
-import React, { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useAddLike, useDeleteLike } from "@/data/hooks/articles.hooks";
 import toast from "react-hot-toast";
+import { useMyProfile } from "@/data/hooks/user.hooks";
+import { ArticleResponse } from "@/types/articles";
 
-/**
- * @param {{ article: Article;}} param0
- */
-const ArticleLikes = ({ article }) => {
-  const { data: session } = useSession();
-  const [likes, setLikes] = useState([]);
+interface ArticleLikesProps {
+  article: ArticleResponse;
+}
+
+const ArticleLikes: React.FC<ArticleLikesProps> = ({ article }) => {
+  const { data: user } = useMyProfile();
+  const [likes, setLikes] = useState<number[]>([]);
   const { mutateAsync: addLike } = useAddLike();
   const { mutateAsync: removeLike } = useDeleteLike();
 
   useEffect(() => {
-    if (article && article.likes) {
+    if (article?.likes) {
       setLikes(article.likes);
     }
-  }, [article]);
+  }, [article?.likes]);
 
-  const handleLikeToggle = async () => {
-    if (!session?.user?.id || isNaN(parseInt(session.user.id))) {
-      toast.error("Invalid user session");
+  const handleLikeToggle = useCallback(async () => {
+    if (!user?.id) {
+      toast.error("Please sign in to like articles");
       return;
     }
     
-    const userId = parseInt(session.user.id);
+    const userId = user.id;
     const isLiked = likes.includes(userId);
     
     try {
-      isLiked
-        ? await removeLike({ Article: article, userid: userId })
-        : await addLike({ Article: article, userid: userId });
-      toast.success(isLiked ? "You unliked the post" : "You liked the post");
+      if (isLiked) {
+        await removeLike({ blogId: article.id!, userId });
+        setLikes(prev => prev.filter(id => id !== userId));
+        toast.success("You unliked the article");
+      } else {
+        await addLike({ blogId: article.id!, userId });
+        setLikes(prev => [...prev, userId]);
+        toast.success("You liked the article");
+      }
     } catch (error) {
-      console.error(error);
-      toast.error(error?.message || "An error occurred");
+      console.error("Failed to toggle like:", error);
+      toast.error("An error occurred while updating like status");
     }
-  };
+  }, [user?.id, likes, article.id, addLike, removeLike]);
+
+  const isUserLiked = useCallback(() => {
+    return user?.id ? likes.includes(user.id) : false;
+  }, [user?.id, likes]);
+
+  if (!article?.id) {
+    return null;
+  }
 
   return (
     <>
-      {session ? (
-        <button className="btn btn-primary" onClick={handleLikeToggle}>
-          {likes?.includes(
-            session?.user?.id && !isNaN(parseInt(session.user.id)) 
-              ? parseInt(session.user.id) 
-              : -1
-          ) ? "Unlike" : "Like"}
+      {user ? (
+        <button 
+          className="btn btn-primary" 
+          onClick={handleLikeToggle}
+          disabled={!article.id}
+        >
+          {isUserLiked() ? "Unlike" : "Like"}
         </button>
       ) : (
         <Link
-          href={`/accounts/signin?next=/articles/${article?.slug || ''}/`}
+          href={`/accounts/signin?next=/articles/${article.slug || ''}/`}
           className="btn btn-primary"
         >
           Like

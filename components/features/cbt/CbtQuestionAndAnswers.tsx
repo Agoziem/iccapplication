@@ -1,6 +1,26 @@
-import React from "react";
+import React, { useCallback } from "react";
+import { Subject, Question, Answer } from "@/types/cbt";
 
-const QuestionAndAnswers = ({
+interface QuestionWithIndex extends Question {
+  questionIndex?: number;
+  correctAnswer?: Answer;
+}
+
+interface SelectedAnswers {
+  [subjectId: number]: {
+    [questionId: number]: number;
+  };
+}
+
+interface QuestionAndAnswersProps {
+  currentSubject: Subject;
+  currentQuestion: QuestionWithIndex;
+  selectedAnswers: SelectedAnswers;
+  handleAnswerSelect: (subjectId: number, questionId: number, answerId: number) => void;
+  reviewAnswers?: boolean;
+}
+
+const QuestionAndAnswers: React.FC<QuestionAndAnswersProps> = ({
   currentSubject,
   currentQuestion,
   selectedAnswers,
@@ -27,19 +47,20 @@ const QuestionAndAnswers = ({
   }
 
   // Safe access to selected answers with validation
-  const getSelectedAnswerId = () => {
+  const getSelectedAnswerId = useCallback(() => {
     try {
+      if (!currentSubject.id || !currentQuestion.id) return null;
       return selectedAnswers?.[currentSubject.id]?.[currentQuestion.id] || null;
     } catch (error) {
       console.error('Error accessing selected answers:', error);
       return null;
     }
-  };
+  }, [selectedAnswers, currentSubject.id, currentQuestion.id]);
 
   const answerSelectedID = getSelectedAnswerId();
 
   // Safe answer selection handler
-  const safeHandleAnswerSelect = (subjectId, questionId, answerId) => {
+  const safeHandleAnswerSelect = useCallback((subjectId: number, questionId: number, answerId: number) => {
     if (typeof handleAnswerSelect !== 'function') {
       console.warn('handleAnswerSelect function not provided');
       return;
@@ -55,7 +76,7 @@ const QuestionAndAnswers = ({
     } catch (error) {
       console.error('Error selecting answer:', error);
     }
-  };
+  }, [handleAnswerSelect]);
 
   return (
     <div>
@@ -114,7 +135,11 @@ const QuestionAndAnswers = ({
                   checked={isSelectedAnswer}
                   className={`form-check-input me-3 ${inputClassName}`}
                   onChange={() =>
-                    safeHandleAnswerSelect(currentSubject.id, currentQuestion.id, answer.id)
+                    safeHandleAnswerSelect(
+                      currentSubject.id!, 
+                      currentQuestion.id!, 
+                      answer.id!
+                    )
                   }
                   disabled={reviewAnswers}
                 />

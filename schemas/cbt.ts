@@ -85,17 +85,21 @@ export const testSchema = z.object({
 export const testArraySchema = z.array(testSchema);
 
 
+// test subjects can be optionally included during test creation
 export const createTestSchema = z.object({
   testYear: z.number(),
   texttype: z.number(),
-  testSubject: z.array(z.number()).min(1, { message: "At least one subject is required" }),
+  testSubject: z.array(z.number()).optional(),
 });
 
+export const subjectidSchema = z.object({
+  id: z.number(),
+});
 
 export const studentTestRequestSchema = z.object({
   user_id: z.number(),
   test_id: z.number(),
-  examSubjects: z.array(z.object({}).passthrough()),
+  examSubjects: z.array(subjectidSchema),
 });
 
 

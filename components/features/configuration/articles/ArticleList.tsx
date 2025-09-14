@@ -1,17 +1,31 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import Modal from "@/components/custom/Modal/modal";
 import Alert from "@/components/custom/Alert/Alert";
 import ArticlePlaceholder from "./ArticlePlaceholder";
 import Pagination from "@/components/custom/Pagination/Pagination";
-import { ArticleDefault } from "@/data/constants";
 import { useRouter } from "next/navigation";
 import { useDeleteArticle } from "@/data/hooks/articles.hooks";
 import toast from "react-hot-toast";
+import { ArticleResponse, PaginatedArticleResponse } from "@/types/articles";
 
-/**
- * @param {{ articles: ArticlesResponse; article: Article; setArticle: (value:Article) => void; editMode: any; setEditMode: any; loading: any; currentPage: any; pageSize: any; }} param0
- */
-const ArticleList = ({
+interface ArticlesListProps {
+  articles: PaginatedArticleResponse | null;
+  article: ArticleResponse | null;
+  setArticle: React.Dispatch<React.SetStateAction<ArticleResponse | null>>;
+  editMode: boolean;
+  setEditMode: React.Dispatch<React.SetStateAction<boolean>>;
+  loading: boolean;
+  currentPage: number;
+  pageSize: string;
+}
+
+interface AlertState {
+  show: boolean;
+  message: string;
+  type: "success" | "danger" | "warning" | "info";
+}
+
+const ArticleList: React.FC<ArticlesListProps> = ({
   articles,
   article,
   setArticle,
@@ -22,45 +36,52 @@ const ArticleList = ({
   pageSize,
 }) => {
   const [showModal, setShowModal] = useState(false);
-  const [alert, setAlert] = useState({
+  const [alert, setAlert] = useState<AlertState>({
     show: false,
     message: "",
-    type: "",
+    type: "info",
   });
   const router = useRouter();
 
   // handle Article Delete
   const { mutateAsync: deleteArticle } = useDeleteArticle();
-  const removeArticle = async (id) => {
+  
+  const removeArticle = useCallback(async (id: number) => {
+    if (!id) {
+      toast.error("Invalid article ID");
+      return;
+    }
+    
     try {
       await deleteArticle(id);
       toast.success("Article deleted successfully");
     } catch (error) {
+      console.error("Error deleting article:", error);
       toast.error("An error occurred, please try again");
     } finally {
       closeModal();
     }
-  };
+  }, [deleteArticle]);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setShowModal(false);
-    setArticle(ArticleDefault);
-  };
+    setArticle(null);
+  }, [setArticle]);
 
   // -----------------------------------------
   // Handle page change
   // -----------------------------------------
-  /**  @param {string} newPage */
-  const handlePageChange = (newPage) => {
-    router.push(`?category=All&page=${newPage}&page_size=${pageSize}`, {
+  const handlePageChange = useCallback((newPage: string | number) => {
+    const pageStr = typeof newPage === 'number' ? newPage.toString() : newPage;
+    router.push(`?category=All&page=${pageStr}&page_size=${pageSize}`, {
       scroll: false,
     });
-  };
+  }, [router, pageSize]);
 
   return (
     <div>
       <h4 className="mb-3">
-        {articles?.count} Article{articles?.results?.length > 1 ? "s" : ""}
+        {articles?.count || 0} Article{(articles?.results?.length || 0) > 1 ? "s" : ""}
       </h4>
       {alert.show && <Alert type={alert.type}>{alert.message}</Alert>}
       {articles && articles.results.length > 0 ? (
@@ -158,7 +179,8 @@ const ArticleList = ({
             <button
               type="button"
               className="btn btn-danger rounded"
-              onClick={() => removeArticle(article?.id)}
+              onClick={() => article?.id && removeArticle(article.id)}
+              disabled={!article?.id}
             >
               Delete
             </button>
