@@ -2,10 +2,9 @@ import Link from "next/link";
 import React from "react";
 import { DEFAULT_LOGIN_REDIRECT } from "@/routes";
 import { FcGoogle } from "react-icons/fc";
-// import { SiFacebook } from "react-icons/si";
-import { FaGithub } from "react-icons/fa6";
 import { useSearchParams } from "next/navigation";
-
+import { GOOGLE_CLIENT_ID } from "@/data/constants";
+import CustomGoogleLogin from "./CustomGoogleLogin";
 
 interface FormWrapperProps {
   children: React.ReactNode;
@@ -40,49 +39,16 @@ const FormWrapper: React.FC<FormWrapperProps> = ({
         {/* Social icons */}
         {showSocial && (
           <div className="d-md-flex justify-content-center mb-4">
-            <div
-              className="d-flex align-items-center me-0 me-md-3 p-2 px-3 mb-4 mb-md-0"
-              style={{
-                border: "1.2px solid #98889573",
-                borderRadius: "5px",
-                cursor: "pointer",
-                width: "100%",
-              }}
-              onClick={() => {
-                signIn("google", {
-                  callbackUrl: next,
-                });
-              }}
-            >
-              <FcGoogle className="h5 mb-0 me-2" />
-
-              {backButtonHrefText === "Sign up" ? "Sign in" : "Sign up"}
-            </div>
-
-            <div
-              className="d-flex align-items-center me-0  p-2 px-3"
-              style={{
-                border: "1.2px solid #98889573",
-                borderRadius: "5px",
-                cursor: "pointer",
-                width: "100%",
-              }}
-              onClick={() => {
-                signIn("github", {
-                  callbackUrl: next,
-                });
-              }}
-            >
-              <FaGithub
-                className="h5 mb-0 me-2"
-                style={{
-                  cursor: "pointer",
-                  color: "#000000",
-                }}
-              />
-
-              {backButtonHrefText === "Sign up" ? "Sign in" : "Sign up"}
-            </div>
+            {GOOGLE_CLIENT_ID && (
+              <div className="mb-4">
+                <CustomGoogleLogin
+                  redirectPath={next}
+                  buttonText={
+                    backButtonHrefText === "Sign up" ? "Sign in" : "Sign up"
+                  }
+                />
+              </div>
+            )}
           </div>
         )}
 

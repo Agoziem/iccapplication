@@ -14,3 +14,4 @@ export const FIREBASE_CONFIG = {
 export const COOKIE_NAME = process.env.COOKIE_NAME || "iccapplication_cookie";
 export const ORGANIZATION_ID = process.env.NEXT_PUBLIC_ORGANIZATION_ID || "1";
 export const RESEND_API_KEY = process.env.NEXT_PUBLIC_RESEND_API_KEY || "";
+export const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";

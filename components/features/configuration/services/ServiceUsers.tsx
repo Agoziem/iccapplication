@@ -6,7 +6,7 @@ import { BsPerson } from "react-icons/bs";
 import { PulseLoader } from "react-spinners";
 import toast from "react-hot-toast";
 import { useQueryClient } from "react-query";
-import { Service } from "@/types/items";
+import { Service, ServiceUser } from "@/types/items";
 import { StatusCategory } from "./ServiceConf";
 import {
   useAddServiceToCompleted,
@@ -18,15 +18,8 @@ import {
   useServiceUsersInProgress,
 } from "@/data/hooks/service.hooks";
 import "./ServiceUsersTable.css";
+import { sendServiceCompletedEmail, sendServiceStartedEmail } from "@/utils/mail";
 
-interface ServiceUser {
-  id: number;
-  username: string;
-  email?: string;
-  avatar_url: string;
-  date_joined: string;
-  user_count?: number;
-}
 
 interface ServiceUsersProps {
   users?: ServiceUser[];
@@ -72,20 +65,23 @@ const ServiceUsers: React.FC<ServiceUsersProps> = ({
   const updateUserServiceStatus = async (
     userId: number, 
     serviceId: number, 
-    action: string
+    action: string,
+    serviceUser?: ServiceUser
   ) => {
     if (!service) return;
-    
+
     setActionStates(prev => ({ ...prev, [userId]: action }));
     
     try {
       switch (action) {
         case "add-to-progress":
           await addServiceToProgress({ userId, serviceId });
+          serviceUser && sendServiceStartedEmail(service, serviceUser);
           toast.success("User added to progress");
           break;
         case "add-to-completed":
           await addServiceToCompleted({ userId, serviceId });
+          serviceUser && sendServiceCompletedEmail(service, serviceUser);
           toast.success("Service marked as completed");
           break;
         case "remove-from-progress":
@@ -146,7 +142,7 @@ const ServiceUsers: React.FC<ServiceUsersProps> = ({
     if (isLoading) {
       return (
         <div className="d-flex align-items-center">
-          <PulseLoader color="#0d6efd" size={8} />
+          <PulseLoader color="var(--primary)" size={8} />
           <span className="ms-2 text-muted small">{currentAction}...</span>
         </div>
       );
@@ -160,7 +156,7 @@ const ServiceUsers: React.FC<ServiceUsersProps> = ({
               <button
                 className="btn btn-sm btn-outline-primary"
                 onClick={() => startTransition(() => 
-                  updateUserServiceStatus(user.id, service.id!, "add-to-progress")
+                  updateUserServiceStatus(user.id, service.id!, "add-to-progress", user)
                 )}
                 title="Add to Progress"
               >
@@ -173,7 +169,7 @@ const ServiceUsers: React.FC<ServiceUsersProps> = ({
                 <button
                   className="btn btn-sm btn-outline-success"
                   onClick={() => startTransition(() => 
-                    updateUserServiceStatus(user.id, service.id!, "add-to-completed")
+                    updateUserServiceStatus(user.id, service.id!, "add-to-completed", user)
                   )}
                   title="Mark as Completed"
                 >

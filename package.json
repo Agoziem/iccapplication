@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
+    "@react-oauth/google": "^0.12.2",
     "@tiptap/extension-image": "^2.4.0",
     "@tiptap/extension-link": "^2.4.0",
     "@tiptap/extension-underline": "^2.4.0",

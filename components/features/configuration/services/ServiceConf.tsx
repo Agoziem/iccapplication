@@ -246,7 +246,7 @@ const ServiceConfig: React.FC = () => {
           {loadingUsers ? (
             <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "300px" }}>
               <div className="text-center">
-                <PulseLoader color="#0d6efd" size={12} />
+                <PulseLoader color="var(--secondary)" size={12} />
                 <p className="mt-3 text-muted">Loading users...</p>
               </div>
             </div>
