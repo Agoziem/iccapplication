@@ -1,204 +1,241 @@
-import React, { useEffect, useState } from "react";
+"use client";
+import React, { useEffect, useState, useCallback, useMemo, memo } from "react";
+import { useQueryClient } from "react-query";
+import toast from "react-hot-toast";
 import useWebSocket from "@/hooks/useWebSocket";
 import Modal from "@/components/custom/Modal/modal";
 import { shortenMessage, timeSince } from "@/utils/utilities";
-import { notificationActionSchema } from "@/schemas/notifications";
-import { useFetchNotifications } from "@/data/notificationsAPI/notification.hook";
-import { useQueryClient } from "react-query";
-import toast from "react-hot-toast";
+import { useNotifications } from "@/data/hooks/notifications.hooks";
+import { NotificationSchema, wsNotificationMessageSchema } from "@/schemas/notifications";
+import { Notification as NotificationType } from "@/types/notifications";
 
-function NavNotice() {
-  const [showmodal, setShowModal] = useState(false);
-  const [modalContent, setModalContent] = useState({
+interface ModalContent {
+  title: string;
+  message: string;
+  time: string;
+}
+
+interface WSNotificationMessage {
+  action: "add" | "update" | "delete" | "mark_viewed";
+  notification: NotificationType;
+}
+
+const NavNotice: React.FC = memo(() => {
+  const [showmodal, setShowModal] = useState<boolean>(false);
+  const [modalContent, setModalContent] = useState<ModalContent>({
     title: "",
     message: "",
     time: "",
   });
+
+  // WebSocket connection for real-time notifications
   const { ws, isConnected } = useWebSocket(
     `${process.env.NEXT_PUBLIC_DJANGO_WEBSOCKET_URL}/ws/notifications/`
   );
 
-  // fetch notifications from the server
-  const {
-    data: notifications,
-    isLoading,
-    error,
-  } = useFetchNotifications();
-
+  // Fetch notifications from the server
+  const { data: notifications, isLoading, error } = useNotifications();
   const queryClient = useQueryClient();
 
-  // WebSocket Connection for notifications
-  useEffect(() => {
-    if (isConnected && ws) {
-      ws.onmessage = (event) => {
-        const responseNotification = JSON.parse(event.data);
-        const validatedcontact =
-          notificationActionSchema.safeParse(responseNotification);
-  
-        // Validate the WebSocket data
-        if (!validatedcontact.success) {
-          console.log(validatedcontact.error.issues);
-          return;
-        }
-  
-        const newNotification = validatedcontact.data;
-  
-        // Function to sort notifications by updated_at
-        const sortNotifications = (notifications) =>
-          notifications.sort(
-            (a, b) =>
-              new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-          );
-  
-        // Define cache key for notifications
-        const cacheKey = ["notifications"];
-  
-        // Handle different actions
-        if (newNotification.action === "add") {
-          queryClient.setQueryData(cacheKey, (existingNotifications = []) => {
+  // Function to sort notifications by updated_at
+  const sortNotifications = useCallback((notifications: NotificationType[]) =>
+    notifications.sort((a, b) => {
+      const dateA = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+      const dateB = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+      return dateB - dateA;
+    }), []
+  );
+
+  // Handle WebSocket messages
+  const handleWebSocketMessage = useCallback((event: MessageEvent) => {
+    try {
+      const responseNotification = JSON.parse(event.data);
+      const validatednotification = wsNotificationMessageSchema.safeParse(responseNotification);
+
+      // Validate the WebSocket data
+      if (!validatednotification.success) {
+        console.error('Invalid notification format:', validatednotification.error.issues);
+        return;
+      }
+
+      const newNotification = validatednotification.data;
+      
+      // Ensure notification data exists
+      if (!newNotification.notification) {
+        console.error('No notification data in WebSocket message');
+        return;
+      }
+
+      const cacheKey = ["notifications"];
+
+      // Handle different notification actions
+      switch (newNotification.action) {
+        case "add":
+          queryClient.setQueryData(cacheKey, (existingNotifications: any[] = []) => {
             const notificationExists = existingNotifications.some(
-              (notification) =>
-                notification.id === newNotification.notification.id
+              (notification) => notification.id === newNotification.notification!.id
             );
-  
+
             if (notificationExists) {
               return sortNotifications([
-                newNotification.notification,
+                newNotification.notification!,
                 ...existingNotifications.filter(
-                  (notification) =>
-                    notification.id !== newNotification.notification.id
+                  (notification) => notification.id !== newNotification.notification!.id
                 ),
               ]);
             } else {
-              // If the notification doesn't exist, just add it to the top
               return sortNotifications([
-                newNotification.notification,
+                newNotification.notification!,
                 ...existingNotifications,
               ]);
             }
           });
           toast.success("New notification received");
-        }
-  
-        if (newNotification.action === "update") {
-          queryClient.setQueryData(cacheKey, (existingNotifications = []) =>
+          break;
+
+        case "update":
+          queryClient.setQueryData(cacheKey, (existingNotifications: any[] = []) =>
             sortNotifications(
               existingNotifications.map((notification) =>
-                notification.id === newNotification.notification.id
-                  ? newNotification.notification
+                notification.id === newNotification.notification!.id
+                  ? newNotification.notification!
                   : notification
               )
             )
           );
-          toast.success("A Notification was updated");
-        }
-  
-        if (newNotification.action === "delete") {
-          queryClient.setQueryData(cacheKey, (existingNotifications = []) =>
+          toast.success("Notification updated");
+          break;
+
+        case "delete":
+          queryClient.setQueryData(cacheKey, (existingNotifications: any[] = []) =>
             existingNotifications.filter(
-              (notification) =>
-                notification.id !== newNotification.notification.id
+              (notification) => notification.id !== newNotification.notification!.id
             )
           );
-          toast.success("A Notification deleted");
-        }
-  
-        if (newNotification.action === "mark_viewed") {
-          queryClient.setQueryData(cacheKey, (existingNotifications = []) =>
+          toast.success("Notification deleted");
+          break;
+
+        case "mark_viewed":
+          queryClient.setQueryData(cacheKey, (existingNotifications: any[] = []) =>
             existingNotifications.map((notification) =>
-              notification.id === newNotification.notification.id
-                ? newNotification.notification
+              notification.id === newNotification.notification!.id
+                ? newNotification.notification!
                 : notification
             )
           );
-        }
-      };
-    }
-  }, [isConnected, ws]);
+          break;
 
-  /** @param {NotificationMessage} notification */
-  const mark_viewed = (notification) => {
-    if (!notification.viewed) {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        /**@type {NotificationAction} */
-        const payload = {
-          action: "mark_viewed",
-          notification: notification,
-        };
-        ws.send(JSON.stringify(payload));
-      } else {
-        console.error("WebSocket is not connected.");
+        default:
+          console.warn('Unknown notification action:', newNotification.action);
       }
+    } catch (error) {
+      console.error('Error processing WebSocket message:', error);
     }
-  };
+  }, [queryClient, sortNotifications]);
+
+  // WebSocket Connection effect
+  useEffect(() => {
+    if (isConnected && ws) {
+      ws.onmessage = handleWebSocketMessage;
+    }
+  }, [isConnected, ws, handleWebSocketMessage]);
+
+  // Mark notification as viewed
+  const markAsViewed = useCallback((notification: NotificationType) => {
+    if (!notification.viewed && ws && ws.readyState === WebSocket.OPEN) {
+      const payload = {
+        action: "mark_viewed",
+        notification: notification,
+      };
+      ws.send(JSON.stringify(payload));
+    } else if (!ws || ws.readyState !== WebSocket.OPEN) {
+      console.error("WebSocket is not connected.");
+    }
+  }, [ws]);
+
+  // Handle notification click
+  const handleNotificationClick = useCallback((notification: NotificationType) => {
+    markAsViewed(notification);
+    setModalContent({
+      title: notification.title,
+      message: notification.message,
+      time: notification.created_at ? timeSince(notification.created_at) : 'Unknown time',
+    });
+    setShowModal(true);
+  }, [markAsViewed]);
+
+  // Toggle modal
+  const toggleModal = useCallback(() => {
+    setShowModal(prev => !prev);
+  }, []);
+
+  // Memoized calculations
+  const unreadNotifications = useMemo(() => 
+    notifications?.filter((notification) => !notification.viewed) || [], 
+    [notifications]
+  );
+
+  const unseenCount = useMemo(() => unreadNotifications.length, [unreadNotifications]);
+
+  // Handle loading and error states
+  if (error) {
+    console.error('Error fetching notifications:', error);
+  }
 
   return (
     <li className="nav-item dropdown">
-      {/* the Notification bell icon */}
-      <a className="nav-link nav-icon" href="#" data-bs-toggle="dropdown">
+      {/* Notification bell icon */}
+      <a 
+        className="nav-link nav-icon" 
+        href="#" 
+        data-bs-toggle="dropdown"
+        role="button"
+        aria-label="View notifications"
+        aria-expanded="false"
+      >
         <i className="bi bi-bell"></i>
-        {(() => {
-          const unseenCount = notifications?.filter(
-            (notification) => !notification?.viewed
-          ).length;
-          return unseenCount > 0 ? (
-            <span className="badge bg-danger badge-number">{unseenCount}</span>
-          ) : null;
-        })()}
+        {unseenCount > 0 && (
+          <span className="badge bg-danger badge-number">{unseenCount}</span>
+        )}
       </a>
 
-      {/* Notification dropdown header */}
+      {/* Notification dropdown */}
       <ul className="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications">
-        {(() => {
-          const unreadNotifications = notifications?.filter(
-            (notification) => !notification.viewed
-          );
-          return unreadNotifications?.length > 0 ? (
-            <>
-              <li className="dropdown-header text-primary">
-                You have {unreadNotifications.length} unread notification
-                {unreadNotifications.length > 1 ? "s" : ""}
-              </li>
-              <li>
-                <hr className="dropdown-divider" />
-              </li>
-            </>
-          ) : (
-            <>
-              <li className="dropdown-header text-primary">
-                You have no unread notifications at the moment
-              </li>
-              <li>
-                <hr className="dropdown-divider" />
-              </li>
-            </>
-          );
-        })()}
+        {/* Dropdown header */}
+        <li className="dropdown-header text-primary">
+          {unreadNotifications.length > 0 
+            ? `You have ${unreadNotifications.length} unread notification${unreadNotifications.length > 1 ? 's' : ''}`
+            : "You have no unread notifications at the moment"
+          }
+        </li>
+        <li>
+          <hr className="dropdown-divider" />
+        </li>
 
-        {/* Notification dropdown messages */}
-        {notifications?.length > 0 ? (
-          notifications?.map((notification, index) => (
+        {/* Notification items */}
+        {notifications && notifications.length > 0 ? (
+          notifications.map((notification, index) => (
             <React.Fragment key={notification.id}>
               <li
                 className="notification-item"
                 style={{ cursor: "pointer" }}
-                onClick={() => {
-                  mark_viewed(notification);
-                  setModalContent({
-                    title: notification.title,
-                    message: notification.message,
-                    time: timeSince(notification.created_at),
-                  });
-                  setShowModal(true);
+                onClick={() => handleNotificationClick(notification)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    handleNotificationClick(notification);
+                  }
                 }}
+                aria-label={`View notification: ${notification.title}`}
               >
                 <i
-                  className={`bi  ${
+                  className={`bi ${
                     notification.viewed
                       ? "bi-check-all text-primary"
                       : "bi-exclamation-circle text-secondary"
                   }`}
-                ></i>
+                />
                 <div>
                   <h4
                     className={
@@ -210,10 +247,10 @@ function NavNotice() {
                   <p className={notification.viewed ? "" : "text-dark"}>
                     {shortenMessage(notification.message, 50)}
                   </p>
-                  <p>{timeSince(notification.created_at)}</p>
+                  <p>{notification.created_at ? timeSince(notification.created_at) : 'Unknown time'}</p>
                 </div>
               </li>
-              {index === notifications.length - 1 ? null : (
+              {index < notifications.length - 1 && (
                 <li key={`divider-${notification.id}`}>
                   <hr className="dropdown-divider" />
                 </li>
@@ -222,31 +259,42 @@ function NavNotice() {
           ))
         ) : (
           <li className="notification-item">
-            <i className="bi bi-exclamation-circle text-warning"></i>
+            <i className="bi bi-exclamation-circle text-warning" />
             <div>
               <h4>Notice</h4>
-              <p>No notice available at the moment</p>
+              <p>
+                {isLoading 
+                  ? "Loading notifications..." 
+                  : "No notice available at the moment"
+                }
+              </p>
             </div>
           </li>
         )}
       </ul>
 
-      <Modal showmodal={showmodal} toggleModal={() => setShowModal(!showmodal)}>
-        <h6>{modalContent.title}</h6>
-        <p className="small text-muted">{modalContent.time}</p>
-        <hr />
-        <p>{modalContent.message}</p>
-        <div className="d-flex justify-content-end">
-          <button
-            className="btn btn-primary"
-            onClick={() => setShowModal(!showmodal)}
-          >
-            Close
-          </button>
+      {/* Notification detail modal */}
+      <Modal showmodal={showmodal} toggleModal={toggleModal}>
+        <div className="modal-body">
+          <h6>{modalContent.title}</h6>
+          <p className="small text-muted">{modalContent.time}</p>
+          <hr />
+          <p>{modalContent.message}</p>
+          <div className="d-flex justify-content-end mt-3">
+            <button
+              className="btn btn-primary"
+              onClick={toggleModal}
+              type="button"
+            >
+              Close
+            </button>
+          </div>
         </div>
       </Modal>
     </li>
   );
-}
+});
+
+NavNotice.displayName = 'NavNotice';
 
 export default NavNotice;

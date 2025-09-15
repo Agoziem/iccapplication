@@ -16,7 +16,7 @@ import {
   SuccessResponse,
   Users
 } from "@/types/users";
-import { getRefreshToken } from "@/utils/auth";
+import { getRefreshToken, TokenType } from "@/utils/auth";
 
 export const authAPIendpoint = "/authapi";
 
@@ -65,7 +65,7 @@ export const registerUser = async (userData: UserRegistration): Promise<UserRegi
   return response.data;
 };
 
-export const registerUserOAuth = async (provider: string, userData: UserRegistrationOAuth): Promise<UserRegistrationResponse> => {
+export const registerUserOAuth = async (provider: string, userData: UserRegistrationOAuth): Promise<TokenType> => {
   const response = await AxiosInstance.post(`${authAPIendpoint}/register_oauth/${provider}/`, userData);
   return response.data;
 };
@@ -76,7 +76,7 @@ export const getResetPasswordToken = async (email: string): Promise<SuccessRespo
   return response.data;
 };
 
-export const verifyEmail = async (verificationData: VerifyEmail): Promise<SuccessResponse> => {
+export const verifyEmail = async (verificationData: VerifyEmail): Promise<TokenType> => {
   const response = await AxiosInstance.post(`${authAPIendpoint}/verifyEmail/`, verificationData);
   return response.data;
 };
@@ -86,7 +86,7 @@ export const verifyToken = async (tokenData: VerifyToken): Promise<User> => {
   return response.data;
 };
 
-export const verifyUser = async (userData: any): Promise<SuccessResponse> => {
+export const verifyUser = async (userData: any): Promise<TokenType> => {
   const response = await AxiosInstance.post(`${authAPIendpoint}/verifyuser/`, userData);
   return response.data;
 };
@@ -108,8 +108,9 @@ export const logoutUser = async (): Promise<SuccessResponse> => {
 };
 
 // React Query Hooks
-
+// =================================================
 // User Query Hooks
+// =================================================
 export const useUsers = (): UseQueryResult<Users, Error> => {
   return useQuery({
     queryKey: USER_KEYS.list(),
@@ -177,7 +178,9 @@ export const useDeleteUser = (): UseMutationResult<SuccessResponse, Error, numbe
   });
 };
 
+// ================================================================
 // Authentication Mutations
+// ================================================================
 export const useRegisterUser = (): UseMutationResult<UserRegistrationResponse, Error, UserRegistration> => {
   const queryClient = useQueryClient();
   
@@ -193,7 +196,7 @@ export const useRegisterUser = (): UseMutationResult<UserRegistrationResponse, E
   });
 };
 
-export const useRegisterUserOAuth = (): UseMutationResult<UserRegistrationResponse, Error, { provider: string; userData: UserRegistrationOAuth }> => {
+export const useRegisterUserOAuth = (): UseMutationResult<TokenType, Error, { provider: string; userData: UserRegistrationOAuth }> => {
   const queryClient = useQueryClient();
   
   return useMutation({
@@ -219,7 +222,7 @@ export const useGetResetPasswordToken = (): UseMutationResult<SuccessResponse, E
   });
 };
 
-export const useVerifyEmail = (): UseMutationResult<SuccessResponse, Error, VerifyEmail> => {
+export const useVerifyEmail = (): UseMutationResult<TokenType, Error, VerifyEmail> => {
   return useMutation({
     mutationFn: verifyEmail,
     onError: (error: Error) => {
@@ -246,7 +249,7 @@ export const useVerifyToken = (): UseMutationResult<User, Error, VerifyToken> =>
   });
 };
 
-export const useVerifyUser = (): UseMutationResult<SuccessResponse, Error, any> => {
+export const useVerifyUser = (): UseMutationResult<TokenType, Error, any> => {
   return useMutation({
     mutationFn: verifyUser,
     onError: (error: Error) => {

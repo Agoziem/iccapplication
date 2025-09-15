@@ -1,8 +1,11 @@
-import { useFetchOrganization } from "@/data/organization/organization.hook";
+import { ORGANIZATION_ID } from "@/data/constants";
+import { useOrganization } from "@/data/hooks/organization.hooks";
 import Link from "next/link";
 
 const MainHeaderLogo = () => {
-  const { data: OrganizationData } = useFetchOrganization();
+  const { data: OrganizationData } = useOrganization(
+    parseInt(ORGANIZATION_ID || "0", 10)
+  );
   return (
     <div>
       <Link href="/" className="logo d-flex align-items-center mt-0 ">

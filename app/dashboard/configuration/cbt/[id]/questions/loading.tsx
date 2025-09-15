@@ -1,12 +1,15 @@
 const Loading = () => {
-    return (
-      <div className='w-100 d-flex align-items-center justify-content-center' style={{minHeight:"100vh"}}>
-        {/* Boostrap Spinner */}
-          <div className='spinner-border text-primary' role='status'>
-              <span className='visually-hidden'>Loading...</span>
-          </div>
+  return (
+    <div
+      className="w-100 d-flex align-items-center justify-content-center"
+      style={{ minHeight: "100vh" }}
+    >
+      {/* Boostrap Spinner */}
+      <div className="spinner-border text-primary" role="status">
+        <span className="visually-hidden">Loading...</span>
       </div>
-    );
-  };
-  
-  export default Loading;
+    </div>
+  );
+};
+
+export default Loading;

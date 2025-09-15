@@ -4,19 +4,20 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PulseLoader } from "react-spinners";
 import Tiptap from "@/components/custom/Richtexteditor/Tiptap";
-import { UpdateOrganizationSchema } from "@/schemas/organizations";
-import { UpdateOrganization, Organization } from "@/types/organizations";
-import { useUpdateOrganization } from "@/data/hooks/organization.hooks";
+import {
+  useOrganization,
+  useUpdateOrganization,
+} from "@/data/hooks/organization.hooks";
+import { ORGANIZATION_ID } from "@/data/constants";
 
 type PrivacyPolicyFormData = {
   privacy_policy: string;
 };
 
-const PrivacyPolicy = ({ 
-  OrganizationData 
-}: { 
-  OrganizationData: Organization 
-}) => {
+const PrivacyPolicy = () => {
+  const { data: OrganizationData } = useOrganization(
+    parseInt(ORGANIZATION_ID || "0")
+  );
   const [isPending, startTransition] = useTransition();
   const { mutateAsync: updateOrganization } = useUpdateOrganization();
 
@@ -45,6 +46,7 @@ const PrivacyPolicy = ({
 
   // Handle form submission
   const onSubmit = async (data: PrivacyPolicyFormData) => {
+    if (!OrganizationData) return;
     startTransition(async () => {
       try {
         await updateOrganization({
@@ -53,7 +55,7 @@ const PrivacyPolicy = ({
             privacy_policy: data.privacy_policy,
           },
         });
-        
+
         // Show success feedback (you might want to add a toast notification here)
         console.log("Privacy Policy updated successfully");
       } catch (error) {
@@ -68,14 +70,21 @@ const PrivacyPolicy = ({
         <h5 className="mb-0">Privacy Policy</h5>
         {isSubmitting && (
           <div className="d-flex align-items-center text-muted">
-            <PulseLoader size={8} color={"#0d6efd"} loading={true} className="me-2" />
+            <PulseLoader
+              size={8}
+              color={"#0d6efd"}
+              loading={true}
+              className="me-2"
+            />
             <small>Saving...</small>
           </div>
         )}
       </div>
       <hr />
-      <p className="text-muted mb-4">Add or edit Privacy Policy for your organization</p>
-      
+      <p className="text-muted mb-4">
+        Add or edit Privacy Policy for your organization
+      </p>
+
       <form onSubmit={handleFormSubmit(onSubmit)}>
         <div className="mb-4">
           <Controller

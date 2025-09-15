@@ -6,7 +6,7 @@ import RecentActivityItem from "./RecentActivityItem";
 function RecentActivity() {
   const [items, setItems] = useState([]);
   const [filter, setFilter] = useState("Today");
-  const handleFilterChange = (filter) => {
+  const handleFilterChange = (filter: string) => {
     setFilter(filter);
   };
 
@@ -41,8 +41,8 @@ function RecentActivity() {
         <div className="activity">
           {items &&
             items.length > 0 &&
-            items.map((item) => (
-              <RecentActivityItem key={item._id} item={item} />
+            items.map((item: any) => (
+              <RecentActivityItem key={item.id} item={item} />
             ))}
         </div>
       </div>

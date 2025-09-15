@@ -1,6 +1,6 @@
 import React from 'react'
 
-const EmailResponse = ({message}) => {
+const EmailResponse = ({message}: {message: string}) => {
   return (
     <p>{message}</p>
   )

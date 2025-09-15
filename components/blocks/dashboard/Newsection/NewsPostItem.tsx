@@ -1,38 +1,83 @@
-import ArticlePlaceholder from "@/components/features/configuration/articles/ArticlePlaceholder";
+import React, { useMemo } from "react";
 import Link from "next/link";
-import React from "react";
+import ArticlePlaceholder from "@/components/features/configuration/articles/ArticlePlaceholder";
+import { ArticleResponse, PaginatedArticleResponse } from "@/types/articles";
 
-function NewsPostItem({ item, index, items }) {
+interface NewsPostItemProps {
+  item: ArticleResponse;
+  index: number;
+  items: PaginatedArticleResponse | undefined;
+}
+
+const NewsPostItem: React.FC<NewsPostItemProps> = React.memo(({ item, index, items }) => {
+  // Memoized show divider condition
+  const shouldShowDivider = useMemo(() => {
+    if (!items?.results) return false;
+    return index < items.results.length - 1;
+  }, [index, items?.results]);
+
+  // Memoized truncated subtitle
+  const truncatedSubtitle = useMemo(() => {
+    if (!item.subtitle) return "";
+    const maxLength = 100;
+    return item.subtitle.length > maxLength 
+      ? `${item.subtitle.substring(0, maxLength)}...` 
+      : item.subtitle;
+  }, [item.subtitle]);
+
   return (
-    <div className="post-item ">
-      <div className="d-flex">
-        {item.img_url ? (
-          <div className="post-image">
+    <article className="post-item" role="listitem">
+      <div className="d-flex align-items-start">
+        <div className="post-image flex-shrink-0">
+          {item.img_url ? (
             <img
               src={item.img_url}
-              alt={item.title}
+              alt={`Thumbnail for ${item.title}`}
+              className="rounded shadow-sm"
               style={{
                 width: "90px",
                 height: "90px",
                 objectFit: "cover",
                 objectPosition: "top center",
               }}
+              loading="lazy"
             />
-          </div>
-        ) : (
-          <ArticlePlaceholder />
-        )}
-        <div className="ms-3">
-          <h6 className="text-wrap text-break">
-            <Link href={`/articles/${item.slug}`}>{item.title}</Link>
+          ) : (
+            <ArticlePlaceholder />
+          )}
+        </div>
+        
+        <div className="ms-3 flex-grow-1">
+          <h6 className="text-wrap text-break mb-2">
+            <Link 
+              href={`/articles/${item.slug}`}
+              className="text-decoration-none text-dark hover-text-primary"
+              title={item.title}
+            >
+              {item.title}
+            </Link>
           </h6>
-          <p>{item.subtitle}...</p>
+          
+          {truncatedSubtitle && (
+            <p className="text-muted small mb-0 lh-sm">
+              {truncatedSubtitle}
+            </p>
+          )}
+          
+          <small className="text-muted">
+            <i className="bi bi-calendar3 me-1" aria-hidden="true"></i>
+            {item.date ? new Date(item.date).toLocaleDateString() : 'No date'}
+          </small>
         </div>
       </div>
 
-      {index < items.length - 1 && <hr style={{ width: "100%" }} />}
-    </div>
+      {shouldShowDivider && (
+        <hr className="my-3" style={{ width: "100%" }} />
+      )}
+    </article>
   );
-}
+});
+
+NewsPostItem.displayName = "NewsPostItem";
 
 export default NewsPostItem;

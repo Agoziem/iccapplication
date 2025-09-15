@@ -118,7 +118,7 @@ const Contacts: React.FC<ContactsProps> = React.memo(({ showlist, setShowlist })
       }
 
       const newContact = validatedcontact.data;
-      const cacheKey = ["waContacts"];
+      const cacheKey = ["whatsapp", "contacts"];
 
       if (newContact.operation === "update_seen_status" && newContact.contact) {
         queryClient.setQueryData<Contact[]>(cacheKey, (existingContacts = []) => {

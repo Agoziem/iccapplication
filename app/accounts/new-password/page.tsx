@@ -7,130 +7,98 @@ import Link from "next/link";
 import Alert from "@/components/custom/Alert/Alert";
 import PasswordInput from "@/components/custom/Inputs/PasswordInput";
 import { useRouter } from "next/navigation";
+import { useResetPassword } from "@/data/hooks/user.hooks";
+import { ResetPasswordSchema } from "@/schemas/users";
+import { ResetPassword } from "@/types/users";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import {z} from "zod";
+
+const FormDataSchema = ResetPasswordSchema.extend({
+  confirmPassword: z.string().min(1, "Please confirm your password"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+
+type FormDataType = z.infer<typeof FormDataSchema>;
 
 const NewPasswordPage = () => {
   const [resultmode, setResultMode] = useState("loading");
   const [errormessage, setErrorMessage] = useState("something went wrong");
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
-  const [alert, setAlert] = useState({
+  const [alert, setAlert] = useState<{
+    show: boolean;
+    message: string;
+    type: "success" | "danger" | "info" | "warning";
+  }>({
     show: false,
     message: "",
-    type: "",
+    type: "success",
   });
-  const [formData, setFormData] = useState({
-    password: "",
-    confirmPassword: "",
-  });
-  const [formErrors, setFormErrors] = useState({});
-  const [submitting, setSubmitting] = useState(false);
+  
+  const { mutateAsync: changePassword } = useResetPassword();
   const router = useRouter();
 
-  const verifyEmail = async () => {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/authapi/verifyToken/`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ token }),
-      }
-    );
-    const data = await res.json();
-    if (res.ok) {
-      setResultMode("success");
-    } else if (res.status === 400) {
-      setErrorMessage(data.error);
-      setResultMode("error");
-    } else {
-      setErrorMessage("something went wrong in the server, try again later");
-      setResultMode("error");
-    }
-  };
+  // React Hook Form setup
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+    watch
+  } = useForm<FormDataType>({
+    resolver: zodResolver(FormDataSchema),
+    defaultValues: {
+      token: token || "",
+      password: "",
+      confirmPassword: "",
+    },
+  });
 
+  // Watch password values for real-time validation feedback
+  const password = watch("password");
+  const confirmPassword = watch("confirmPassword");
+
+  // Validate token on component mount
   useEffect(() => {
     if (token) {
-      verifyEmail();
+      setResultMode("success");
     } else {
       setResultMode("error");
+      setErrorMessage("Invalid or missing reset token");
     }
   }, [token]);
 
-  const validate = () => {
-    const errors = {};
-    if (!formData.password) errors.password = "Your password is required";
-    return errors;
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const errors = validate();
-    setFormErrors(errors);
-    if (
-      Object.keys(errors).length === 0 &&
-      formData.password === formData.confirmPassword
-    ) {
-      setSubmitting(true);
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/authapi/resetPassword/`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              password: formData.password,
-              token,
-            }),
-          }
-        );
-        if (response.ok) {
-          setAlert({
-            show: true,
-            message: "Password reset successfully, you can now login to your account",
-            type: "success",
-          });
-          setFormData({ password: "", confirmPassword: "" });
-          router.push("/accounts/login");
-        } else {
-          const data = await response.json();
-          setAlert({
-            show: true,
-            message: data.error,
-            type: "danger",
-          });
-        }
-      } catch (error) {
-        console.error("error:", error);
-        setAlert({
-          show: true,
-          message: "An error occurred, please try again",
-          type: "danger",
-        });
-      } finally {
-        setSubmitting(false);
-        setTimeout(() => {
-          setAlert({ show: false, message: "", type: "" });
-        }, 3000);
-      }
-    } else {
+  const onSubmit = async (data: FormDataType) => {
+    try {
+      const result = await changePassword({
+        token: data.token,
+        password: data.password,
+      });
+      
       setAlert({
         show: true,
-        message: "Passwords do not match",
+        message: "Password reset successfully, you can now login to your account",
+        type: "success",
+      });
+      
+      reset();
+      setTimeout(() => {
+        router.push("/accounts/signin");
+      }, 2000);
+      
+    } catch (error: any) {
+      console.error("error:", error);
+      setAlert({
+        show: true,
+        message: error.message || "An error occurred, please try again",
         type: "danger",
       });
+    } finally {
       setTimeout(() => {
-        setAlert({ show: false, message: "", type: "" });
+        setAlert({ show: false, message: "", type: "success" });
       }, 3000);
     }
   };
@@ -189,38 +157,61 @@ const NewPasswordPage = () => {
                 ),
                 success: (
                   <div className="text-center mt-3 p-3">
-          
+                    <form onSubmit={handleSubmit(onSubmit)} noValidate>
+                      {/* Hidden token field */}
+                      <input
+                        type="hidden"
+                        {...register("token")}
+                        value={token || ""}
+                      />
 
-                    {/* password */}
-                    <PasswordInput
-                      name="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      placeholder="Enter your new password"
-                      formErrors={formErrors}
-                    />
+                      {/* password */}
+                      <div className="form-group my-4">
+                        <input
+                          {...register("password")}
+                          type="password"
+                          className={`form-control ${errors.password ? "is-invalid" : ""}`}
+                          placeholder="Enter your new password"
+                          disabled={isSubmitting}
+                        />
+                        {errors.password && (
+                          <div className="invalid-feedback d-block">
+                            {errors.password.message}
+                          </div>
+                        )}
+                      </div>
 
-                    {/* confirmPassword */}
-                    <PasswordInput
-                      name="confirmPassword"
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      placeholder="Confirm your new password"
-                      formErrors={formErrors}
-                    />
+                      {/* confirmPassword */}
+                      <div className="form-group my-4">
+                        <input
+                          {...register("confirmPassword")}
+                          type="password"
+                          className={`form-control ${errors.confirmPassword ? "is-invalid" : ""}`}
+                          placeholder="Confirm your new password"
+                          disabled={isSubmitting}
+                        />
+                        {errors.confirmPassword && (
+                          <div className="invalid-feedback d-block">
+                            {errors.confirmPassword.message}
+                          </div>
+                        )}
+                      </div>
 
-                    {alert.show && (
-                      <Alert type={alert.type}>{alert.message}</Alert>
-                    )}
+                      {alert.show && (
+                        <div className="my-3">
+                          <Alert type={alert.type}>{alert.message}</Alert>
+                        </div>
+                      )}
 
-                    {/* submit button */}
-                    <button
-                      type="submit"
-                      className="btn btn-primary w-100 my-3"
-                      onClick={handleSubmit}
-                    >
-                      {submitting ? "Submitting in..." : "Submit Password"}
-                    </button>
+                      {/* submit button */}
+                      <button
+                        type="submit"
+                        className="btn btn-primary w-100 my-3"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? "Submitting..." : "Submit Password"}
+                      </button>
+                    </form>
                   </div>
                 ),
                 error: (

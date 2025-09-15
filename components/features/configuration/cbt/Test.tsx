@@ -7,12 +7,10 @@ import { useOrganization } from "@/data/hooks/organization.hooks";
 import { ORGANIZATION_ID } from "@/data/constants";
 import { useTest } from "@/data/hooks/cbt.hooks";
 import { Subject, Test as TestType } from "@/types/cbt";
+import { useParams } from "next/navigation";
 
-interface TestProps {
-  testID: string | null;
-}
-
-const Test: React.FC<TestProps> = ({ testID }) => {
+const Test: React.FC = () => {
+  const { testID } = useParams() as { testID: string };
   const { data: OrganizationData } = useOrganization(parseInt(ORGANIZATION_ID || "0"));
   const [currentSubject, setCurrentSubject] = useState<Subject | null>(null);
   const { data: testData } = useTest(testID ? parseInt(testID) : 0);

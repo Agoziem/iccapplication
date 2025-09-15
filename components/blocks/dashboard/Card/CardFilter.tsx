@@ -1,39 +1,77 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 
-function CardFilter({ filterChange }) {
+interface CardFilterProps {
+  filterChange: (filter: string) => void;
+}
+
+const CardFilter: React.FC<CardFilterProps> = React.memo(({ filterChange }) => {
+  // Memoized filter handlers
+  const handleTodayFilter = useCallback(() => {
+    filterChange('Today');
+  }, [filterChange]);
+
+  const handleMonthFilter = useCallback(() => {
+    filterChange('This Month');
+  }, [filterChange]);
+
+  const handleYearFilter = useCallback(() => {
+    filterChange('This Year');
+  }, [filterChange]);
+
   return (
     <div className="filter">
-      <a className="icon" href="#" data-bs-toggle="dropdown">
-        <i className="bi bi-three-dots"></i>
-      </a>
+      <button
+        type="button"
+        className="btn btn-link icon p-0 border-0"
+        data-bs-toggle="dropdown"
+        aria-expanded="false"
+        aria-label="Filter options"
+      >
+        <i className="bi bi-three-dots" aria-hidden="true"></i>
+      </button>
+      
       <ul className="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
         <li className="dropdown-header text-start">
-          <h6>Filter</h6>
+          <h6 className="mb-0">Filter</h6>
         </li>
+        
         <li>
-          <a className="dropdown-item" onClick={() => filterChange('Today')}>
+          <button
+            type="button"
+            className="dropdown-item"
+            onClick={handleTodayFilter}
+          >
+            <i className="bi bi-calendar-day me-2" aria-hidden="true"></i>
             Today
-          </a>
+          </button>
         </li>
+        
         <li>
-          <a
+          <button
+            type="button"
             className="dropdown-item"
-            onClick={() => filterChange('This Month')}
+            onClick={handleMonthFilter}
           >
+            <i className="bi bi-calendar-month me-2" aria-hidden="true"></i>
             This Month
-          </a>
+          </button>
         </li>
+        
         <li>
-          <a
+          <button
+            type="button"
             className="dropdown-item"
-            onClick={() => filterChange('This Year')}
+            onClick={handleYearFilter}
           >
+            <i className="bi bi-calendar-range me-2" aria-hidden="true"></i>
             This Year
-          </a>
+          </button>
         </li>
       </ul>
     </div>
   );
-}
+});
+
+CardFilter.displayName = "CardFilter";
 
 export default CardFilter;

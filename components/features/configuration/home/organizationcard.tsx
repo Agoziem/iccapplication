@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import OrganizationalForm from "./organizationalform";
-import { Organization } from "@/types/organizations";
+import { useOrganization } from "@/data/hooks/organization.hooks";
+import { ORGANIZATION_ID } from "@/data/constants";
 
-const OrganizationCard = ({
-  OrganizationData,
-}: {
-  OrganizationData: Organization;
-}) => {
+const OrganizationCard = () => {
+  const { data: OrganizationData } = useOrganization(
+    parseInt(ORGANIZATION_ID || "0")
+  );
   const [editMode, setEditMode] = useState(false);
 
   return (

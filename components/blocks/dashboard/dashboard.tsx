@@ -1,74 +1,78 @@
 "use client";
+import React, { useMemo, memo } from "react";
 import HorizontalCard from "./Card/horizontalcard";
 // import RecentActivity from "./RecentactionsSections/RecentActivity";
 import RecentSales from "./RecentsalesSection/RecentSales";
-// import Reports from "./ReportchartsSection/Reports";
 import News from "./Newsection/News";
 import TopSelling from "./TopsellingSection/TopSelling";
-import { useSession } from "next-auth/react";
 import CartButton from "../../custom/Offcanvas/CartButton";
-import { useFetchServices } from "@/data/services/service.hook";
-import { servicesAPIendpoint } from "@/data/hooks/service.hooks";
-import { productsAPIendpoint } from "@/data/hooks/product.hooks";
-import { useFetchProducts } from "@/data/product/product.hook";
-import { useFetchVideos } from "@/data/hooks/video.hooks";
+import useCurrentUser from "@/hooks/useCurrentUser";
+import { ORGANIZATION_ID } from "@/data/constants";
 import {
-  useFetchPayments,
-  useFetchPaymentsByUser,
-  useGetOrderReport,
-} from "@/data/payments/orders.hook";
-import { vidoesapiAPIendpoint } from "@/data/hooks/video.hooks";
+  useOrderReport,
+  usePayments,
+  usePaymentsByUser,
+} from "@/data/hooks/payment.hooks";
+import { useServices } from "@/data/hooks/service.hooks";
+import { useProducts } from "@/data/hooks/product.hooks";
+import { useVideos } from "@/data/hooks/video.hooks";
 
-const DashboardBody = () => {
-  const { data: session } = useSession();
-  const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
+const DashboardBody: React.FC = memo(() => {
+  const { currentUser } = useCurrentUser();
+
+  // Memoized organization ID
+  const organizationId = useMemo(
+    () => Number(ORGANIZATION_ID || process.env.NEXT_PUBLIC_ORGANIZATION_ID),
+    []
+  );
+
+  // Memoized pagination config
+  const paginationConfig = useMemo(
+    () => ({
+      page: 1,
+      pageSize: 20,
+    }),
+    []
+  );
+
+  // API calls with proper error handling
   const { data: orders, isLoading: loadingOrders } =
-    useFetchPayments(Organizationid);
-  const { data: userOrders, isLoading: loadingUserOrders } =
-    useFetchPaymentsByUser(session?.user?.id);
+    usePayments(organizationId);
+  const { data: userOrders, isLoading: loadingUserOrders } = usePaymentsByUser(
+    currentUser?.id || 0
+  );
 
-  const page = 1;
-  const pageSize = 6;
-
-  // fetchOrderReport
+  // Fetch order report
   const {
     data: orderReport,
     isLoading: loadingOrderReport,
-    error: orderReporterror,
-  } = useGetOrderReport();
+    error: orderReportError,
+  } = useOrderReport(organizationId);
 
-  // fetchServices
   const {
     data: services,
     isLoading: loadingServices,
-    error: serviceserror,
-  } = useFetchServices(
-    `${servicesAPIendpoint}/services/${Organizationid}/?category=All&page=${page}&page_size=${pageSize}`
-  );
+    error: servicesError,
+  } = useServices(organizationId);
 
-  // fetchProducts
   const {
     data: products,
     isLoading: loadingProducts,
     error: producterror,
-  } = useFetchProducts(
-    `${productsAPIendpoint}/products/${Organizationid}/?category=All&page=${page}&page_size=${pageSize}`
-  );
+  } = useProducts(organizationId);
 
   // fetchProducts
   const {
     data: videos,
     isLoading: loadingVideos,
     error: videoserror,
-  } = useFetchVideos(
-    `${vidoesapiAPIendpoint}/videos/${Organizationid}/?category=All&page=${page}&page_size=${pageSize}`
-  );
+  } = useVideos(organizationId);
 
   return (
     <div className="dashboard">
       <div className="my-4 d-flex justify-content-between align-items-center flex-wrap">
         <h5 className="mb-3 mb-md-0 me-2 me-md-0">
-          Welcome, {session?.user?.username}
+          Welcome, {currentUser?.username}
         </h5>
         <CartButton />
       </div>
@@ -76,7 +80,7 @@ const DashboardBody = () => {
         <div className="col-12 col-md-9">
           <div className="row">
             {/* Display the Cards */}
-            {session?.user?.is_staff ? (
+            {currentUser?.is_staff ? (
               <>
                 {/* Only Admins */}
                 <div className="col-12 col-md-4">
@@ -84,7 +88,7 @@ const DashboardBody = () => {
                     iconcolor="primary"
                     cardtitle="Services"
                     icon="bi bi-person-fill-gear"
-                    cardbody={services?.count}
+                    cardbody={String(services?.count || 0)}
                     cardspan="Services"
                     loading={loadingServices}
                   />
@@ -94,9 +98,9 @@ const DashboardBody = () => {
                     iconcolor="secondary"
                     cardtitle="Orders"
                     icon="bi bi-cart3"
-                    cardbody={userOrders?.length}
+                    cardbody={String(orders?.length || 0)}
                     cardspan={`Service${
-                      userOrders?.length > 1 ? "s" : ""
+                      userOrders && userOrders?.length > 1 ? "s" : ""
                     } Ordered`}
                     loading={loadingUserOrders}
                   />
@@ -106,9 +110,11 @@ const DashboardBody = () => {
                     iconcolor="success"
                     cardtitle="Customers"
                     icon="bi bi-people"
-                    cardbody={orderReport?.customers?.length}
+                    cardbody={String(orderReport?.customers?.length || 0)}
                     cardspan={`Total Customer${
-                      orderReport?.customers?.length > 1 ? "s" : ""
+                      orderReport && orderReport?.customers?.length > 1
+                        ? "s"
+                        : ""
                     }`}
                     loading={loadingOrderReport}
                   />
@@ -121,7 +127,7 @@ const DashboardBody = () => {
                     iconcolor="primary"
                     cardtitle="Services"
                     icon="bi bi-person-fill-gear"
-                    cardbody={services?.count}
+                    cardbody={String(services?.count || 0)}
                     cardspan="Services"
                     loading={loadingServices}
                   />
@@ -131,7 +137,7 @@ const DashboardBody = () => {
                     iconcolor="secondary"
                     cardtitle="Orders"
                     icon="bi bi-person-check"
-                    cardbody={orders?.length}
+                    cardbody={String(orders?.length || 0)}
                     cardspan="Orders"
                     loading={loadingOrders}
                   />
@@ -141,11 +147,11 @@ const DashboardBody = () => {
                     iconcolor="success"
                     cardtitle="Completed Orders"
                     icon="bi bi-cart-check"
-                    cardbody={
+                    cardbody={String(
                       userOrders &&
                       userOrders.filter((item) => item.status === "Completed")
                         .length
-                    }
+                    )}
                     cardspan="Completed Orders"
                     loading={loadingUserOrders}
                   />
@@ -160,14 +166,14 @@ const DashboardBody = () => {
 
             {/* Display the Resent Orders to Admin OR Orders purchased to customers */}
             <div className="col-12">
-              <RecentSales session={session} />
+              <RecentSales />
             </div>
 
             {/* Display Services Available */}
             <div className="col-12">
               <TopSelling
                 itemName={"Services"}
-                data={services?.results}
+                data={services?.results || []}
                 itemCount={services?.count}
                 loading={loadingServices}
               />
@@ -177,7 +183,7 @@ const DashboardBody = () => {
             <div className="col-12">
               <TopSelling
                 itemName={"Products"}
-                data={products?.results}
+                data={products?.results || []}
                 itemCount={products?.count}
                 loading={loadingProducts}
               />
@@ -187,7 +193,7 @@ const DashboardBody = () => {
             <div className="col-12">
               <TopSelling
                 itemName={"Videos"}
-                data={videos?.results}
+                data={videos?.results || []}
                 itemCount={videos?.count}
                 loading={loadingVideos}
               />
@@ -206,6 +212,8 @@ const DashboardBody = () => {
       </div>
     </div>
   );
-};
+});
+
+DashboardBody.displayName = 'DashboardBody';
 
 export default DashboardBody;

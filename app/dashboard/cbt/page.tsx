@@ -1,6 +1,6 @@
 "use client";
 import PageTitle from "@/components/custom/PageTitle/PageTitle";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useState } from "react";
 import CbtForm from "@/components/features/cbt/CbtForm";
 import CbtQuiz from "@/components/features/cbt/CbtQuiz";
 import { Test } from "@/types/cbt";
@@ -20,7 +20,7 @@ const CbtPage = () => {
         {!Test ? (
           <CbtForm setTest={setTest} />
         ) : (
-          <CbtQuiz Test={Test} setTest={} />
+          <CbtQuiz Test={Test} setTest={setTest} />
         )}
       </section>
     </div>

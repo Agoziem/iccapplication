@@ -1,13 +1,16 @@
 "use client";
-import React, { useContext } from "react";
+import React, { useContext, useMemo } from "react";
 import { TbTargetArrow } from "react-icons/tb";
 import { FaEye, FaUserGroup } from "react-icons/fa6";
 import "./section.css";
-import { useFetchOrganization } from "@/data/organization/organization.hook";
 import ParagraphPlaceholders from "@/components/custom/Placeholders/ParagraphPlaceholders";
+import { useOrganization } from "@/data/hooks/organization.hooks";
+import { ORGANIZATION_ID } from "@/data/constants";
 
 const AboutSection = () => {
-  const { data: OrganizationData, isLoading } = useFetchOrganization();
+  const { data: OrganizationData, isLoading } = useOrganization(
+    parseInt(ORGANIZATION_ID || "1")
+  );
 
   return (
     <section id="about" className="text-center p-3 py-5 p-md-5">

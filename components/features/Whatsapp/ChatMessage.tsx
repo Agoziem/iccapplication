@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { useWhatsAppMedia } from "@/data/hooks/whatsapp.hooks";
+import { useWhatsAppMediaStream } from "@/data/hooks/whatsapp.hooks";
 import { WAMessage } from "@/types/whatsapp";
 import moment from "moment";
 import Link from "next/link";
@@ -14,24 +14,41 @@ interface ChatMessageProps {
 interface MediaLoadingProps {
   isLoading: boolean;
   error: any;
+  progress?: number;
+  status?: 'processing' | 'completed' | 'error';
 }
 
-const MediaLoading: React.FC<MediaLoadingProps> = React.memo(({ isLoading, error }) => {
-  if (isLoading) {
+const MediaLoading: React.FC<MediaLoadingProps> = React.memo(({ isLoading, error, progress, status }) => {
+  if (isLoading || status === 'processing') {
     return (
-      <div className="d-flex justify-content-center mt-2" role="status">
-        <div className="spinner-border text-primary" aria-label="Loading media">
-          <span className="visually-hidden">Loading...</span>
+      <div className="d-flex flex-column justify-content-center align-items-center mt-2" role="status">
+        <div className="spinner-border text-primary mb-2" aria-label="Loading media">
+          <span className="visually-hidden">Processing media...</span>
         </div>
+        {typeof progress === 'number' && (
+          <div className="text-center">
+            <small className="text-muted">Processing: {progress.toFixed(0)}%</small>
+            <div className="progress mt-1" style={{ width: '120px', height: '4px' }}>
+              <div 
+                className="progress-bar" 
+                role="progressbar" 
+                style={{ width: `${progress}%` }}
+                aria-valuenow={progress}
+                aria-valuemin={0}
+                aria-valuemax={100}
+              />
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
-  if (error) {
+  if (error || status === 'error') {
     return (
       <div className="d-flex justify-content-center mt-2">
-        <p className="text-primary mb-0">
-          An error occurred while fetching media
+        <p className="text-danger mb-0 small">
+          {error || "An error occurred while processing media"}
         </p>
       </div>
     );
@@ -159,12 +176,18 @@ DocumentMedia.displayName = 'DocumentMedia';
  * Optimized with React.memo and proper TypeScript typing
  */
 const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message }) => {
-  // Fetch media data if message has media
+  // Fetch media data using streaming hook if message has media
+  const streamingMedia = useWhatsAppMediaStream(message?.media_id || "");
   const {
-    data: mediaUrl,
+    data: mediaData,
     isLoading,
+    isError,
     error,
-  } = useWhatsAppMedia(message?.media_id || "");
+    isConnected
+  } = streamingMedia;
+
+  // Extract media URL from streaming data
+  const mediaUrl = mediaData?.url;
 
   // Format message timestamp safely
   const formattedTime = useMemo(() => {
@@ -214,7 +237,16 @@ const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message }) => {
   }, [mediaUrl]);
 
   const renderMedia = () => {
-    if (!safeMediaUrl) return <MediaLoading isLoading={isLoading} error={error} />;
+    if (!safeMediaUrl) {
+      return (
+        <MediaLoading 
+          isLoading={isLoading} 
+          error={isError ? error : null}
+          progress={mediaData?.progress}
+          status={mediaData?.status}
+        />
+      );
+    }
 
     switch (message.message_type) {
       case "image":
@@ -250,6 +282,19 @@ const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message }) => {
 
         {/* Message timestamp and status */}
         <div className="d-flex justify-content-end align-items-center mt-1">
+          {/* Streaming indicator for media messages */}
+          {message.message_type !== "text" && isConnected && mediaData?.status === 'processing' && (
+            <small className="me-2 text-info d-flex align-items-center" style={{ fontSize: "0.6rem" }}>
+              <span 
+                className="spinner-border spinner-border-sm me-1" 
+                style={{ width: "0.6rem", height: "0.6rem" }}
+                role="status" 
+                aria-hidden="true"
+              />
+              Live
+            </small>
+          )}
+          
           <small
             style={{
               color: isOutgoing ? "rgba(255,255,255,0.7)" : "var(--primary)",

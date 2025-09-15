@@ -8,14 +8,15 @@ import {
 } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import { IoLogoWhatsapp } from "react-icons/io5";
-import { OrganizationContext } from "@/providers/context/Organizationalcontextdata";
 import Link from "next/link";
+import { User } from "@/types/users";
+import { useOrganization } from "@/data/hooks/organization.hooks";
+import { ORGANIZATION_ID } from "@/data/constants";
 
-/**
- * @param {{user:User}} param0
- */
-const Onboarding = ({ user }) => {
-  const { OrganizationData } = useContext(OrganizationContext);
+const Onboarding = ({ user }: { user: User }) => {
+  const { data: OrganizationData } = useOrganization(
+    Number(ORGANIZATION_ID || 1)
+  );
   return (
     <div>
       <div>

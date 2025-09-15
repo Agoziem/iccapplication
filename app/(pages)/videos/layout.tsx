@@ -1,15 +1,16 @@
 import BackToTop from "@/components/custom/backtotopbutton/BackToTop";
 import MainHeader from "@/components/blocks/header/Mainheader/MainHeader";
 import FooterSection from "@/components/sections/footerSection";
+import { Metadata } from "next";
 
-export const metadata = {
+export const metadata: Metadata = {
     title: "ICC Videos",
     description:
       "We offer video tutorials on various courses across institutions.",
   };
   
 
-const VideoLayout = ({ children }) => {
+const VideoLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div
       className="d-flex flex-column justify-content-between"

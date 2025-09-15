@@ -2,31 +2,34 @@
 import { useSearchParams } from "next/navigation";
 import PageTitle from "@/components/custom/PageTitle/PageTitle";
 import ServicesPlaceholder from "@/components/custom/ImagePlaceholders/ServicesPlaceholder";
-import { servicesAPIendpoint } from "@/data/hooks/service.hooks";
 import { PulseLoader } from "react-spinners";
 import GoogleForm from "@/components/custom/Iframe/googleform";
 import { TbNotesOff } from "react-icons/tb";
 import { FaBell } from "react-icons/fa";
-import { useSession } from "next-auth/react";
-import { useFetchServiceByToken } from "@/data/services/service.hook";
+import { useMyProfile } from "@/data/hooks/user.hooks";
+import { useServiceByToken } from "@/data/hooks/service.hooks";
+import { Service } from "@/types/items";
+import { useMemo } from "react";
 
 const ServicePage = () => {
   const searchParams = useSearchParams();
   const servicetoken = searchParams.get("servicetoken");
-  const { data: session } = useSession();
+  const { data: user } = useMyProfile();
   const {
     data: service,
     isLoading: loadingService,
     error: error,
-  } = useFetchServiceByToken(
-    `${servicesAPIendpoint}/service_by_token/${servicetoken}/`,
-    servicetoken
-  );
+  } = useServiceByToken(servicetoken || "");
 
-  /** * @param {Service} service */
-  const ServiceStatus = (service) => {
+  const validUserId = useMemo(() => {
+    return user?.id ? parseInt(String(user.id)) : null;
+  }, [user?.id]);
+
+  const ServiceStatus = (service: Service) => {
     if (
-      service.userIDs_whose_services_is_in_progress.includes(session?.user.id)
+      validUserId &&
+      service.userIDs_whose_services_is_in_progress &&
+      service.userIDs_whose_services_is_in_progress.includes(validUserId)
     ) {
       return (
         <div className="badge bg-secondary-light text-secondary py-2">
@@ -36,9 +39,9 @@ const ServicePage = () => {
     }
 
     if (
-      service.userIDs_whose_services_have_been_completed.includes(
-        session?.user.id
-      )
+      validUserId &&
+      service.userIDs_whose_services_have_been_completed &&
+      service.userIDs_whose_services_have_been_completed.includes(validUserId)
     ) {
       return (
         <div className="badge bg-success-light text-success py-2">
@@ -96,7 +99,7 @@ const ServicePage = () => {
                   }}
                 >
                   <span className="fw-bold me-2 text-primary">category :</span>
-                  {service?.category.category} Service
+                  {service?.category && service?.category.category} Service
                 </p>
 
                 <div>
@@ -115,7 +118,7 @@ const ServicePage = () => {
                 <hr />
                 <div
                   dangerouslySetInnerHTML={{
-                    __html: service?.service_flow,
+                    __html: service?.service_flow || "No Service Flow Available",
                   }}
                   style={{
                     fontSize: "1.1rem",

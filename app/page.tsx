@@ -13,7 +13,6 @@ import Feedback from "@/components/blocks/Feedback/ModalFeedback";
 import CBTSection from "@/components/sections/CBTSection";
 import ChatSection from "@/components/sections/ChatSection";
 
-
 export default function Home() {
   return (
     <main className={styles.main}>
@@ -33,5 +32,3 @@ export default function Home() {
     </main>
   );
 }
-
-// import React from "react";

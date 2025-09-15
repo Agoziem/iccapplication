@@ -1,10 +1,12 @@
-/** * @param {{order:Order}} param0 */
-const PaymentSuccesful = ({ order }) => {
+import { SITE_URL } from "@/data/constants";
+import { PaymentResponse } from "@/types/payments";
+
+const PaymentSuccesful = ({ order }: { order: PaymentResponse }) => {
   return (
     <div>
       <div>
         <h4>Thank you for your Order</h4>
-        <p>Dear {order.customer.name} </p>
+        <p>Dear {order.customer.first_name},</p>
         <p>
           Your purchase of the following items is successful. Kindly check your
           dashboard for the record.
@@ -66,7 +68,7 @@ const PaymentSuccesful = ({ order }) => {
 
       {/* button to view Orders */}
       <div>
-        <a href={`${process.env.NEXT_PUBLIC_URL}/dashboard/my-orders`}>
+        <a href={`${SITE_URL}/dashboard/my-orders`}>
           view your Orders
         </a>
       </div>

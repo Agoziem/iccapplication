@@ -2,16 +2,14 @@
 import "./section.css";
 import { PiGearBold } from "react-icons/pi";
 import Link from "next/link";
-import { fetchDepartments, MainAPIendpoint } from "@/data/hooks/organization.hooks";
-import { dept_icons } from "@/data/constants";
-import { useFetchDepartments } from "@/data/organization/organization.hook";
 import AnimationContainer from "@/components/animation/animation-container";
+import { useDepartments } from "@/data/hooks/organization.hooks";
+import { ORGANIZATION_ID } from "@/data/constants";
+import { dept_icons } from "@/utils/selectFileIcon";
 
 const StaffSection = () => {
-  const OrganizationID = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
-  // for data fetching
-  const { data: depts } = useFetchDepartments(
-    `${MainAPIendpoint}/department/${OrganizationID}/`
+  const { data: depts } = useDepartments(
+    parseInt(ORGANIZATION_ID || "0")
   );
 
   return (

@@ -1,6 +1,12 @@
 import { v4 as uuidv4 } from "uuid";
 
-const navlist = [
+interface NavItem {
+  id: string;
+  title: string;
+  link: string;
+}
+
+const navlist: NavItem[] = [
   {
     id: uuidv4(),
     title: "Home",

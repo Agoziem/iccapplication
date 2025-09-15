@@ -91,7 +91,7 @@ const ChatBody: React.FC = React.memo(() => {
 
       if (newMessage.operation === "create" && newMessage.message) {
         queryClient.setQueryData<WAMessage[]>(
-          ["waMessages", newMessage.message.contact],
+          ["whatsapp", "messages", newMessage.message.contact],
           (oldData = []) => {
             if (!Array.isArray(oldData)) return [newMessage.message];
             return [...oldData, newMessage.message];

@@ -4,18 +4,11 @@ import React, { useContext, useEffect, useState } from "react";
 import "./section.css";
 import { FaLongArrowAltRight } from "react-icons/fa";
 import { MdOutlineArticle } from "react-icons/md";
-import { articleAPIendpoint, fetchArticles } from "@/data/hooks/articles.hooks";
-import { useFetchArticles } from "@/data/hooks/articles.hooks";
+import { articleAPIendpoint, fetchArticles, useArticles } from "@/data/hooks/articles.hooks";
 import AnimationContainer from "@/components/animation/animation-container";
 
 const BlogSection = () => {
-  const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
-  // ----------------------------------------------------------
-  // fetch articles by Categories
-  // ----------------------------------------------------------
-const { data: articles } = useFetchArticles(
-  `${articleAPIendpoint}/orgblogs/${Organizationid}/?category=All&page=1&page_size=3`
-)
+const { data: articles } = useArticles()
 
   return (
     <>
@@ -79,7 +72,7 @@ const { data: articles } = useFetchArticles(
                     <div className="text-center">
                       <h6 className="text-primary mb-2">{blog.title}</h6>
                       <p className="mb-1 small ">
-                        {blog.subtitle.length > 100
+                        {blog.subtitle && blog.subtitle.length > 100
                           ? blog.subtitle.slice(0, 100) + "..."
                           : blog.subtitle}
                       </p>
@@ -112,7 +105,7 @@ const { data: articles } = useFetchArticles(
           )}
         </div>
 
-        {articles?.count > 3 && (
+        {articles?.results && articles?.results.length > 3 && (
           <div>
             <div className="d-flex justify-content-center mt-0 mb-5">
               <Link href="/articles" className="btn btn-primary px-5">

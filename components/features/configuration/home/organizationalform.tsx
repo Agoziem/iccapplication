@@ -21,7 +21,7 @@ type UpdateOrganizationFormData = {
 };
 
 interface OrganizationalFormProps {
-  OrganizationData: Organization;
+  OrganizationData: Organization | undefined;
   setEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
@@ -70,7 +70,7 @@ const OrganizationalForm = ({
     startTransition(async () => {
       try {
         await updateOrganization({
-          organizationId: OrganizationData.id || 0,
+          organizationId: OrganizationData?.id || 0,
           updateData: {
             name: data.name,
             description: data.description,
@@ -79,7 +79,7 @@ const OrganizationalForm = ({
             email: data.email,
             phone: data.phone,
             address: data.address,
-            logo: data.Organizationlogo || OrganizationData.Organizationlogo,
+            logo: data.Organizationlogo || OrganizationData?.Organizationlogo,
           },
         });
         setEditMode(false);
@@ -104,7 +104,7 @@ const OrganizationalForm = ({
             render={({ field: { onChange, onBlur, name } }) => (
               <ImageUploader
                 name={name}
-                value={OrganizationData.Organizationlogo}
+                value={OrganizationData?.Organizationlogo}
                 onChange={onChange}
                 onBlur={onBlur}
                 error={errors.Organizationlogo?.message}

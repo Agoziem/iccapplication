@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { BsGear, BsPeople, BsClipboardCheck } from "react-icons/bs";
 import { FiUsers, FiClock, FiCheckCircle } from "react-icons/fi";
 import { PulseLoader } from "react-spinners";
@@ -45,11 +45,9 @@ const categories: StatusCategory[] = [
   },
 ];
 
-interface ServiceConfigProps {
-  serviceid: number;
-}
 
-const ServiceConfig: React.FC<ServiceConfigProps> = ({ serviceid }) => {
+const ServiceConfig: React.FC = () => {
+  const { serviceid } = useParams() as { serviceid: string };
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -64,13 +62,13 @@ const ServiceConfig: React.FC<ServiceConfigProps> = ({ serviceid }) => {
     data: service,
     isLoading: loadingService,
     error: serviceError,
-  } = useService(serviceid);
+  } = useService(Number(serviceid));
 
   const { 
     data: users, 
     isLoading: loadingUsers,
     error: usersError,
-  } = useServiceUsers(serviceid, {
+  } = useServiceUsers(Number(serviceid), {
     category: currentCategory,
     page: parseInt(page),
     page_size: parseInt(pageSize),

@@ -1,6 +1,6 @@
 import React from "react";
 
-const BulkEmail = ({ message }) => {
+const BulkEmail = ({ message }: { message: string }) => {
   return <p>{message}</p>;
 };
 

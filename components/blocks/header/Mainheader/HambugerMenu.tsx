@@ -6,10 +6,16 @@ import MainHeaderLogo from "./Logo";
 import { FaTimes } from "react-icons/fa";
 import navlist from "./navitem";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useMyProfile } from "@/data/hooks/user.hooks";
 
-const Menu = ({ isOpen, toggle }) => {
-  const { data: session } = useSession();
+
+type MenuProps = {
+  isOpen: boolean;
+  toggle: () => void;
+};
+
+const Menu: React.FC<MenuProps> = ({ isOpen, toggle }) => {
+  const { data: user } = useMyProfile();
   const [activeLink, setActiveLink] = useState("/");
   const router = useRouter();
   return (
@@ -44,7 +50,7 @@ const Menu = ({ isOpen, toggle }) => {
       </ul>
 
       <div className="d-flex justify-content-center mt-2 px-3">
-        {session ? (
+        {user ? (
           <Link
             href="/dashboard"
             className="btn btn-primary text-white font-bold w-100"

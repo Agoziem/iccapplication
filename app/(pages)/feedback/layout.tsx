@@ -4,7 +4,7 @@ import MainHeader from "@/components/blocks/header/Mainheader/MainHeader";
 import FooterSection from "@/components/sections/footerSection";
 import "./feedback.css";
 
-const FeedbackLayout = ({ children }) => {
+const FeedbackLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div
       className="d-flex flex-column justify-content-between"

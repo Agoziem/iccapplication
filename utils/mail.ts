@@ -25,44 +25,22 @@ export interface EmailResponse {
   error?: string;
 }
 
-// export interface EmailReplyData {
-//   response_message: string;
-//   response_subject: string;
-//   recipient_email: string;
-// }
-
-// export interface ServiceUser {
-//   email: string;
-//   username?: string;
-//   first_name?: string;
-//   [key: string]: any;
-// }
-
-// // Extended PaymentResponse interface for email functions
-// interface PaymentWithCustomerEmail extends Omit<PaymentResponse, 'customer'> {
-//   customer: {
-//     email: string;
-//     username?: string;
-//     first_name?: string;
-//     last_name?: string;
-//   } | undefined;
-// }
-
 // ----------------------------------------
 // Send email Verification
 // ----------------------------------------
 export const sendVerificationEmail = async (
   email: string,
-  token: string
+  token: string,
+  expire_time: string | Date
 ): Promise<EmailResponse> => {
   const confirmLink = `${process.env.NEXT_PUBLIC_URL}/accounts/new-verification?token=${token}`;
-
+  const stringifiedDate = typeof expire_time === 'string' ? expire_time : expire_time.toISOString();
   try {
     await resend.emails.send({
       from: "ICCapp <onboarding@innovationscybercafe.com>", // Set your "from" email address
       to: email,
       subject: "Verify your email",
-      react: React.createElement(VerificationEmail, { confirmLink }),
+      react: React.createElement(VerificationEmail, { confirmLink, expire_time: stringifiedDate }),
       reply_to: "innovationscybercafe@gmail.com",
     });
     return {

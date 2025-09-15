@@ -7,78 +7,67 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Alert from "@/components/custom/Alert/Alert";
 import { sendPasswordResetEmail } from "@/utils/mail";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { useGetResetPasswordToken } from "@/data/hooks/user.hooks";
+import { GetVerificationToken } from "@/types/users";
+import { GetVerificationTokenSchema } from "@/schemas/users";
 
-const SigninPage = () => {
+const PasswordResetPage = () => {
   const router = useRouter();
-  const [formData, setFormData] = useState({ email: "" });
-  const [formErrors, setFormErrors] = useState({});
-  const [submitting, setSubmitting] = useState(false);
-  const [alert, setAlert] = useState({
+  const [alert, setAlert] = useState<{
+    show: boolean;
+    message: string;
+    type: "success" | "danger" | "info" | "warning";
+  }>({
     show: false,
     message: "",
     type: "success",
   });
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  const { mutateAsync: getResetPasswordToken } = useGetResetPasswordToken();
 
-  const validate = () => {
-    const errors = {};
-    if (!formData.email) {
-      errors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = "Email address is invalid";
-    }
-    return errors;
-  };
+  // React Hook Form setup
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm<GetVerificationToken>({
+    resolver: zodResolver(GetVerificationTokenSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
 
-  const validateUser = async (email) => {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/authapi/getResetPasswordToken/`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
+  const onSubmit = async (data: GetVerificationToken) => {
+    try {
+      const result = await getResetPasswordToken(data.email);
+      
+      // Send password reset email
+      const emailResult = await sendPasswordResetEmail(data.email, result.message);
+      
+      setAlert({
+        show: true,
+        message: emailResult.message,
+        type: emailResult.success ? "success" : "danger",
+      });
+      
+      if (emailResult.success) {
+        reset();
       }
-    );
-    const data = await res.json();
-    return data;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const errors = validate();
-    setFormErrors(errors);
-    if (Object.keys(errors).length === 0) {
-      const { email } = formData;
-      setSubmitting(true);
-      setFormData({ email: "" });
-      const user = await validateUser(email);
-      if (user) {
-        const res = await sendPasswordResetEmail(user.email, user.verificationToken);
-        setAlert({
-          show: true,
-          message: res.message,
-          type: res.success ? "success" : "danger",
-        });
-      } else {
-        setAlert({
-          show: true,
-          message: "User not found",
-          type: "danger",
-        });
-      }
+    } catch (error: any) {
+      console.error("Error:", error);
+      setAlert({
+        show: true,
+        message: error.message || "User not found or an error occurred",
+        type: "danger",
+      });
+    } finally {
       setTimeout(() => {
-        setAlert({ show: false, message: "", type: "" });
+        setAlert({ show: false, message: "", type: "success" });
       }, 5000);
-      setSubmitting(false);
     }
   };
 
@@ -130,36 +119,38 @@ const SigninPage = () => {
               backButtonHref="/accounts/signup"
               showSocial={false}
             >
-              <form noValidate onSubmit={handleSubmit}>
+              <form noValidate onSubmit={handleSubmit(onSubmit)}>
                 {/* email */}
                 <div className="form-group my-4">
                   <input
+                    {...register("email")}
                     type="email"
                     className={`form-control ${
-                      formErrors?.email ? "is-invalid" : ""
+                      errors.email ? "is-invalid" : ""
                     }`}
-                    value={formData?.email}
-                    onChange={handleChange}
-                    name="email"
                     placeholder="Enter your email"
-                    required
+                    disabled={isSubmitting}
                   />
-                  {formErrors?.email && (
-                    <div className="text-danger invalid-feedback">
-                      {formErrors?.email}
+                  {errors.email && (
+                    <div className="invalid-feedback d-block">
+                      {errors.email.message}
                     </div>
                   )}
                 </div>
 
-                {alert.show && <Alert type={alert.type}>{alert.message}</Alert>}
+                {alert.show && (
+                  <div className="my-3">
+                    <Alert type={alert.type}>{alert.message}</Alert>
+                  </div>
+                )}
 
                 {/* submit button */}
                 <button
                   type="submit"
                   className="btn btn-primary w-100 my-3"
-                  disabled={submitting}
+                  disabled={isSubmitting}
                 >
-                  {submitting ? "Submitting..." : "Submit"}
+                  {isSubmitting ? "Submitting..." : "Submit"}
                 </button>
               </form>
               <div className="text-end">
@@ -182,4 +173,4 @@ const SigninPage = () => {
   );
 };
 
-export default SigninPage;
+export default PasswordResetPage;

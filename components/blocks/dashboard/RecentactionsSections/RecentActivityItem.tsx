@@ -1,6 +1,10 @@
 import React from 'react';
 
-function RecentActivityItem({ item }) {
+type RecentActivityItemProps = {
+  item: any;
+};
+
+function RecentActivityItem({ item }: RecentActivityItemProps) {
   return (
     <div className="activity-item d-flex">
       <div className="activite-label">{item.time}</div>

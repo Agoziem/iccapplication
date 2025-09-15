@@ -10,11 +10,6 @@ interface Contact {
   [key: string]: any;
 }
 
-/**
- * Sorts contacts based on their most recent message timestamp (received or sent)
- * @param contacts - Array of contact objects to sort
- * @returns Array of contacts sorted by most recent message timestamp (descending)
- */
 const SortContacts = (contacts: Contact[]): Contact[] => {
     return contacts.sort((a: Contact, b: Contact): number => {
         // Get the latest message timestamp for contact 'a'

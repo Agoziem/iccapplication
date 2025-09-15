@@ -2,27 +2,24 @@
 import Datatable from "@/components/custom/Datatable/Datatable";
 import Modal from "@/components/custom/Modal/modal";
 import PageTitle from "@/components/custom/PageTitle/PageTitle";
-import OrganizationCard from "@/components/features/configuration/home/organizationcard";
 import CustomersTable from "@/components/features/orders/CustomersTable";
-import { useGetOrderReport } from "@/data/payments/orders.hook";
-import { authAPIendpoint, fetchUser } from "@/data/hooks/user.hooks";
-import { useFetchUser } from "@/data/hooks/user.hooks";
+import { ORGANIZATION_ID } from "@/data/constants";
+import { useOrderReport } from "@/data/hooks/payment.hooks";
+import { useUserById } from "@/data/hooks/user.hooks";
+import { CustomerPaymentStatsArray } from "@/types/payments";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 
 const CustomersPage = () => {
-  /**
-   * @type {[Customers, (value:Customers) => void]}
-   */
-  const [items, setItems] = useState(null);
+  const [items, setItems] = useState<CustomerPaymentStatsArray | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [customerID, setCustomerID] = useState(null);
-
-  // fetch Order Report
-  const { data: orderReport } = useGetOrderReport();
+  const [customerID, setCustomerID] = useState<number | null>(null);
+  const { data: orderReport } = useOrderReport(Number(ORGANIZATION_ID || "0"));
 
   useEffect(() => {
-    setItems(orderReport?.customers);
+    if (orderReport) {
+      setItems(orderReport.customers ? orderReport.customers : null);
+    }
   }, [orderReport]);
 
   // fetch User
@@ -30,10 +27,7 @@ const CustomersPage = () => {
     data: customer,
     isLoading: loadingCustomer,
     error,
-  } = useFetchUser(
-    `${authAPIendpoint}/getuser/${customerID}`,
-    customerID
-  );
+  } = useUserById(customerID || 0);
 
   return (
     <div style={{ minHeight: "100vh" }}>
@@ -69,7 +63,7 @@ const CustomersPage = () => {
             {!loadingCustomer && customer ? (
               <div>
                 <div className="profilepicture d-flex flex-column justify-content-center align-items-center my-3">
-                  {customer.avatar ? (
+                  {customer.avatar_url ? (
                     <Image
                       src={customer.avatar_url}
                       alt="Picture of the Customer"
@@ -128,7 +122,8 @@ const CustomersPage = () => {
                 </p>
                 <p>
                   <span className="fw-bold">date joined: </span>{" "}
-                  {new Date(customer.date_joined).toDateString()}
+                  {customer.date_joined &&
+                    new Date(customer.date_joined).toDateString()}
                 </p>
               </div>
             ) : (

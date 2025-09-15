@@ -1,34 +1,40 @@
 "use client";
 import Link from "next/link";
-import React, {useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { IoMdCheckmarkCircleOutline } from "react-icons/io";
 import BackButton from "@/components/custom/backbutton/BackButton";
-import { dept_icons } from "@/data/constants";
-import { fetchDepartments, MainAPIendpoint } from "@/data/hooks/organization.hooks";
-import { useFetchDepartments } from "@/data/organization/organization.hook";
+import { useDepartments } from "@/data/hooks/organization.hooks";
+import { ORGANIZATION_ID } from "@/data/constants";
+import { Department } from "@/types/organizations";
+import { dept_icons } from "@/utils/selectFileIcon";
 
-const Department = ({ params }) => {
+const DepartmentPage = ({ params }: { params: { id: string } }) => {
   const { id } = params;
-  const [department, setDepartment] = useState(null);
-  const [otherDepartments, setOtherDepartments] = useState([]);
-  const OrganizationID = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
+  const [department, setDepartment] = useState<Department | null>(null);
+  const [otherDepartments, setOtherDepartments] = useState<Department[] | null>(null);
 
-   // for data fetching
-   const { data: depts } = useFetchDepartments(`${MainAPIendpoint}/department/${OrganizationID}/`);
+  // for data fetching
+  const { data: depts } = useDepartments(Number(ORGANIZATION_ID || 1));
 
- const fetchdepartment = () => {
+  const fetchdepartment = () => {
     if (!depts) return;
     const department = depts.results.find((item) => item.id === parseInt(id));
     if (department) {
       setDepartment(department);
-      const otherDepartments = depts.results.filter((item) => item.id !== parseInt(id));
+      const otherDepartments = depts.results.filter(
+        (item) => item.id !== parseInt(id)
+      );
       setOtherDepartments(otherDepartments);
-    } 
+    }
   };
 
   useEffect(() => {
     if (id && depts && depts.results.length > 0) fetchdepartment();
   }, [id, depts]);
+
+  const deptheadname = useMemo(() => {
+    return `${department?.staff_in_charge?.first_name} ${department?.staff_in_charge?.last_name}`;
+  }, [department]);
 
   return (
     <section className="px-5 pt-3">
@@ -42,7 +48,7 @@ const Department = ({ params }) => {
               alt={department.name}
               className="rounded shadow-sm mx-auto d-block mb-3 mb-md-0"
               style={{
-                width: "80%", 
+                width: "80%",
                 minWidth: "264px",
                 height: "400px",
                 objectFit: "cover",
@@ -72,7 +78,7 @@ const Department = ({ params }) => {
                 >
                   <img
                     src={department?.staff_in_charge.img_url}
-                    alt={department?.staff_in_charge.name}
+                    alt={deptheadname}
                     className="rounded-circle"
                     style={{
                       width: "80px",
@@ -87,13 +93,13 @@ const Department = ({ params }) => {
                   style={{ width: "80px", height: "80px" }}
                 >
                   <h1 className="text-white text-center mb-0">
-                    {department?.staff_in_charge.name[0]}
+                    {deptheadname[0]}
                   </h1>
                 </div>
               )}
 
               <div className="flex-fill ms-0 ms-md-3 mt-3 mt-md-0">
-                <h5 className="mb-1">{department?.staff_in_charge.name}</h5>
+                <h5 className="mb-1">{deptheadname}</h5>
                 <p className="my-1">{department?.name} Department Head</p>
               </div>
             </div>
@@ -107,7 +113,7 @@ const Department = ({ params }) => {
             <img
               src="/ICC Dept Banner.png"
               alt=""
-              style={{ width: "80%", minWidth: "240px",maxWidth: "400px"}}
+              style={{ width: "80%", minWidth: "240px", maxWidth: "400px" }}
               className=" mx-auto d-block mb-4 mb-md-0"
             />
           </div>
@@ -164,4 +170,4 @@ const Department = ({ params }) => {
   );
 };
 
-export default Department;
+export default DepartmentPage;

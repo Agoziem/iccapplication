@@ -1,32 +1,55 @@
 "use client";
-import React, { useContext, useRef, useState } from "react";
+import React, { useContext, useRef, useState, useCallback, memo } from "react";
 import "./sideBar.css";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import useClickOutside from "@/hooks/useClickOutside";
 import { RefContext } from "./sideBarTogglerContext";
 import Modal from "../../custom/Modal/modal";
-import { signOut, useSession } from "next-auth/react";
+import { logoutUser, useMyProfile } from "@/data/hooks/user.hooks";
+import toast from "react-hot-toast";
 
-function SideBar({ navList }) {
-  const { data: session } = useSession();
+interface NavItem {
+  _id: string;
+  name: string;
+  link: string;
+  icon: string;
+  content?: NavItem[];
+}
+
+interface SideBarProps {
+  navList: NavItem[];
+}
+
+const SideBar: React.FC<SideBarProps> = memo(({ navList }) => {
   const paths = usePathname();
   const router = useRouter();
-  const sidebarref = useRef();
+  const sidebarref = useRef<HTMLElement>(null);
   const sidebartoggleref = useContext(RefContext);
-  const [showModal, setShowModal] = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const { data: user } = useMyProfile();
+  const [loggingOut, setLoggingOut] = useState<boolean>(false);
 
-  const logoutDashboard = () => {
+  // Memoized logout function
+  const logoutDashboard = useCallback(async () => {
     setLoggingOut(true);
     setShowModal(false);
-    setLoggingOut(false);
-    signOut();
-  };
+    try {
+      console.log('Logging out...');
+      await logoutUser();
+      toast.success("Logged out successfully");
+      router.push('/login');
+    } catch (error) {
+      console.error("Logout failed:", error);
+      toast.error("Logout failed");
+    } finally {
+      setLoggingOut(false);
+    }
+  }, [router]);
 
-  // handle Sidebar close
-  const handleSidebarClose = () => {
-    const windowWidth = typeof window !== "undefined" && window.innerWidth;
+  // Handle Sidebar close
+  const handleSidebarClose = useCallback(() => {
+    const windowWidth = typeof window !== "undefined" ? window.innerWidth : 0;
     const lgBreakpoint = 992;
 
     if (
@@ -36,166 +59,107 @@ function SideBar({ navList }) {
     ) {
       document.body.classList.remove("toggle-sidebar");
     }
-  };
+  }, []);
+
+  // Handle navigation for mobile
+  const handleMobileNavigation = useCallback((link: string, hasContent: boolean = false) => {
+    if (!hasContent) {
+      router.push(link);
+      handleSidebarClose();
+    }
+  }, [router, handleSidebarClose]);
+
+  // Filter navigation items based on user permissions
+  const filteredNavList = React.useMemo(() => {
+    return navList?.filter((navGroup) => {
+      if (user?.is_staff) {
+        return true; // Keep all navGroups for staff users
+      } else {
+        // Exclude specific navGroups for non-staff users
+        return !["Payments", "Customers", "Configurations"].includes(navGroup.name);
+      }
+    });
+  }, [navList, user?.is_staff]);
 
   useClickOutside(sidebarref, sidebartoggleref, handleSidebarClose);
+
+  // Render navigation item
+  const renderNavItem = useCallback((navGroup: NavItem, isMobile: boolean = false) => (
+    <li className="nav-item" key={navGroup._id}>
+      <Link
+        className={`nav-link ${paths === navGroup.link ? "active" : ""} ${
+          navGroup.content && navGroup.content.length > 0 ? "collapsed" : ""
+        }`}
+        href={navGroup.link}
+        data-bs-toggle={
+          navGroup.content && navGroup.content.length > 0 ? "collapse" : ""
+        }
+        data-bs-target={`#${navGroup.name}`}
+        {...(isMobile && {
+          onClick: (e) => {
+            if (navGroup.name === "Logout") {
+              e.preventDefault();
+              setShowModal(true);
+              return;
+            }
+            handleMobileNavigation(navGroup.link, navGroup.content && navGroup.content.length > 0);
+          },
+        })}
+        {...(!isMobile && navGroup.name === "Logout" && {
+          onClick: (e) => {
+            e.preventDefault();
+            setShowModal(true);
+          },
+        })}
+      >
+        <i className={navGroup.icon}></i>
+        <span>{navGroup.name}</span>
+        {navGroup.content && navGroup.content.length > 0 && (
+          <i className="bi bi-chevron-down ms-auto"></i>
+        )}
+      </Link>
+      {navGroup.content && navGroup.content.length > 0 && (
+        <ul
+          id={navGroup.name}
+          className="nav-content collapse"
+          data-bs-parent="#sidebar-nav"
+        >
+          {navGroup.content.map((subNav) => (
+            <li key={subNav._id}>
+              <Link
+                className={`nav-link ${paths === subNav.link ? "active" : ""}`}
+                href={isMobile ? "#" : subNav.link}
+                {...(isMobile && {
+                  onClick: (e) => {
+                    e.preventDefault();
+                    router.push(subNav.link);
+                    handleSidebarClose();
+                  },
+                })}
+              >
+                <i className={subNav.icon}></i>
+                <span>{subNav.name}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </li>
+  ), [paths, router, handleSidebarClose, handleMobileNavigation]);
 
   return (
     <>
       {/* Side bar for Large Screen */}
       <aside className="sidebar d-none d-md-block">
         <ul className="sidebar-nav" id="sidebar-nav">
-          {navList &&
-            navList
-              .filter((navGroup) => {
-                if (session?.user.is_staff) {
-                  return true; // Keep all navGroups for staff users
-                } else {
-                  // Exclude specific navGroups for non-staff users
-                  return !["Payments", "Customers", "Configurations"].includes(
-                    navGroup.name
-                  );
-                }
-              })
-              .map((navGroup) => (
-                <li className="nav-item" key={navGroup._id}>
-                  <Link
-                    className={`nav-link ${
-                      paths === navGroup.link ? "active" : ""
-                    } ${
-                      navGroup.content && navGroup.content.length > 0
-                        ? "collapsed"
-                        : ""
-                    }`}
-                    href={navGroup.link}
-                    data-bs-toggle={
-                      navGroup.content && navGroup.content.length > 0
-                        ? "collapse"
-                        : ""
-                    }
-                    data-bs-target={`#${navGroup.name}`}
-                    {...(navGroup.name === "Logout" && {
-                      onClick: (e) => {
-                        e.preventDefault();
-                        setShowModal(true);
-                      },
-                    })}
-                  >
-                    <i className={navGroup.icon}></i>
-                    <span>{navGroup.name}</span>
-                    {navGroup.content && navGroup.content.length > 0 && (
-                      <i className="bi bi-chevron-down ms-auto"></i>
-                    )}
-                  </Link>
-                  {navGroup.content && navGroup.content.length > 0 && (
-                    <ul
-                      id={navGroup.name}
-                      className="nav-content collapse"
-                      data-bs-parent="#sidebar-nav"
-                    >
-                      {navGroup.content.map((subNav) => (
-                        <li key={subNav._id}>
-                          <Link
-                            className={`nav-link ${
-                              paths === subNav.link ? "active" : ""
-                            }`}
-                            href={subNav.link}
-                          >
-                            <i className={subNav.icon}></i>
-                            <span>{subNav.name}</span>
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </li>
-              ))}
+          {filteredNavList?.map((navGroup) => renderNavItem(navGroup, false))}
         </ul>
       </aside>
 
       {/* Side bar for Small Screen */}
-
       <aside className="sidebar d-block d-md-none" ref={sidebarref}>
         <ul className="sidebar-nav" id="sidebar-nav">
-          {navList &&
-            navList
-              .filter((navGroup) => {
-                if (session?.user.is_staff) {
-                  return true; // Keep all navGroups for staff users
-                } else {
-                  // Exclude specific navGroups for non-staff users
-                  return !["Payments", "Customers", "Configurations"].includes(
-                    navGroup.name
-                  );
-                }
-              })
-              .map((navGroup) => (
-                <li className="nav-item" key={navGroup._id}>
-                  <Link
-                    className={`nav-link ${
-                      paths === navGroup.link && "active"
-                    } ${
-                      navGroup.content && navGroup.content.length > 0
-                        ? "collapsed"
-                        : ""
-                    }`}
-                    href={`${navGroup.link}`}
-                    data-bs-toggle={
-                      navGroup.content && navGroup.content.length > 0
-                        ? "collapse"
-                        : ""
-                    }
-                    data-bs-target={`#${navGroup.name}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (navGroup.content && navGroup.content.length > 0) {
-                        return;
-                      } else {
-                        router.push(`${navGroup.link}`);
-                        handleSidebarClose();
-                      }
-                    }}
-                    {...(navGroup.name === "Logout" && {
-                      onClick: (e) => {
-                        e.preventDefault();
-                        setShowModal(true);
-                      },
-                    })}
-                  >
-                    <i className={navGroup.icon}></i>
-                    <span>{navGroup.name}</span>
-                    {navGroup.content && navGroup.content.length > 0 && (
-                      <i className="bi bi-chevron-down ms-auto"></i>
-                    )}
-                  </Link>
-                  {navGroup.content && navGroup.content.length > 0 && (
-                    <ul
-                      id={navGroup.name}
-                      className="nav-content collapse"
-                      data-bs-parent="#sidebar-nav"
-                    >
-                      {navGroup.content.map((subNav) => (
-                        <li key={subNav._id}>
-                          <Link
-                            className={`nav-link ${
-                              paths === subNav.link && "active"
-                            }`}
-                            href={"#"}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              router.push(`${subNav.link}`);
-                              handleSidebarClose();
-                            }}
-                          >
-                            <i className={subNav.icon}></i>
-                            <span>{subNav.name}</span>
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </li>
-              ))}
+          {filteredNavList?.map((navGroup) => renderNavItem(navGroup, true))}
         </ul>
       </aside>
 
@@ -206,9 +170,8 @@ function SideBar({ navList }) {
           <div className="d-flex justify-content-center mt-4">
             <button
               className="btn btn-primary me-3"
-              onClick={() => {
-                logoutDashboard();
-              }}
+              onClick={logoutDashboard}
+              disabled={loggingOut}
             >
               {loggingOut ? (
                 <div className="spinner-border spinner-border-sm" role="status">
@@ -218,7 +181,6 @@ function SideBar({ navList }) {
                 "Yes"
               )}
             </button>
-
             <button
               className="btn btn-secondary"
               onClick={() => setShowModal(false)}
@@ -230,6 +192,8 @@ function SideBar({ navList }) {
       </Modal>
     </>
   );
-}
+});
+
+SideBar.displayName = 'SideBar';
 
 export default SideBar;

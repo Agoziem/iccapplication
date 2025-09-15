@@ -1,21 +1,40 @@
 "use client";
+import React, { useMemo } from "react";
 import "./footer.css";
-import { useFetchOrganization } from "@/data/organization/organization.hook";
+import { useOrganization } from "@/data/hooks/organization.hooks";
+import { ORGANIZATION_ID } from "@/data/constants";
 
-function Footer() {
-  const organizationID = process.env.NEXT_PUBLIC_ORGANIZATION_ID
-  const { data: OrganizationData } = useFetchOrganization(organizationID ? `/organizations/${organizationID}` : null);
+const Footer: React.FC = () => {
+  // Get organization data using the organization ID constant
+  const { data: OrganizationData, isLoading, error } = useOrganization(Number(ORGANIZATION_ID));
+
+  // Memoize the current year to avoid recalculation
+  const currentYear = useMemo(() => new Date().getFullYear(), []);
+
+  // Handle loading and error states gracefully
+  if (error) {
+    console.warn('Failed to fetch organization data for footer:', error);
+  }
+
   return (
     <footer id="footer" className="dashboardfooter px-2">
       <div className="copyright">
-        &copy; Copyright 2024, {' '}
+        &copy; Copyright {currentYear},{' '}
         <strong>
-          <span>{OrganizationData?.name}</span>
+          <span>
+            {isLoading ? (
+              <span className="placeholder-glow">
+                <span className="placeholder col-4"></span>
+              </span>
+            ) : (
+              OrganizationData?.name || 'Innovation CyberCafe'
+            )}
+          </span>
         </strong>
         . All Rights Reserved
       </div>
     </footer>
   );
-}
+};
 
 export default Footer;

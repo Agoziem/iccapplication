@@ -2,7 +2,7 @@ import AnimationContainer from "@/components/animation/animation-container";
 import Link from "next/link";
 import React from "react";
 import { FaLongArrowAltRight } from "react-icons/fa";
-import { LuCheckCircle } from "react-icons/lu";
+import { LiaCheckCircle } from "react-icons/lia";
 
 const CBTSection = () => {
   return (
@@ -32,15 +32,15 @@ const CBTSection = () => {
           <AnimationContainer slideDirection="left" delay={0.4}>
             <ul className="list-unstyled text-primary mt-3">
               <li className="py-1">
-                <LuCheckCircle className="text-secondary me-2" /> Complete Exam
+                <LiaCheckCircle  className="text-secondary me-2" /> Complete Exam
                 feel for your Upcoming Exam
               </li>
               <li className="py-1">
-                <LuCheckCircle className="text-secondary  me-2" /> automatic
+                <LiaCheckCircle  className="text-secondary  me-2" /> automatic
                 result generation with Corrections
               </li>
               <li className="py-1">
-                <LuCheckCircle className="text-secondary  me-2" /> Practice with
+                <LiaCheckCircle  className="text-secondary  me-2" /> Practice with
                 over 1000+ Questions
               </li>
             </ul>

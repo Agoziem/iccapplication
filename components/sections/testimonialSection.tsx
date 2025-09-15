@@ -3,14 +3,13 @@ import { BiSolidQuoteAltRight } from "react-icons/bi";
 import StarRating from "@/components/custom/StarRating/StarRating";
 import ReusableSwiper from "@/components/custom/Swiper/ReusableSwiper";
 import "./section.css";
-import { MainAPIendpoint } from "@/data/hooks/organization.hooks";
-import { useFetchTestimonials } from "@/data/organization/organization.hook";
+import { useTestimonials } from "@/data/hooks/organization.hooks";
+import { ORGANIZATION_ID } from "@/data/constants";
 
 const CustomSwiper = () => {
-  const OrganizationID = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
    // for fetching testimonials
-  const { data: testimonials } = useFetchTestimonials(
-    `${MainAPIendpoint}/testimonial/${OrganizationID}/`
+  const { data: testimonials } = useTestimonials(
+    parseInt(ORGANIZATION_ID || "0")
   )
   return (
     <>
@@ -60,7 +59,7 @@ const CustomSwiper = () => {
                     <div className="ms-3">
                       <h6 className="mb-1">{testimonial.name}</h6>
                       <p className="my-0 small">{testimonial.role}</p>
-                      <StarRating rating={testimonial.rating} />
+                      <StarRating rating={Number(testimonial.rating || "0")} />
                     </div>
                   </div>
                 </div>

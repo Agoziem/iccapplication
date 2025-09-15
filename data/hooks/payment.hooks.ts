@@ -53,7 +53,7 @@ export const deletePayment = async (paymentId: number): Promise<void> => {
   await AxiosInstanceWithToken.delete(`${paymentsAPIendpoint}/deletepayment/${paymentId}/`);
 };
 
-export const verifyPayment = async (paymentData: VerifyPayment): Promise<{ verified: boolean; message: string }> => {
+export const verifyPayment = async (paymentData: VerifyPayment): Promise<PaymentResponse> => {
   const response = await AxiosInstanceWithToken.post(
     `${paymentsAPIendpoint}/verifypayment/`,
     paymentData
@@ -172,9 +172,8 @@ export const useDeletePayment = (): UseMutationResult<void, Error, number> => {
   });
 };
 
-export const useVerifyPayment = (): UseMutationResult<{ verified: boolean; message: string }, Error, VerifyPayment> => {
+export const useVerifyPayment = (): UseMutationResult<PaymentResponse, Error, VerifyPayment> => {
   const queryClient = useQueryClient();
-  
   return useMutation({
     mutationFn: verifyPayment,
     onSuccess: () => {

@@ -1,11 +1,7 @@
-import React from 'react'
+import React from "react";
 
-const OrderLayout = ({children}) => {
-  return (
-    <div>
-      {children}
-    </div>
-  )
-}
+const OrderLayout = ({ children }: { children: React.ReactNode }) => {
+  return <div>{children}</div>;
+};
 
-export default OrderLayout
+export default OrderLayout;

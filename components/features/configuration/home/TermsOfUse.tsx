@@ -6,17 +6,17 @@ import { PulseLoader } from "react-spinners";
 import Tiptap from "@/components/custom/Richtexteditor/Tiptap";
 import { UpdateOrganizationSchema } from "@/schemas/organizations";
 import { UpdateOrganization, Organization } from "@/types/organizations";
-import { useUpdateOrganization } from "@/data/hooks/organization.hooks";
+import { useOrganization, useUpdateOrganization } from "@/data/hooks/organization.hooks";
+import { ORGANIZATION_ID } from "@/data/constants";
 
 type TermsOfUseFormData = {
   terms_of_use: string;
 };
 
-const TermsOfUse = ({
-  OrganizationData,
-}: {
-  OrganizationData: Organization;
-}) => {
+const TermsOfUse = () => {
+  const { data: OrganizationData } = useOrganization(
+    parseInt(ORGANIZATION_ID || "0")
+  );
   const [isPending, startTransition] = useTransition();
   const { mutateAsync: updateOrganization } = useUpdateOrganization();
 
@@ -45,6 +45,7 @@ const TermsOfUse = ({
 
   // Handle form submission
   const onSubmit = async (data: TermsOfUseFormData) => {
+    if (!OrganizationData) return;
     startTransition(async () => {
       try {
         await updateOrganization({

@@ -1,9 +1,8 @@
+import { SITE_URL } from "@/data/constants";
+import { Service, ServiceUser } from "@/types/items";
 import React from "react";
 
-/**
- * @param {{user:ServiceUser,service:Service}} param0
- */
-const ServiceStarted = ({ service, user }) => {
+const ServiceStarted = ({ service, user }: { service: Service; user: ServiceUser }) => {
   return (
     <div>
       <div>
@@ -19,7 +18,7 @@ const ServiceStarted = ({ service, user }) => {
 
       <div>
         <p>explore other hot and trending Services available, at the moment</p>
-        <a href={`${process.env.NEXT_PUBLIC_URL}/dashboard/services`}>
+        <a href={`${SITE_URL}/dashboard/services`}>
           view Services
         </a>
       </div>

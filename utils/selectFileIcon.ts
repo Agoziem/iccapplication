@@ -2,6 +2,10 @@ import { AiFillFileExcel, AiFillFileImage, AiFillFileWord } from "react-icons/ai
 import { BsFileEarmarkPdfFill } from "react-icons/bs";
 import { ReactElement } from "react";
 import React from "react";
+import { MdOutlineQuestionAnswer } from "react-icons/md";
+import { PiGearBold, PiGraduationCapBold } from "react-icons/pi";
+import { RiCustomerService2Line } from "react-icons/ri";
+import { TbBooks } from "react-icons/tb";
 
 // Define supported MIME types
 export type SupportedFileType = 
@@ -87,4 +91,27 @@ export const getFileCategory = (type: string): string => {
   return "unknown";
 };
 
+
+export const dept_icons = [
+  {
+    id: 1,
+    icon: React.createElement(MdOutlineQuestionAnswer),
+  },
+  {
+    id: 2,
+    icon: React.createElement(PiGraduationCapBold),
+  },
+  {
+    id: 3,
+    icon: React.createElement(TbBooks),
+  },
+  {
+    id: 4,
+    icon: React.createElement(RiCustomerService2Line),
+  },
+  {
+    id: 5,
+    icon: React.createElement(PiGearBold),
+  },
+];
   

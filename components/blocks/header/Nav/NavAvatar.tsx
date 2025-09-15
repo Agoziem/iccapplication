@@ -1,25 +1,37 @@
 "use client";
 
+import React, { useState, useCallback, memo } from "react";
 import Link from "next/link";
-import useCurrentUser from "@/hooks/useCurrentUser";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import toast from "react-hot-toast";
+import useCurrentUser from "@/hooks/useCurrentUser";
 import Modal from "@/components/custom/Modal/modal";
-import { signOut, useSession } from "next-auth/react";
+import { logoutUser } from "@/data/hooks/user.hooks";
 
-function NavAvatar() {
-  const { data: session } = useSession();
-  const { currentRoot } = useCurrentUser();
-  const [showModal, setShowModal] = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
+const NavAvatar: React.FC = memo(() => {
+  const { currentRoot, currentUser } = useCurrentUser();
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [loggingOut, setLoggingOut] = useState<boolean>(false);
   const router = useRouter();
 
-  const logoutDashboard = () => {
-    setLoggingOut(true);
-    setShowModal(false);
-    setLoggingOut(false);
-    signOut();
-  };
+  const logoutDashboard = useCallback(async () => {
+    try {
+      setLoggingOut(true);
+      setShowModal(false);
+      await logoutUser();
+      toast.success("Logged out successfully");
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      toast.error("Logout failed");
+    } finally {
+      setLoggingOut(false);
+    }
+  }, [router]);
+
+  const toggleModal = useCallback(() => {
+    setShowModal(prev => !prev);
+  }, []);
 
   return (
     <>
@@ -29,9 +41,9 @@ function NavAvatar() {
           href="#"
           data-bs-toggle="dropdown"
         >
-          {session?.user.image ? (
+          {currentUser?.avatar_url ? (
             <img
-              src={`${session.user.image}`}
+              src={`${currentUser.avatar_url}`}
               alt="Profile"
               width={35}
               height={35}
@@ -48,23 +60,23 @@ function NavAvatar() {
                 backgroundColor: "var(--secondary)",
               }}
             >
-              {session?.user?.username?.charAt(0).toUpperCase()}
+              {currentUser?.username?.charAt(0).toUpperCase()}
             </div>
           )}
           <span className="d-none d-md-block dropdown-toggle ps-2">
-            {session?.user.first_name || session?.user.username || "customer"}
+            {currentUser?.first_name || currentUser?.username || "customer"}
           </span>
         </a>
 
         <ul className="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
           <li className="dropdown-header">
             <h6>
-              {session?.user.first_name || session?.user.username || "customer"}
+              {currentUser?.first_name || currentUser?.username || "customer"}
             </h6>
             <span className="d-block">
-              {session?.user.is_staff ? "admin" : "customer"}
+              {currentUser?.is_staff ? "admin" : "customer"}
             </span>
-            <span>{session?.user.email}</span>
+            <span>{currentUser?.email}</span>
           </li>
           <li>
             <hr className="dropdown-divider" />
@@ -121,7 +133,7 @@ function NavAvatar() {
           <li>
             <hr className="dropdown-divider" />
           </li>
-          
+
           <li>
             <Link
               className="dropdown-item d-flex align-items-center"
@@ -154,7 +166,7 @@ function NavAvatar() {
       </li>
 
       {/* Modal for logout */}
-      <Modal showmodal={showModal} toggleModal={() => setShowModal(false)}>
+      <Modal showmodal={showModal} toggleModal={toggleModal}>
         <div className="modal-body">
           <p className="text-center">Are you sure you want to logout?</p>
           <div className="d-flex justify-content-center mt-4">
@@ -175,7 +187,7 @@ function NavAvatar() {
 
             <button
               className="btn btn-secondary"
-              onClick={() => setShowModal(false)}
+              onClick={toggleModal}
             >
               No
             </button>
@@ -184,6 +196,8 @@ function NavAvatar() {
       </Modal>
     </>
   );
-}
+});
+
+NavAvatar.displayName = 'NavAvatar';
 
 export default NavAvatar;

@@ -8,139 +8,134 @@ import { useRouter } from "next/navigation";
 import Alert from "@/components/custom/Alert/Alert";
 import { sendVerificationEmail } from "@/utils/mail";
 import PasswordInput from "@/components/custom/Inputs/PasswordInput";
-import { useFetchOrganization } from "@/data/organization/organization.hook";
+import { ORGANIZATION_ID } from "@/data/constants";
+import { useOrganization } from "@/data/hooks/organization.hooks";
+import { useRegisterUser } from "@/data/hooks/user.hooks";
+import { UserRegistrationSchema } from "@/schemas/users";
+import { UserRegistration } from "@/types/users";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Controller, useForm } from "react-hook-form";
+import { z } from "zod";
+
+const FormDataSchema = UserRegistrationSchema.extend({
+  confirmPassword: UserRegistrationSchema.shape.password,
+  organization_id: z.number().optional(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+
+type FormDataType = z.infer<typeof FormDataSchema>;
 
 const SignupPage = () => {
   const router = useRouter();
-  const { data: OrganizationData } = useFetchOrganization();
-  const [formData, setFormData] = useState({
-    organization_id: "",
-    firstname: "",
-    lastname: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
-  const [formErrors, setFormErrors] = useState(null);
+  const { data: OrganizationData } = useOrganization(
+    Number(ORGANIZATION_ID || "0")
+  );
   const [submitting, startSubmitting] = useTransition();
-  const [alert, setAlert] = useState({
+  const [alert, setAlert] = useState<{
+    show: boolean;
+    message: string;
+    type: "success" | "danger" | "info" | "warning";
+  }>({
     show: false,
     message: "",
     type: "success",
   });
 
+  const { mutateAsync: registerUser } = useRegisterUser();
+
+  // React Hook Form setup
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+    setValue,
+    control,
+  } = useForm<FormDataType>({
+    resolver: zodResolver(FormDataSchema),
+    defaultValues: {
+      firstname: "",
+      lastname: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
+  });
+
   useEffect(() => {
     if (OrganizationData && OrganizationData.id) {
-      setFormData((prev) => ({
-        ...prev,
-        id: OrganizationData.id,
-      }));
+      // Set organization_id when organization data is loaded
+      setValue("organization_id", OrganizationData.id);
     }
-  }, [OrganizationData]);
+  }, [OrganizationData, setValue]);
 
-  // ----------------------------------------
-  // Handle form input changes
-  // ----------------------------------------
+  const onSubmit = async (data: FormDataType) => {
+    startSubmitting(async () => {
+      try {
+        // Prepare user registration data (exclude confirmPassword)
+        const { confirmPassword, ...registrationData } = data;
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    setFormErrors({
-      ...formErrors,
-      [name]: "",
-    });
-  };
+        const result = await registerUser(registrationData);
 
-  // ----------------------------------------
-  // Form validation
-  // ----------------------------------------
-
-  const validate = () => {
-    const errors = {};
-    if (!formData.firstname) errors.firstname = "firstname is required";
-    if (!formData.lastname) errors.lastname = "lastname is required";
-    if (!formData.email) {
-      errors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = "Email address is invalid";
-    }
-    if (!formData.password) errors.password = "your password is required";
-    if (!formData.confirmPassword) {
-      errors.confirmPassword = "password confirmation is required";
-    } else if (formData.password !== formData.confirmPassword) {
-      errors.confirmPassword = "passwords do not match";
-    }
-    return errors;
-  };
-
-  // ----------------------------------------
-  // Handle form submission
-  // ----------------------------------------
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const errors = validate();
-    setFormErrors(errors);
-    if (Object.keys(errors).length === 0) {
-      startSubmitting(async () => {
-        try {
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/authapi/register/`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(formData),
-            }
-          );
-          if (response.ok) {
-            setFormData({
-              organization_id: null,
-              firstname: "",
-              lastname: "",
-              email: "",
-              password: "",
-              confirmPassword: "",
-            });
-            const data = await response.json();
-            const verificationres = await sendVerificationEmail(
-              data.user.email,
-              data.user.verificationToken
+        if (result.message && result.user) {
+          if (result.user.email && result.user.verificationToken) {
+            const expire_time = result.user.expireTime
+              ? new Date(result.user.expireTime)
+              : new Date(Date.now() + 60 * 60 * 1000); // 1 hour ahead
+            await sendVerificationEmail(
+              result.user.email,
+              result.user.verificationToken,
+              expire_time
             );
             setAlert({
               show: true,
-              message: verificationres.message,
-              type: verificationres.success ? "success" : "danger",
+              message:
+                "Registration successful! Please check your email for verification.",
+              type: "success",
             });
           } else {
-            const message =
-              response.status === 400
-                ? "a user with that email already exists"
-                : "An error occurred, please try again";
             setAlert({
               show: true,
-              message: message,
-              type: "danger",
+              message:
+                "Registration successful!, but verification email could not be sent.",
+              type: "success",
             });
           }
-        } catch (error) {
-          console.error("error:", error);
+
+          // Reset form on success
+          reset();
+
+          // Optional: redirect to sign in after some time
+          setTimeout(() => {
+            router.push("/accounts/signin");
+          }, 3000);
+        } else {
           setAlert({
             show: true,
-            message: "An unexcepted error just occurred, please try again",
+            message: result.message || "Registration failed",
             type: "danger",
           });
-        } finally {
-          setTimeout(() => {
-            setAlert((prev) => ({ ...prev, show: false }));
-          }, 3000);
         }
-      });
-    }
+      } catch (error: any) {
+        console.error("Error:", error);
+        const message =
+          error.status === 400
+            ? "A user with that email already exists"
+            : "An unexpected error occurred, please try again";
+
+        setAlert({
+          show: true,
+          message,
+          type: "danger",
+        });
+      } finally {
+        setTimeout(() => {
+          setAlert((prev) => ({ ...prev, show: false }));
+        }, 5000);
+      }
+    });
   };
 
   //
@@ -191,24 +186,22 @@ const SignupPage = () => {
               backButtonHrefText="Sign in"
               backButtonHref="/accounts/signin"
             >
-              <form noValidate onSubmit={handleSubmit}>
+              <form noValidate onSubmit={handleSubmit(onSubmit)}>
                 <div className="form-group d-md-flex my-4">
                   {/* firstname */}
                   <div className=" mb-4 mb-md-0 me-md-2">
                     <input
                       type="text"
-                      name="firstname"
+                      {...register("firstname")}
                       className={`form-control  ${
-                        formErrors?.firstname ? "is-invalid" : ""
+                        errors.firstname ? "is-invalid" : ""
                       }`}
                       placeholder="firstname"
-                      value={formData.firstname}
-                      onChange={handleChange}
                       required
                     />
-                    {formErrors?.firstname && (
+                    {errors.firstname && (
                       <div className="text-danger invalid-feedback">
-                        {formErrors?.firstname}
+                        {errors.firstname.message}
                       </div>
                     )}
                   </div>
@@ -217,18 +210,16 @@ const SignupPage = () => {
                   <div>
                     <input
                       type="text"
-                      name="lastname"
+                      {...register("lastname")}
                       className={`form-control ${
-                        formErrors?.lastname ? "is-invalid" : ""
+                        errors.lastname ? "is-invalid" : ""
                       }`}
                       placeholder="lastname"
-                      value={formData.lastname}
-                      onChange={handleChange}
                       required
                     />
-                    {formErrors?.lastname && (
+                    {errors.lastname && (
                       <div className="text-danger invalid-feedback">
-                        {formErrors?.lastname}
+                        {errors.lastname.message}
                       </div>
                     )}
                   </div>
@@ -237,40 +228,66 @@ const SignupPage = () => {
                 {/* email */}
                 <div className="form-group my-4">
                   <input
-                    name="email"
                     type="email"
+                    {...register("email")}
                     className={`form-control ${
-                      formErrors?.email ? "is-invalid" : ""
+                      errors.email ? "is-invalid" : ""
                     }`}
                     placeholder="Enter your email"
-                    value={formData.email}
-                    onChange={handleChange}
                     required
                   />
-                  {formErrors?.email && (
+                  {errors.email && (
                     <div className="text-danger invalid-feedback">
-                      {formErrors?.email}
+                      {errors.email.message}
                     </div>
                   )}
                 </div>
 
                 {/* password */}
-                <PasswordInput
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Enter your password"
-                  formErrors={formErrors}
-                />
+                <div className="form-group my-4">
+                  <Controller
+                    name="password"
+                    control={control}
+                    render={({ field }) => (
+                      <PasswordInput
+                        {...field}
+                        className={`form-control ${
+                          errors.password ? "is-invalid" : ""
+                        }`}
+                        placeholder="Enter your password"
+                        required
+                      />
+                    )}
+                  />
+                  {errors.password && (
+                    <div className="text-danger invalid-feedback">
+                      {errors.password.message}
+                    </div>
+                  )}
+                </div>
 
                 {/* confirmPassword */}
-                <PasswordInput
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  placeholder="Confirm your password"
-                  formErrors={formErrors}
-                />
+                <div className="form-group my-4">
+                  <Controller
+                    name="confirmPassword"
+                    control={control}
+                    render={({ field }) => (
+                      <PasswordInput
+                        {...field}
+                        className={`form-control ${
+                          errors.confirmPassword ? "is-invalid" : ""
+                        }`}
+                        placeholder="Confirm your password"
+                        required
+                      />
+                    )}
+                  />
+                  {errors.confirmPassword && (
+                    <div className="text-danger invalid-feedback">
+                      {errors.confirmPassword.message}
+                    </div>
+                  )}
+                </div>
 
                 {alert.show && (
                   <div className="my-3">
@@ -283,9 +300,11 @@ const SignupPage = () => {
                   <button
                     type="submit"
                     className="btn btn-primary w-100"
-                    disabled={submitting}
+                    disabled={submitting || isSubmitting}
                   >
-                    {submitting ? "Creating account..." : "Create Account"}
+                    {submitting || isSubmitting
+                      ? "Creating account..."
+                      : "Create Account"}
                   </button>
                 </div>
               </form>

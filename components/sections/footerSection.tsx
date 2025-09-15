@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import React, { useContext, useState } from "react";
+import React, { useState } from "react";
 import {
   FaFacebook,
   FaInstagram,
@@ -11,95 +11,79 @@ import {
 import { IoLogoWhatsapp } from "react-icons/io5";
 import Alert from "@/components/custom/Alert/Alert";
 import "./section.css";
-import { useFetchOrganization } from "@/data/organization/organization.hook";
+import {
+  useCreateSubscription,
+  useOrganization,
+} from "@/data/hooks/organization.hooks";
+import { ORGANIZATION_ID } from "@/data/constants";
+import { CreateSubscriptionSchema } from "@/schemas/organizations";
+import { CreateSubscription } from "@/types/organizations";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+type AlertType = "info" | "success" | "warning" | "danger";
 
 const FooterSection = () => {
-  const { data: OrganizationData } = useFetchOrganization();   
-  const [formData, setFormData] = useState({
-    email: "",
-  });
-  const [submitting, setIsSubmitting] = useState(false);
-  const [alert, setAlert] = useState({
-    type: "",
+  const { data: OrganizationData } = useOrganization(
+    parseInt(ORGANIZATION_ID as string, 10)
+  );
+  const { mutateAsync: createSubscription } = useCreateSubscription();
+
+  const [alert, setAlert] = useState<{
+    type: AlertType;
+    message: string;
+    show: boolean;
+  }>({
+    type: "info",
     message: "",
     show: false,
   });
-  const [formErrors, setFormErrors] = useState(null);
 
-  const validate = () => {
-    const errors = {};
-    if (!formData.email) {
-      errors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = "Email address is invalid";
-    }
-    return errors;
-  };
+  // React Hook Form setup
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm<CreateSubscription>({
+    resolver: zodResolver(CreateSubscriptionSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-    setFormErrors({
-      ...formErrors,
-      [name]: "",
-    });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const errors = validate();
-    setFormErrors(errors);
-    if (Object.keys(errors).length === 0) {
-      try {
-        setIsSubmitting(true);
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/api/subscription/add/${OrganizationData.id}/`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(formData),
-          }
-        );
-        if (response.ok) {
-          setIsSubmitting(false);
-          setFormData({
-            email: "",
-          });
-          setAlert({
-            type: "success",
-            message: "You have successfully subscribed to our newsletter",
-            show: true,
-          });
-          setTimeout(() => {
-            setAlert({
-              type: "",
-              message: "",
-              show: false,
-            });
-          }, 5000);
-        } else {
-          throw new Error("Something went wrong. Please try again later");
-        }
-      } catch (error) {
-        setIsSubmitting(false);
+  const onSubmit = async (data: CreateSubscription) => {
+    try {
+      await createSubscription({
+        organizationId: Number(ORGANIZATION_ID || "0"),
+        subscriptionData: data
+      });
+      reset();
+      setAlert({
+        type: "success",
+        message: "You have successfully subscribed to our newsletter",
+        show: true,
+      });
+      setTimeout(() => {
         setAlert({
-          type: "danger",
-          message: error.message,
-          show: true,
+          type: "info",
+          message: "",
+          show: false,
         });
-        setTimeout(() => {
-          setAlert({
-            type: "",
-            message: "",
-            show: false,
-          });
-        }, 3000);
-      }
+      }, 5000);
+    } catch (error: any) {
+      setAlert({
+        type: "danger",
+        message: error.message || "An error occurred while subscribing",
+        show: true,
+      });
+      setTimeout(() => {
+        setAlert({
+          type: "info",
+          message: "",
+          show: false,
+        });
+      }, 3000);
     }
   };
 
@@ -191,30 +175,30 @@ const FooterSection = () => {
                     <Alert type={alert.type}>{alert.message}</Alert>
                   </div>
                 )}
-                {formErrors?.email && (
-                  <div className="text-danger mb-2">{formErrors.email}</div>
+                {errors?.email && (
+                  <div className="text-danger mb-2">{errors.email.message}</div>
                 )}
-                <div className="subscribe-input d-md-flex">
-                  <input
-                    type="email"
-                    className={`form-control ${
-                      formErrors?.email ? "is-invalid" : ""
-                    }`}
-                    name="email"
-                    placeholder="Enter your email"
-                    onChange={handleChange}
-                    value={formData.email}
-                    required
-                  />
+                <form onSubmit={handleSubmit(onSubmit)}>
+                  <div className="subscribe-input d-md-flex">
+                    <input
+                      {...register("email")}
+                      type="email"
+                      className={`form-control ${
+                        errors?.email ? "is-invalid" : ""
+                      }`}
+                      placeholder="Enter your email"
+                      disabled={isSubmitting}
+                    />
 
-                  <button
-                    className="btn btn-primary ms-0 ms-md-3 mt-3 mt-md-0"
-                    onClick={handleSubmit}
-                    disabled={submitting}
-                  >
-                    {submitting ? "Subscribing..." : "Subscribe"}
-                  </button>
-                </div>
+                    <button
+                      type="submit"
+                      className="btn btn-primary ms-0 ms-md-3 mt-3 mt-md-0"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? "Subscribing..." : "Subscribe"}
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           </div>

@@ -1,7 +1,19 @@
+import { PaymentStatus, PaymentResponse } from "@/types/payments";
+import { User } from "@/types/users";
 import React from "react";
 
-function RecentSalesTable({ loading, items, session }) {
-  const handleStatus = (status) => {
+type RecentSalesTableProps = {
+  loading: boolean;
+  items: PaymentResponse[] | undefined;
+  currentUser: User | undefined;
+};
+
+function RecentSalesTable({
+  loading,
+  items,
+  currentUser,
+}: RecentSalesTableProps) {
+  const handleStatus = (status: PaymentStatus) => {
     switch (status) {
       case "Completed":
         return "success";
@@ -22,7 +34,7 @@ function RecentSalesTable({ loading, items, session }) {
       <thead className="table-light">
         <tr>
           <th scope="col">Order id</th>
-          {session?.user?.is_staff ? <th scope="col">Customer</th> : null}
+          {currentUser?.is_staff ? <th scope="col">Customer</th> : null}
           <th scope="col">Payment Ref</th>
           <th scope="col">Total</th>
           <th scope="col">Status</th>
@@ -31,10 +43,7 @@ function RecentSalesTable({ loading, items, session }) {
       <tbody>
         {loading ? (
           <tr>
-            <td
-              colSpan={session?.user?.is_staff ? 5 : 4}
-              className="text-center"
-            >
+            <td colSpan={currentUser?.is_staff ? 5 : 4} className="text-center">
               <div className="spinner-border text-primary" role="status">
                 <span className="visually-hidden">Loading...</span>
               </div>
@@ -47,7 +56,9 @@ function RecentSalesTable({ loading, items, session }) {
               <th scope="row">
                 <a href="#">{item.id}</a>
               </th>
-              {session?.user?.is_staff ? <td>{item.customer.name}</td> : null}
+              {currentUser?.is_staff ? (
+                <td>{item.customer.first_name}</td>
+              ) : null}
               <td>{item.reference}</td>
               <td className="fw-bold">
                 &#8358;
@@ -56,8 +67,10 @@ function RecentSalesTable({ loading, items, session }) {
               <td>
                 <span
                   className={`badge text-${handleStatus(
-                    item.status
-                  )} bg-${handleStatus(item.status)}-light px-2`}
+                    item.status as PaymentStatus
+                  )} bg-${handleStatus(
+                    item.status as PaymentStatus
+                  )}-light px-2`}
                 >
                   {item.status}
                 </span>

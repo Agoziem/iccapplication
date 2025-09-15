@@ -3,11 +3,11 @@ import React from "react";
 import MainHeader from "@/components/blocks/header/Mainheader/MainHeader";
 import "./section.css";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
 import AnimationContainer from "@/components/animation/animation-container";
+import { useMyProfile } from "@/data/hooks/user.hooks";
 
 const HeaderSection = () => {
-  const { data: session } = useSession();
+  const { data: user } = useMyProfile();
   return (
     <div>
       <MainHeader />
@@ -35,7 +35,7 @@ const HeaderSection = () => {
                     }}
                     href={"/dashboard"}
                   >
-                    {session ? "Go to Dashboard" : "Get Started now"}
+                    {user ? "Go to Dashboard" : "Get Started now"}
                   </Link>
                 </AnimationContainer>
               </div>

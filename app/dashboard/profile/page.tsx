@@ -4,20 +4,30 @@ import React, { useState } from "react";
 import ProfileForm from "@/components/features/Profile/ProfileForm";
 import ProfileCard from "@/components/features/Profile/ProfileCard";
 
+interface AlertState {
+  show: boolean;
+  type: "success" | "danger" | "info" | "warning";
+  message: string;
+}
+
 const ProfilePage = () => {
   const [editMode, setEditMode] = useState(false);
-  const [alert, setAlert] = useState({
+  const [alert, setAlert] = useState<AlertState>({
     show: false,
     message: "",
-    type: "",
+    type: "info",
   });
   return (
-    <div style={{minHeight:"100vh"}}>
+    <div style={{ minHeight: "100vh" }}>
       <PageTitle pathname="Profile" />
       {editMode ? (
         <ProfileForm setAlert={setAlert} setEditMode={setEditMode} />
       ) : (
-        <ProfileCard alert={alert} setEditMode={setEditMode} />
+        <ProfileCard
+          alert={alert}
+          setAlert={setAlert}
+          setEditMode={setEditMode}
+        />
       )}
     </div>
   );

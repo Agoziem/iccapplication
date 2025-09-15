@@ -1,9 +1,17 @@
-import React from "react";
+"use client";
+import React, { memo } from "react";
 
-function NavMessage() {
+const NavMessage: React.FC = memo(() => {
   return (
     <li className="nav-item dropdown">
-      <a className="nav-link nav-icon" href="#" data-bs-toggle="dropdown">
+      <a 
+        className="nav-link nav-icon" 
+        href="#" 
+        data-bs-toggle="dropdown"
+        role="button"
+        aria-label="View messages"
+        aria-expanded="false"
+      >
         <i className="bi bi-chat-left-text"></i>
         {/* <span className="badge bg-success badge-number">3</span> */}
       </a>
@@ -58,6 +66,8 @@ function NavMessage() {
       </ul>
     </li>
   );
-}
+});
+
+NavMessage.displayName = 'NavMessage';
 
 export default NavMessage;

@@ -1,7 +1,6 @@
 "use client";
 import FormWrapper from "@/components/features/auth/FormWrapper";
 import React, { useState, useTransition } from "react";
-import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DEFAULT_LOGIN_REDIRECT } from "@/routes";
 import Image from "next/image";
@@ -10,80 +9,59 @@ import Link from "next/link";
 import Alert from "@/components/custom/Alert/Alert";
 import { sendVerificationEmail } from "@/utils/mail";
 import PasswordInput from "@/components/custom/Inputs/PasswordInput";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Controller, useForm } from "react-hook-form";
+import { useVerifyUser } from "@/data/hooks/user.hooks";
+import { UserLoginSchema } from "@/schemas/users";
+import { UserLogin } from "@/types/users";
+import { saveToken } from "@/utils/auth";
 
 const SigninPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || DEFAULT_LOGIN_REDIRECT;
-  const [formData, setFormData] = useState({ email: "", password: "" });
-  const [formErrors, setFormErrors] = useState(null);
   const [loggingIn, startLoggingIn] = useTransition();
-  const [alert, setAlert] = useState({
+  const [alert, setAlert] = useState<{
+    show: boolean;
+    message: string;
+    type: "success" | "danger" | "info" | "warning";
+  }>({
     show: false,
     message: "",
     type: "success",
   });
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  const { mutateAsync: verifyUser } = useVerifyUser();
 
-  const validate = () => {
-    const errors = {};
-    if (!formData.email) {
-      errors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = "Email address is invalid";
-    }
-    if (!formData.password) errors.password = "Your password is required";
-    return errors;
-  };
+  // React Hook Form setup
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+    control
+  } = useForm<UserLogin>({
+    resolver: zodResolver(UserLoginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
-  const validateUser = async (email) => {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/authapi/getUserbyEmail/`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      }
-    );
-    
-    /** @type {User} */
-    const data = await res.json();
-    return data;
-  };
+  const onSubmit = async (data: UserLogin) => {
+    startLoggingIn(async () => {
+      try {
+        // Check whether the user email is verified
+        const response = await verifyUser(data.email);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const errors = validate();
-    setFormErrors(errors);
-    if (Object.keys(errors).length === 0) {
-      const { email, password } = formData;
-      startLoggingIn(async () => {
-
-        // check whether the user email is verified
-        const user = await validateUser(email);
-        if (user?.emailIsVerified === true) {
+        if (response?.user.isVerified === true) {
           try {
-            const result = await signIn("credentials", {
-              redirect: false,
-              email,
-              password,
-            });
-            if (user.date_joined === user.last_login) {
-                // 
-            }
-            if (result?.error) {
-              throw new Error(result.error);
-            } else {
+            if (response && response.access_token) {
+              // Save token and redirect
+              saveToken(response);
               router.push(next);
+            } else {
+              throw new Error("Invalid credentials");
             }
           } catch (error) {
             setAlert({
@@ -91,29 +69,39 @@ const SigninPage = () => {
               message: "Invalid credentials, try again",
               type: "danger",
             });
-          } finally {
-            setFormData({ email: "", password: "" });
-            setTimeout(() => {
-              setAlert({ show: false, message: "", type: "" });
-            }, 5000);
           }
         } else {
-          // send Verification email
-          const res = await sendVerificationEmail(
-            email,
-            user.verificationToken
-          );
-          setAlert({
-            show: true,
-            message: res.message,
-            type: res.success ? "success" : "danger",
-          });
-          setTimeout(() => {
-            setAlert({ show: false, message: "", type: "" });
-          }, 5000);
+          // Send Verification email
+          if (response?.user.verificationToken && response?.user.email) {
+            const expire_time = response?.user?.expireTime
+              ? new Date(response.user.expireTime)
+              : new Date(Date.now() + 60 * 60 * 1000); // 1 hour ahead
+            const emailResult = await sendVerificationEmail(
+              response?.user.email || data.email,
+              response?.user.verificationToken,
+              expire_time
+            );
+            setAlert({
+              show: true,
+              message: emailResult.message,
+              type: emailResult.success ? "success" : "danger",
+            });
+          }
         }
-      });
-    }
+      } catch (error: any) {
+        console.error("Error:", error);
+        setAlert({
+          show: true,
+          message: error.message || "An error occurred, please try again",
+          type: "danger",
+        });
+      } finally {
+        reset();
+        setTimeout(() => {
+          setAlert({ show: false, message: "", type: "success" });
+        }, 5000);
+      }
+    });
   };
 
   return (
@@ -163,35 +151,47 @@ const SigninPage = () => {
               backButtonHrefText="Sign up"
               backButtonHref="/accounts/signup"
             >
-              <form noValidate onSubmit={handleSubmit}>
+              <form noValidate onSubmit={handleSubmit(onSubmit)}>
                 {/* email */}
                 <div className="form-group my-4">
                   <input
                     type="email"
+                    {...register("email")}
                     className={`form-control ${
-                      formErrors?.email ? "is-invalid" : ""
+                      errors.email ? "is-invalid" : ""
                     }`}
-                    value={formData.email}
-                    onChange={handleChange}
-                    name="email"
                     placeholder="Enter your email"
                     required
                   />
-                  {formErrors?.email && (
+                  {errors.email && (
                     <div className="text-danger invalid-feedback">
-                      {formErrors?.email}
+                      {errors.email.message}
                     </div>
                   )}
                 </div>
 
                 {/* password */}
-                <PasswordInput
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Enter your password"
-                  formErrors={formErrors}
-                />
+                <div className="form-group my-4">
+                  <Controller
+                    name="password"
+                    control={control}
+                    render={({ field }) => (
+                      <PasswordInput
+                        {...field}
+                        className={`form-control ${
+                          errors.password ? "is-invalid" : ""
+                        }`}
+                        placeholder="Enter your password"
+                        required
+                      />
+                    )}
+                  />
+                  {errors.password && (
+                    <div className="text-danger invalid-feedback">
+                      {errors.password.message}
+                    </div>
+                  )}
+                </div>
 
                 {alert.show && <Alert type={alert.type}>{alert.message}</Alert>}
 
@@ -199,9 +199,9 @@ const SigninPage = () => {
                 <button
                   type="submit"
                   className="btn btn-primary w-100 my-3"
-                  disabled={loggingIn}
+                  disabled={isSubmitting || loggingIn}
                 >
-                  {loggingIn ? "Logging in..." : "Sign In"}
+                  {isSubmitting || loggingIn ? "Logging in..." : "Sign In"}
                 </button>
               </form>
               <div className="text-end">

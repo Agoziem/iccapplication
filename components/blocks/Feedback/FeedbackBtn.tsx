@@ -1,22 +1,46 @@
-import React, { useEffect, useState } from "react";
+"use client";
+import React, { useCallback, useEffect, useState } from "react";
 import "./Feedback.css";
 
-const FeedbackButton = ({ setShowModal }) => {
-  const [scroll, setScroll] = useState(0);
+interface FeedbackButtonProps {
+  setShowModal: (show: boolean) => void;
+}
+
+const FeedbackButton: React.FC<FeedbackButtonProps> = ({ setShowModal }) => {
+  const [scroll, setScroll] = useState<number>(0);
+
+  // Memoized scroll handler to prevent unnecessary re-renders
+  const handleScroll = useCallback(() => {
+    setScroll(window.scrollY);
+  }, []);
 
   useEffect(() => {
-    window.addEventListener('scroll', () => {
-      setScroll(window.scrollY);
-    });
+    // Add scroll event listener
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // Cleanup function to remove event listener
     return () => {
-      window.removeEventListener('scroll', () => {
-        setScroll(window.scrollY);
-      });
+      window.removeEventListener('scroll', handleScroll);
     };
-  }, [scroll]);
+  }, [handleScroll]);
+
+  const handleClick = useCallback(() => {
+    setShowModal(true);
+  }, [setShowModal]);
 
   return (
-    <div className={`feedback-button ${scroll > 100 ? 'active' : undefined}`} onClick={() => setShowModal(true)} >
+    <div 
+      className={`feedback-button ${scroll > 100 ? 'active' : ''}`} 
+      onClick={handleClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          handleClick();
+        }
+      }}
+      aria-label="Send Feedback"
+    >
       <span className="feedback-button-text text-nowrap">Send Feedback</span>
     </div>
   );

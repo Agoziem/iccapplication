@@ -1,9 +1,8 @@
 "use client";
 import { useSearchParams } from "next/navigation";
 import PageTitle from "@/components/custom/PageTitle/PageTitle";
-import { vidoesapiAPIendpoint } from "@/data/hooks/video.hooks";
 import { PulseLoader } from "react-spinners";
-import { useFetchVideoByToken } from "@/data/hooks/video.hooks";
+import { useVideoByToken } from "@/data/hooks/video.hooks";
 
 const VideoPage = () => {
   const searchParams = useSearchParams();
@@ -13,9 +12,7 @@ const VideoPage = () => {
     data: video,
     isLoading: loadingVideo,
     error: error,
-  } = useFetchVideoByToken(
-    videotoken ? `${vidoesapiAPIendpoint}/video_by_token/${videotoken}/` : null
-  );
+  } = useVideoByToken(videotoken || "");
 
   return (
     <div style={{ minHeight: "100vh" }}>
@@ -56,7 +53,7 @@ const VideoPage = () => {
                     border: "1px solid var(--secondary)",
                   }}
                 >
-                  {video?.category.category}
+                  {video?.category && video?.category.category}
                 </p>
                 <h6>Subcategory</h6>
                 <p
@@ -65,7 +62,7 @@ const VideoPage = () => {
                     border: "1px solid var(--success)",
                   }}
                 >
-                  {video?.subcategory.subcategory}
+                  {video?.subcategory && video?.subcategory.subcategory}
                 </p>
               </div>
             </div>

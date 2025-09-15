@@ -1,11 +1,14 @@
 "use client";
 import PageTitle from "@/components/custom/PageTitle/PageTitle";
+import { ORGANIZATION_ID } from "@/data/constants";
+import { useOrganization } from "@/data/hooks/organization.hooks";
 import Link from "next/link";
 import { IoChatbubbleEllipsesOutline, IoLogoWhatsapp } from "react-icons/io5";
-import { useFetchOrganization } from "@/data/organization/organization.hook";
 
 const ChatRoom = () => {
-  const { data: OrganizationData } = useFetchOrganization();
+  const { data: OrganizationData } = useOrganization(
+    Number(ORGANIZATION_ID || "0")
+  );
 
   return (
     <div style={{ minHeight: "100vh" }}>

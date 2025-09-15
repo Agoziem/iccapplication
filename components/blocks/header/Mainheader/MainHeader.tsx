@@ -7,20 +7,22 @@ import Link from "next/link";
 import { IoMenu } from "react-icons/io5";
 import MainHeaderLogo from "./Logo";
 import navlist from "./navitem";
-import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import { MdOutlineShoppingCart } from "react-icons/md";
 import { useCart } from "@/providers/context/Cartcontext";
 import Cartbutton from "@/components/custom/Cartbutton/cart-button";
+import { logoutUser, useMyProfile } from "@/data/hooks/user.hooks";
+import { useRouter } from "next/navigation";
 
 const MainHeader = () => {
   const { cart } = useCart();
   const [isOpen, setIsOpen] = useState(false);
   const [activeLink, setActiveLink] = useState("/");
-  const { data: session } = useSession();
+  const { data: user } = useMyProfile();
+  const router = useRouter();
   // const [toggleDropdown, setToggleDropdown] = useState(false);
 
-  const handleActive = (link) => {
+  const handleActive = (link: string) => {
     setActiveLink(link);
   };
 
@@ -49,6 +51,16 @@ const MainHeader = () => {
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
+  };
+
+  const handleLogout = async(e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    try {
+      await logoutUser();
+      router.push("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
   return (
@@ -93,15 +105,15 @@ const MainHeader = () => {
                 borderRadius: "25px",
               }}
             >
-              {session ? "Dashboard" : "Get Started now"}
+              {user ? "Dashboard" : "Get Started now"}
             </button>
           </Link>
-          {session && (
+          {user && (
             <div className="dropdown">
               <a href="#" data-bs-toggle="dropdown">
-                {session.user.image ? (
+                {user?.avatar_url ? (
                   <Image
-                    src={session.user.image}
+                    src={user.avatar_url}
                     alt="Profile"
                     width={38}
                     height={38}
@@ -118,7 +130,7 @@ const MainHeader = () => {
                       backgroundColor: "var(--secondary)",
                     }}
                   >
-                    {session?.user?.username?.charAt(0).toUpperCase()}
+                    {user?.username?.charAt(0).toUpperCase()}
                   </div>
                 )}
               </a>
@@ -146,8 +158,7 @@ const MainHeader = () => {
                     className="dropdown-item d-flex align-items-center"
                     href={`/`}
                     onClick={(e) => {
-                      e.preventDefault();
-                      signOut();
+                      handleLogout(e);
                     }}
                   >
                     <i className="bi bi-box-arrow-right"></i>
@@ -187,12 +198,12 @@ const MainHeader = () => {
             onClick={toggleMenu}
             style={{ cursor: "pointer", fontSize: "28px" }}
           />
-          {session && (
+          {user && (
             <div className="dropdown d-inline">
               <a href="#" data-bs-toggle="dropdown">
-                {session.user.image ? (
+                {user.avatar_url ? (
                   <Image
-                    src={session.user.image}
+                    src={user.avatar_url}
                     alt="Profile"
                     width={32}
                     height={32}
@@ -209,7 +220,7 @@ const MainHeader = () => {
                       backgroundColor: "var(--secondary)",
                     }}
                   >
-                    {session?.user?.username?.charAt(0).toUpperCase()}
+                    {user?.username?.charAt(0).toUpperCase()}
                   </div>
                 )}
               </a>
@@ -237,8 +248,7 @@ const MainHeader = () => {
                     className="dropdown-item d-flex align-items-center"
                     href={`/`}
                     onClick={(e) => {
-                      e.preventDefault();
-                      signOut();
+                      handleLogout(e);
                     }}
                   >
                     <i className="bi bi-box-arrow-right"></i>

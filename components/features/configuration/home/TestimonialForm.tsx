@@ -7,9 +7,15 @@ import { PulseLoader } from "react-spinners";
 import toast from "react-hot-toast";
 import { FiUser, FiStar, FiMessageSquare, FiBriefcase } from "react-icons/fi";
 import ImageUploader from "@/components/custom/Imageuploader/ImageUploader";
-import { useCreateTestimonial, useUpdateTestimonial } from "@/data/hooks/organization.hooks";
+import {
+  useCreateTestimonial,
+  useUpdateTestimonial,
+} from "@/data/hooks/organization.hooks";
 import { Testimonial } from "@/types/organizations";
-import { CreateTestimonialSchema, UpdateTestimonialSchema } from "@/schemas/organizations";
+import {
+  CreateTestimonialSchema,
+  UpdateTestimonialSchema,
+} from "@/schemas/organizations";
 import { ORGANIZATION_ID } from "@/data/constants";
 
 type CreateTestimonialFormData = z.infer<typeof CreateTestimonialSchema>;
@@ -29,8 +35,10 @@ const TestimonialForm: React.FC<TestimonialFormProps> = ({
   onCancel,
 }) => {
   // API Hooks
-  const { mutateAsync: createTestimonial, isLoading: isCreating } = useCreateTestimonial();
-  const { mutateAsync: updateTestimonial, isLoading: isUpdating } = useUpdateTestimonial();
+  const { mutateAsync: createTestimonial, isLoading: isCreating } =
+    useCreateTestimonial();
+  const { mutateAsync: updateTestimonial, isLoading: isUpdating } =
+    useUpdateTestimonial();
 
   const isSubmitting = isCreating || isUpdating;
 
@@ -42,22 +50,25 @@ const TestimonialForm: React.FC<TestimonialFormProps> = ({
     reset,
     formState: { errors, isValid },
   } = useForm<CreateTestimonialFormData | UpdateTestimonialFormData>({
-    resolver: zodResolver(editMode ? UpdateTestimonialSchema : CreateTestimonialSchema),
+    resolver: zodResolver(
+      editMode ? UpdateTestimonialSchema : CreateTestimonialSchema
+    ),
     mode: "onChange",
-    defaultValues: editMode && testimonial
-      ? {
-          name: testimonial.name || "",
-          content: testimonial.content || "",
-          role: testimonial.role || "",
-          rating: testimonial.rating || 5,
-          img: testimonial.img || testimonial.img_url,
-        }
-      : {
-          name: "",
-          content: "",
-          role: "",
-          rating: 5,
-        },
+    defaultValues:
+      editMode && testimonial
+        ? {
+            name: testimonial.name || "",
+            content: testimonial.content || "",
+            role: testimonial.role || "",
+            rating: testimonial.rating || 5,
+            img: testimonial.img || testimonial.img_url,
+          }
+        : {
+            name: "",
+            content: "",
+            role: "",
+            rating: 5,
+          },
   });
 
   const watchedName = watch("name");
@@ -75,7 +86,9 @@ const TestimonialForm: React.FC<TestimonialFormProps> = ({
     }
   }, [editMode, testimonial, reset]);
 
-  const onSubmit = async (data: CreateTestimonialFormData | UpdateTestimonialFormData) => {
+  const onSubmit = async (
+    data: CreateTestimonialFormData | UpdateTestimonialFormData
+  ) => {
     try {
       if (editMode && testimonial?.id) {
         await updateTestimonial({
@@ -87,7 +100,12 @@ const TestimonialForm: React.FC<TestimonialFormProps> = ({
       } else {
         await createTestimonial({
           organizationId: parseInt(ORGANIZATION_ID || "0"),
-          testimonialData: data as any,
+          testimonialData: {
+            name: data.name,
+            content: data.content!,
+            role: data.role,
+            rating: data.rating,
+          },
         });
         toast.success("Testimonial created successfully!");
       }
@@ -95,7 +113,9 @@ const TestimonialForm: React.FC<TestimonialFormProps> = ({
       onSuccess?.();
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : "An error occurred while saving the testimonial";
+        error instanceof Error
+          ? error.message
+          : "An error occurred while saving the testimonial";
       toast.error(errorMessage);
     }
   };
@@ -109,7 +129,9 @@ const TestimonialForm: React.FC<TestimonialFormProps> = ({
             <div className="d-flex align-items-center">
               <FiMessageSquare size={24} className="text-primary me-2" />
               <h4 className="mb-0 fw-bold">
-                {editMode ? `Edit "${watchedName || testimonial?.name}"` : "Add New Testimonial"}
+                {editMode
+                  ? `Edit "${watchedName || testimonial?.name}"`
+                  : "Add New Testimonial"}
               </h4>
             </div>
             {onCancel && (
@@ -136,7 +158,7 @@ const TestimonialForm: React.FC<TestimonialFormProps> = ({
                 <FiUser size={18} className="text-primary me-2" />
                 Personal Information
               </h6>
-              
+
               <div className="row g-3">
                 <div className="col-md-6">
                   <label htmlFor="name" className="form-label fw-medium">
@@ -149,13 +171,17 @@ const TestimonialForm: React.FC<TestimonialFormProps> = ({
                       <input
                         {...field}
                         type="text"
-                        className={`form-control ${errors.name ? "is-invalid" : ""}`}
+                        className={`form-control ${
+                          errors.name ? "is-invalid" : ""
+                        }`}
                         placeholder="Enter full name"
                       />
                     )}
                   />
                   {errors.name && (
-                    <div className="invalid-feedback">{errors.name.message}</div>
+                    <div className="invalid-feedback">
+                      {errors.name.message}
+                    </div>
                   )}
                 </div>
 
@@ -171,13 +197,17 @@ const TestimonialForm: React.FC<TestimonialFormProps> = ({
                       <input
                         {...field}
                         type="text"
-                        className={`form-control ${errors.role ? "is-invalid" : ""}`}
+                        className={`form-control ${
+                          errors.role ? "is-invalid" : ""
+                        }`}
                         placeholder="e.g., Student, Client, etc."
                       />
                     )}
                   />
                   {errors.role && (
-                    <div className="invalid-feedback">{errors.role.message}</div>
+                    <div className="invalid-feedback">
+                      {errors.role.message}
+                    </div>
                   )}
                 </div>
 
@@ -192,8 +222,12 @@ const TestimonialForm: React.FC<TestimonialFormProps> = ({
                     render={({ field }) => (
                       <select
                         {...field}
-                        className={`form-select ${errors.rating ? "is-invalid" : ""}`}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 5)}
+                        className={`form-select ${
+                          errors.rating ? "is-invalid" : ""
+                        }`}
+                        onChange={(e) =>
+                          field.onChange(parseInt(e.target.value) || 5)
+                        }
                       >
                         <option value={5}>⭐⭐⭐⭐⭐ (5 stars)</option>
                         <option value={4}>⭐⭐⭐⭐ (4 stars)</option>
@@ -204,7 +238,9 @@ const TestimonialForm: React.FC<TestimonialFormProps> = ({
                     )}
                   />
                   {errors.rating && (
-                    <div className="invalid-feedback">{errors.rating.message}</div>
+                    <div className="invalid-feedback">
+                      {errors.rating.message}
+                    </div>
                   )}
                 </div>
 
@@ -218,14 +254,18 @@ const TestimonialForm: React.FC<TestimonialFormProps> = ({
                     render={({ field }) => (
                       <textarea
                         {...field}
-                        className={`form-control ${errors.content ? "is-invalid" : ""}`}
+                        className={`form-control ${
+                          errors.content ? "is-invalid" : ""
+                        }`}
                         rows={5}
                         placeholder="Write your testimonial here..."
                       />
                     )}
                   />
                   {errors.content && (
-                    <div className="invalid-feedback">{errors.content.message}</div>
+                    <div className="invalid-feedback">
+                      {errors.content.message}
+                    </div>
                   )}
                 </div>
               </div>
@@ -253,7 +293,11 @@ const TestimonialForm: React.FC<TestimonialFormProps> = ({
                       name="img"
                       value={field.value}
                       onChange={field.onChange}
-                      error={typeof errors.img?.message === 'string' ? errors.img.message : undefined}
+                      error={
+                        typeof errors.img?.message === "string"
+                          ? errors.img.message
+                          : undefined
+                      }
                     />
                   )}
                 />
@@ -288,8 +332,10 @@ const TestimonialForm: React.FC<TestimonialFormProps> = ({
                   <PulseLoader size={8} color="#ffffff" className="me-2" />
                   {editMode ? "Updating..." : "Creating..."}
                 </div>
+              ) : editMode ? (
+                "Update Testimonial"
               ) : (
-                editMode ? "Update Testimonial" : "Create Testimonial"
+                "Create Testimonial"
               )}
             </button>
           </div>

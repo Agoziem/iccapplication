@@ -2,7 +2,8 @@ import AnimationContainer from "@/components/animation/animation-container";
 import Link from "next/link";
 import React from "react";
 import { FaLongArrowAltRight } from "react-icons/fa";
-import { LuCheckCircle } from "react-icons/lu";
+import { LiaCheckCircle } from "react-icons/lia";
+
 
 const ChatSection = () => {
   return (
@@ -45,20 +46,20 @@ const ChatSection = () => {
             <AnimationContainer slideDirection="down" delay={0.4}>
               <ul className="list-unstyled text-primary mt-3">
                 <li className="py-1">
-                  <LuCheckCircle className="text-secondary me-2" />
+                  <LiaCheckCircle className="text-secondary me-2" />
                   you recieve responses and your documents as soon as possible
                 </li>
                 <li className="py-1">
-                  <LuCheckCircle className="text-secondary  me-2" />
+                  <LiaCheckCircle className="text-secondary  me-2" />
                   your questions are answered by the Admins and other users
                 </li>
                 <li className="py-1">
-                  <LuCheckCircle className="text-secondary  me-2" />
+                  <LiaCheckCircle className="text-secondary  me-2" />
                   Online Orientations and guidance to Jamb and Postutme
                   Processes
                 </li>
                 <li className="py-1">
-                  <LuCheckCircle className="text-secondary  me-2" />
+                  <LiaCheckCircle className="text-secondary  me-2" />
                   and lots more
                 </li>
               </ul>

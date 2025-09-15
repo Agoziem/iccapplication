@@ -1,35 +1,30 @@
 "use client";
 import React, { useContext, useEffect, useState } from "react";
-import { LuCheckCircle } from "react-icons/lu";
+import { LiaCheckCircle } from "react-icons/lia";
 import { FaLongArrowAltRight } from "react-icons/fa";
 import Link from "next/link";
 import { useOrganization } from "@/providers/context/Organizationalcontextdata";
 import ReusableSwiper from "@/components/custom/Swiper/ReusableSwiper";
 import { useCart } from "@/providers/context/Cartcontext";
-import { useSession } from "next-auth/react";
-import { servicesAPIendpoint } from "@/data/hooks/service.hooks";
-import { useFetchCategories } from "@/data/categories/categories.hook";
-import { useFetchServices } from "@/data/services/service.hook";
 import AnimationContainer from "@/components/animation/animation-container";
 import NormalAnimationContainer from "@/components/animation/animation-normal";
+import { useMyProfile } from "@/data/hooks/user.hooks";
+import { useServiceCategories, useServices } from "@/data/hooks/service.hooks";
+import { ORGANIZATION_ID } from "@/data/constants";
 
 const ServicesSection = () => {
   const { openModal } = useOrganization();
   const { cart, addToCart, removeFromCart } = useCart();
-  const { data: session } = useSession();
+  const { data: user } = useMyProfile();
   const [categoryServices, setCategoryServices] = useState([]);
-  const Organizationid = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
-
-  const { data: categories } = useFetchCategories(
-    `${servicesAPIendpoint}/categories/`
-  );
+  const { data: categories } = useServiceCategories();
 
   const {
     data: services,
     isLoading: loadingServices,
     error: error,
-  } = useFetchServices(
-    `${servicesAPIendpoint}/services/${Organizationid}/?category=All&page=1&page_size=100`
+  } = useServices(
+    parseInt(ORGANIZATION_ID || "0")
   );
 
   const featuredservices = [

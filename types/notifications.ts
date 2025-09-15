@@ -4,7 +4,9 @@ import {
   CreateNotificationSchema,
   UpdateNotificationSchema,
   NotificationsSchema,
-  notificationSchema
+  notificationSchema,
+  wsNotificationMessageSchema,
+  wsNotificationSchema
 } from "../schemas/notifications";
 
 // Extract TypeScript types from Zod schemas
@@ -20,3 +22,7 @@ export type NotificationAlias = z.infer<typeof notificationSchema>;
 export type NotificationPreview = Pick<Notification, 'id' | 'title' | 'viewed' | 'created_at'>;
 export type UnreadNotification = Notification & { viewed: false };
 export type ReadNotification = Notification & { viewed: true };
+
+// WebSocket types
+export type WSNotificationMessage = z.infer<typeof wsNotificationMessageSchema>;
+export type WSNotification = z.infer<typeof wsNotificationSchema>;

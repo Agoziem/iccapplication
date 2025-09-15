@@ -43,3 +43,22 @@ export const NotificationsSchema = z.array(NotificationSchema);
 // ------------------------------------
 
 export const notificationSchema = CreateNotificationSchema;
+
+
+// -----------------------------------------
+// Websocket Notification Schema
+// -----------------------------------------
+
+export const wsNotificationSchema = z.object({
+  id: z.number(),
+  title: z.string(),
+  message: z.string(),
+  viewed: z.boolean(),
+  updated_at: z.string().datetime(), // ISO 8601 timestamp
+  created_at: z.string().datetime(),
+});
+
+export const wsNotificationMessageSchema = z.object({
+  action: z.enum(["add", "update", "delete", "mark_viewed"]),
+  notification: wsNotificationSchema.optional(), // sometimes you only send { error: ... } or action without full payload
+});

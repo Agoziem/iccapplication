@@ -1,4 +1,5 @@
 "use client";
+import React, { memo } from "react";
 import "./nav.css";
 // import Navlinks from './Navlinks'
 // import NavSearch from './NavSearch';
@@ -7,7 +8,7 @@ import NavMessage from "./NavMessage";
 import NavAvatar from "./NavAvatar";
 import Cartbutton from "@/components/custom/Cartbutton/cart-button";
 
-function Nav() {
+const Nav: React.FC = memo(() => {
   return (
     <nav className="header-nav ms-auto">
       <ul className="d-flex align-items-center">
@@ -22,6 +23,8 @@ function Nav() {
       </ul>
     </nav>
   );
-}
+});
+
+Nav.displayName = 'Nav';
 
 export default Nav;

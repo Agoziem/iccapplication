@@ -7,37 +7,39 @@ import { useRouter, useSearchParams } from "next/navigation";
 import useJsxToPdf from "@/hooks/useJSXtoPDF";
 import { FaCheck, FaRegClipboard } from "react-icons/fa6";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
-import { paymentsAPIendpoint, verifyPayment } from "@/data/hooks/payment.hooks";
+import { useVerifyPayment } from "@/data/hooks/payment.hooks";
 import { BeatLoader } from "react-spinners";
 import { sendPaymentSuccessfulEmail } from "@/utils/mail";
-import { useQueryClient } from "react-query";
+import { PaymentResponse } from "@/types/payments";
+import { useMyProfile } from "@/data/hooks/user.hooks";
+import { Service, Product, Video } from "@/types/items";
 
 const OrderCompleted = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const reference = searchParams.get("ref") || "";
-  const [success, setSuccess] = useState(null);
-  const [error, setError] = useState(null);
-  /** @type {[Order,(value:Order) => void]} */
-  const [order, setOrder] = useState(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [order, setOrder] = useState<PaymentResponse | null>(null);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
   const { loading: loadingPdf, generatePdf } = useJsxToPdf();
-  const pdfRef = useRef();
-  const { data: session } = useSession();
+  const { mutateAsync: verifyPayment } = useVerifyPayment();
+  const pdfRef = useRef<HTMLDivElement>(null);
+  const { data: user } = useMyProfile();
 
   const savePdf = async () => {
-    await generatePdf(pdfRef.current, "Order-Receipt");
+    if (pdfRef.current) {
+      await generatePdf(pdfRef.current, "Order-Receipt");
+    }
   };
 
   // -------------------------------
   // Verify payment function
   // -------------------------------
-  const queryClient = useQueryClient();
   const verifypayment = useCallback(async () => {
-    if (!reference) {
-      setError("Reference does not exist");
+    if (!reference || !user || !user?.id) {
+      setError("Reference or User id does not exist");
       return;
     }
 
@@ -45,81 +47,38 @@ const OrderCompleted = () => {
 
     try {
       // Call the API to verify payment
-      const data = await verifyPayment(
-        `${paymentsAPIendpoint}/verifypayment/`,
-        { reference, customer_id: parseInt(session?.user?.id) }
-      );
-
-      // Optimistically update the "orders" cache
-      queryClient.setQueryData("payments", (previousOrders = []) => {
-        const orderExists = previousOrders.some((o) => o.id === data.id);
-        if (orderExists) {
-          // Update the existing order
-          return previousOrders.map((o) => (o.id === data.id ? data : o));
-        }
-        // Add the new order
-        return [...previousOrders, data];
+      const data = await verifyPayment({
+        reference,
+        customer_id: user?.id,
       });
-
-      // Optimistically update the "userOrders" cache
-      queryClient.setQueryData(
-        ["paymentsByUser", session?.user?.id],
-        (previousOrders = []) => {
-          const orderExists = previousOrders.some((o) => o.id === data.id);
-          if (orderExists) {
-            // Update the existing order
-            return previousOrders.map((o) => (o.id === data.id ? data : o));
-          }
-          // Add the new order
-          return [...previousOrders, data];
-        }
-      );
-
       setOrder(data);
       setSuccess("Your Payment has been Verified");
 
       // Trigger additional side effects like sending a confirmation email
       sendPaymentSuccessfulEmail(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error verifying payment:", error);
-
-      // Update the "orders" cache to mark the order as failed
-      queryClient.setQueryData("payments", (previousOrders = []) =>
-        previousOrders.map((o) =>
-          o.reference === reference ? { ...o, status: "Failed" } : o
-        )
-      );
-
-      // Update the "userOrders" cache to mark the order as failed
-      queryClient.setQueryData(
-        ["paymentsByUser", session?.user?.id],
-        (previousOrders = []) =>
-          previousOrders.map((o) =>
-            o.reference === reference ? { ...o, status: "Failed" } : o
-          )
-      );
-
       setError(error.message || "An error occurred while verifying payment");
     } finally {
       setLoading(false); // Reset the loading state
     }
-  }, [reference, session, queryClient]);
+  }, [reference, user]);
 
   // -----------------------------------------------
   // trigger the Verify Payment on page load
   // -----------------------------------------------
   useEffect(() => {
-    if (session && reference) {
+    if (user && reference) {
       verifypayment();
     }
-  }, [verifypayment, session, reference]);
+  }, [verifypayment, user, reference]);
 
   // -----------------------------------------------
   // Copy to clipboard function
   // -----------------------------------------------
   const handleCopy = () => {
     setCopied(true);
-    if (order.reference) {
+    if (order && order.reference) {
       navigator.clipboard.writeText(order.reference);
     }
     setTimeout(() => setCopied(false), 3000);
@@ -217,7 +176,7 @@ const OrderCompleted = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {order.services.map((service, index) => (
+                      {order.services.map((service: Service, index: number) => (
                         <tr key={service.id}>
                           <td className="fw-bold">{index + 1}</td>
                           <td>{service.name}</td>
@@ -242,7 +201,7 @@ const OrderCompleted = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {order.products.map((product, index) => (
+                      {order.products.map((product: Product, index: number) => (
                         <tr key={product.id}>
                           <td className="fw-bold">{index + 1}</td>
                           <td>{product.name}</td>
@@ -267,7 +226,7 @@ const OrderCompleted = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {order.videos.map((video, index) => (
+                      {order.videos.map((video: Video, index: number) => (
                         <tr key={video.id}>
                           <td className="fw-bold">{index + 1}</td>
                           <td>{video.title}</td>

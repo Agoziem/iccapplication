@@ -1,9 +1,3 @@
-/**
- * Returns a human-readable time difference like "8 days ago", "2 weeks ago", "3 months ago", etc.
- *
- * @param {Date | string | number} date - The date to compare with the current time.
- * @returns {string} - A string representing how long ago the date was.
- */
 export const timeSince = (date: Date | string | number): string => {
   // Ensure the 'date' is converted to a valid number (timestamp) before performing any operations
   const timeStamp: number = new Date(date).getTime();
@@ -63,13 +57,6 @@ export const timeSince = (date: Date | string | number): string => {
   );
 };
 
-/**
- * Shortens the message by truncating it to a specified limit and adding ellipsis
- *
- * @param {string} message - The message to shorten
- * @param {number} limit - The maximum length of the message
- * @returns {string} - The shortened message with ellipsis if truncated, or original message if within limit
- */
 export const shortenMessage = (message: string, limit: number): string => {
   if (message.length > limit) {
     return message.substring(0, limit) + "...";

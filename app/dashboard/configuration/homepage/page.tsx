@@ -8,13 +8,10 @@ import OrganizationCard from "@/components/features/configuration/home/organizat
 import Staffs from "@/components/features/configuration/home/staffs";
 import Subscriptions from "@/components/features/configuration/home/subscriptions";
 import Testimonials from "@/components/features/configuration/home/testimonials";
-import { useFetchOrganization } from "@/data/organization/organization.hook";
-import React, { useContext, useState } from "react";
+import React, { useState } from "react";
 
 const HomePageConfigPage = () => {
   const [currentSection, setCurrentSection] = useState(1);
-  const { data: OrganizationData } = useFetchOrganization()
-
 
   return (
     <div style={{ minHeight: "100vh" }}>
@@ -158,27 +155,15 @@ const HomePageConfigPage = () => {
         </div>
 
         <div className="col-md-7">
-          {currentSection === 1 && (
-            <OrganizationCard
-              OrganizationData={OrganizationData}
-            />
-          )}
+          {currentSection === 1 && <OrganizationCard />}
           {currentSection === 2 && <Testimonials />}
 
           {currentSection === 3 && <Staffs />}
           {currentSection === 4 && <Depts />}
           {currentSection === 5 && <Subscriptions />}
           {currentSection === 6 && <Messages />}
-          {currentSection === 7 && (
-            <TermsOfUse
-              OrganizationData={OrganizationData}
-            />
-          )}
-          {currentSection === 8 && (
-            <PrivacyPolicy
-              OrganizationData={OrganizationData}
-            />
-          )}
+          {currentSection === 7 && <TermsOfUse />}
+          {currentSection === 8 && <PrivacyPolicy />}
         </div>
       </div>
     </div>

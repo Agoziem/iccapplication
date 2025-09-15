@@ -1,34 +1,3 @@
-// import { MdOutlineQuestionAnswer } from "react-icons/md";
-// import { PiGearBold, PiGraduationCapBold } from "react-icons/pi";
-// import { RiCustomerService2Line } from "react-icons/ri";
-// import { TbBooks } from "react-icons/tb";
-
-
-
-
-// export const dept_icons = [
-//   {
-//     id: 1,
-//     icon: <MdOutlineQuestionAnswer />,
-//   },
-//   {
-//     id: 2,
-//     icon: <PiGraduationCapBold />,
-//   },
-//   {
-//     id: 3,
-//     icon: <TbBooks />,
-//   },
-//   {
-//     id: 4,
-//     icon: <RiCustomerService2Line />,
-//   },
-//   {
-//     id: 5,
-//     icon: <PiGearBold />,
-//   },
-// ];
-
 export const API_URL = process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL;
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
 export const WEBSOCKET_URL = process.env.NEXT_PUBLIC_DJANGO_WEBSOCKET_URL;

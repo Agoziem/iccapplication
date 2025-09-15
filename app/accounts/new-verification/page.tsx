@@ -1,43 +1,49 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import styles from "../accounts.module.css";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useVerifyEmail } from "@/data/hooks/user.hooks";
+import { saveToken } from "@/utils/auth";
 
 const VerificationPage = () => {
-  const [resultmode, setResultMode] = useState("loading");
+  const [resultmode, setResultMode] = useState<"loading" | "success" | "error">(
+    "loading"
+  );
   const [errormessage, setErrorMessage] = useState("something went wrong");
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
+  const { mutateAsync: verifyEmailMutation } = useVerifyEmail();
 
-  const verifyEmail = async () => {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_DJANGO_API_BASE_URL}/authapi/verifyEmail/`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ token }),
+  const verifyEmail = useCallback(
+    async (token: string) => {
+      try {
+        const data = await verifyEmailMutation({ token });
+        setResultMode("success");
+        saveToken(data);
+      } catch (error: any) {
+        if (error.response?.status === 400) {
+          setErrorMessage(
+            error.response.data.error || "Invalid or expired token."
+          );
+          setResultMode("error");
+        } else {
+          setErrorMessage(
+            "something went wrong in the server, try again later"
+          );
+          setResultMode("error");
+        }
       }
-    );
-    const data = await res.json();
-    if (res.ok) {
-      setResultMode("success");
-    } else if (res.status === 400) {
-      setErrorMessage(data.error);
-      setResultMode("error");
-    } else {
-      setErrorMessage("something went wrong in the server, try again later");
-      setResultMode("error");
-    }
-  };
+    },
+    [verifyEmailMutation]
+  );
 
   useEffect(() => {
     if (token) {
-      verifyEmail();
+      verifyEmail(token);
     } else {
+      setErrorMessage("something went wrong in the server, try again later");
       setResultMode("error");
     }
   }, [token]);
