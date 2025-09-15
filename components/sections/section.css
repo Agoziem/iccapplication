@@ -4,7 +4,7 @@
 
 .hero {
   padding-top: 90px;
-  background-image: url("../public/hero background.png");
+  background-image: url("../../public/hero background.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -78,7 +78,7 @@
 --------------------------------------------------------------*/
 
 .features {
-  background-image: url("../public/feature background.png");
+  background-image: url("../../public/feature background.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -93,7 +93,7 @@
 
 .staff-section {
   padding-top: 90px;
-  background-image: url("../public/feature background.png");
+  background-image: url("../../public/feature background.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

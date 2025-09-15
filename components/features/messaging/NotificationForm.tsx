@@ -104,8 +104,11 @@ const NotificationForm: React.FC<NotificationFormProps> = React.memo(({
         };
 
         if (editmode) {
+          if (!notification?.id) {
+            throw new Error("Notification ID is required for updating");
+          }
           await updateNotification({
-            notificationId: notification?.id!,
+            notificationId: notification.id,
             updateData: notificationPayload,
           });
           setSuccess("Notification updated successfully!");

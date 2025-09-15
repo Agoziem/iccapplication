@@ -70,7 +70,6 @@ const StarRating: React.FC<StarRatingProps> = ({
 
     for (let i = 0; i < maxStars; i++) {
       const starProps = {
-        key: i,
         className: `${styles.star || 'star'} ${getSizeClass()}`,
         style: {
           color: tempRating > 0 ? color : emptyColor,
@@ -88,6 +87,7 @@ const StarRating: React.FC<StarRatingProps> = ({
       if (tempRating >= 1) {
         starArray.push(
           <FaStar 
+            key={i}
             {...starProps}
             className={`${starProps.className} ${styles.filled || 'star-filled'}`}
           />
@@ -96,6 +96,7 @@ const StarRating: React.FC<StarRatingProps> = ({
       } else if (tempRating >= precision && precision === 0.5) {
         starArray.push(
           <FaStarHalfAlt 
+            key={i}
             {...starProps}
             className={`${starProps.className} ${styles.filled || 'star-filled'}`}
           />
@@ -104,6 +105,7 @@ const StarRating: React.FC<StarRatingProps> = ({
       } else {
         starArray.push(
           <FaRegStar 
+            key={i}
             {...starProps}
             className={`${starProps.className} ${styles.empty || 'star-empty'}`}
           />

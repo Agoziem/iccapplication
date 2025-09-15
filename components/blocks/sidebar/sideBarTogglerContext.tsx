@@ -1,5 +1,8 @@
 "use client";
-import React, { createContext, useRef, useMemo, ReactNode } from 'react';
+import React from 'react';
+
+const { createContext, useRef, useMemo } = React;
+type ReactNode = React.ReactNode;
 
 // Create context with proper typing
 export const RefContext = createContext<React.RefObject<HTMLElement | null> | null>(null);

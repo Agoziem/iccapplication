@@ -194,7 +194,7 @@ const Messages = () => {
           <div className="col-12 text-center py-5">
             <FiMail size={64} className="text-muted mb-3" />
             <h5 className="text-muted">No messages found</h5>
-            <p className="text-muted">You haven't received any messages yet</p>
+            <p className="text-muted">You haven&rsquo;t received any messages yet</p>
           </div>
         ) : (
           <div className="col-12">

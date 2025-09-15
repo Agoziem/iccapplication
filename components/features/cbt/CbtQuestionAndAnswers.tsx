@@ -27,37 +27,17 @@ const QuestionAndAnswers: React.FC<QuestionAndAnswersProps> = ({
   handleAnswerSelect,
   reviewAnswers,
 }) => {
-  // Safe access to subject and question data
-  const subjectName = currentSubject?.subjectname || 'Unknown Subject';
-  const questions = currentSubject?.questions || [];
-  const questionIndex = currentQuestion?.questionIndex ?? 0;
-  const questionText = currentQuestion?.questiontext || 'Question not available';
-  const answers = currentQuestion?.answers || [];
-  const correctAnswer = currentQuestion?.correctAnswer;
-  const correctAnswerDescription = currentQuestion?.correctAnswerdescription || '';
-
-  // Validate required data
-  if (!currentSubject || !currentQuestion) {
-    return (
-      <div className="alert alert-warning">
-        <h6>Question not available</h6>
-        <p>Unable to load question data. Please try refreshing the page.</p>
-      </div>
-    );
-  }
-
+  // All hooks must be called at the top level, before any conditional logic
   // Safe access to selected answers with validation
   const getSelectedAnswerId = useCallback(() => {
     try {
-      if (!currentSubject.id || !currentQuestion.id) return null;
+      if (!currentSubject?.id || !currentQuestion?.id) return null;
       return selectedAnswers?.[currentSubject.id]?.[currentQuestion.id] || null;
     } catch (error) {
       console.error('Error accessing selected answers:', error);
       return null;
     }
-  }, [selectedAnswers, currentSubject.id, currentQuestion.id]);
-
-  const answerSelectedID = getSelectedAnswerId();
+  }, [selectedAnswers, currentSubject?.id, currentQuestion?.id]);
 
   // Safe answer selection handler
   const safeHandleAnswerSelect = useCallback((subjectId: number, questionId: number, answerId: number) => {
@@ -77,6 +57,26 @@ const QuestionAndAnswers: React.FC<QuestionAndAnswersProps> = ({
       console.error('Error selecting answer:', error);
     }
   }, [handleAnswerSelect]);
+
+  // Safe access to subject and question data
+  const subjectName = currentSubject?.subjectname || 'Unknown Subject';
+  const questions = currentSubject?.questions || [];
+  const questionIndex = currentQuestion?.questionIndex ?? 0;
+  const questionText = currentQuestion?.questiontext || 'Question not available';
+  const answers = currentQuestion?.answers || [];
+  const correctAnswer = currentQuestion?.correctAnswer;
+  const correctAnswerDescription = currentQuestion?.correctAnswerdescription || '';
+  const answerSelectedID = getSelectedAnswerId();
+
+  // Validate required data - this check comes after all hooks
+  if (!currentSubject || !currentQuestion) {
+    return (
+      <div className="alert alert-warning">
+        <h6>Question not available</h6>
+        <p>Unable to load question data. Please try refreshing the page.</p>
+      </div>
+    );
+  }
 
   return (
     <div>

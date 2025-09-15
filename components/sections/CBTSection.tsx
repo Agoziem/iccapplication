@@ -1,3 +1,4 @@
+"use client";
 import AnimationContainer from "@/components/animation/animation-container";
 import Link from "next/link";
 import React from "react";

@@ -1,13 +1,15 @@
 "use client";
 import useLocalStorage from "@/hooks/useLocalStorage";
-import React, {
+import React from "react";
+
+const {
   useState,
   createContext,
   useContext,
   useEffect,
   useTransition,
-  ReactNode,
-} from "react";
+} = React;
+type ReactNode = React.ReactNode;
 import { useRouter } from "next/navigation";
 import { addPayment } from "../../data/hooks/payment.hooks";
 import { useQueryClient } from "react-query";

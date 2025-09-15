@@ -17,23 +17,11 @@ const MessageCard: React.FC<MessageCardProps> = memo(({
   updateMessagefn, 
   setShowlist 
 }) => {
-  // Validate required props
-  if (!message || !message.id) {
-    console.warn('MessageCard: Invalid message data provided');
-    return null;
-  }
-
-  // Safe property extraction with fallbacks
-  const messageId = message.id;
-  const senderName = message.name || 'Unknown Sender';
-  const subject = message.subject || 'No Subject';
-  const messageText = message.message || '';
-  const createdAt = message.created_at || '';
-  const isRead = Boolean(message.read);
-
-
+  // All hooks must be at the top before any conditional logic
   // Safe click handler with error handling
   const handleClick = useCallback(async () => {
+    if (!message || !message.id) return;
+    
     try {
       // Validate required functions
       if (typeof selectMessage !== 'function') {
@@ -47,6 +35,7 @@ const MessageCard: React.FC<MessageCardProps> = memo(({
       }
 
       // Update message if unread and updateMessagefn is provided
+      const isRead = Boolean(message.read);
       if (!isRead && typeof updateMessagefn === 'function') {
         try {
           const updatedMessage = { ...message, read: true };
@@ -63,7 +52,7 @@ const MessageCard: React.FC<MessageCardProps> = memo(({
     } catch (error) {
       console.error('Error handling message click:', error);
     }
-  }, [message, selectMessage, updateMessagefn, setShowlist, isRead]);
+  }, [message, selectMessage, updateMessagefn, setShowlist]);
 
   // Truncate message text safely
   const getTruncatedMessage = useCallback((text: string) => {
@@ -76,19 +65,38 @@ const MessageCard: React.FC<MessageCardProps> = memo(({
   }, []);
 
   // Memoize truncated message and formatted date to prevent recalculation
-  const truncatedMessage = React.useMemo(() => getTruncatedMessage(messageText), [messageText, getTruncatedMessage]);
+  const truncatedMessage = React.useMemo(() => {
+    const messageText = message?.message || '';
+    return getTruncatedMessage(messageText);
+  }, [message?.message, getTruncatedMessage]);
   
   const formattedDate = React.useMemo(() => {
+    const createdAt = message?.created_at || '';
     if (!createdAt) return 'Unknown date';
     const momentDate = moment(createdAt);
     return momentDate.isValid() ? momentDate.format('MMM D, h:mm A') : 'Invalid date';
-  }, [createdAt]);
+  }, [message?.created_at]);
 
   const dateTitle = React.useMemo(() => {
+    const createdAt = message?.created_at;
     if (typeof createdAt === 'string') return createdAt;
     if (createdAt instanceof Date) return createdAt.toISOString();
     return 'Unknown date';
-  }, [createdAt]);
+  }, [message?.created_at]);
+
+  // Validate required props - after all hooks
+  if (!message || !message.id) {
+    console.warn('MessageCard: Invalid message data provided');
+    return null;
+  }
+
+  // Safe property extraction with fallbacks
+  const messageId = message.id;
+  const senderName = message.name || 'Unknown Sender';
+  const subject = message.subject || 'No Subject';
+  const messageText = message.message || '';
+  const createdAt = message.created_at || '';
+  const isRead = Boolean(message.read);
 
   return (
     <div

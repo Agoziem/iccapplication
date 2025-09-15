@@ -1,12 +1,15 @@
-// ContextProviders.tsx
+"use client";
 
-import React, { ReactNode } from "react";
+import React from "react";
 import { OrganizationProvider } from "@/providers/context/Organizationalcontextdata";
 import { CartProvider } from "@/providers/context/Cartcontext";
 import { AdminContextProvider } from "@/providers/context/Admincontextdata";
 import { ChatroomContextProvider } from "@/providers/context/ChatroomContext";
 import { ChatroomSocketProvider } from "@/providers/context/ChatroomSocket";
 import { WhatsappAPIProvider } from "@/providers/context/WhatsappContext";
+import { SidebartoggleRefProvider } from "@/components/blocks/sidebar/sideBarTogglerContext";
+
+type ReactNode = React.ReactNode;
 
 interface ContextProvidersProps {
   children: ReactNode;
@@ -15,13 +18,15 @@ interface ContextProvidersProps {
 const ContextProviders: React.FC<ContextProvidersProps> = ({ children }) => (
   <OrganizationProvider>
     <AdminContextProvider>
+      <SidebartoggleRefProvider>
         <CartProvider>
-            <ChatroomContextProvider>
-              <ChatroomSocketProvider>
-                <WhatsappAPIProvider>{children}</WhatsappAPIProvider>
-              </ChatroomSocketProvider>
-            </ChatroomContextProvider>
+          <ChatroomContextProvider>
+            <ChatroomSocketProvider>
+              <WhatsappAPIProvider>{children}</WhatsappAPIProvider>
+            </ChatroomSocketProvider>
+          </ChatroomContextProvider>
         </CartProvider>
+      </SidebartoggleRefProvider>
     </AdminContextProvider>
   </OrganizationProvider>
 );

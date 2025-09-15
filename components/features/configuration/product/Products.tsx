@@ -243,6 +243,7 @@ const Products = () => {
         {!loadingProducts && filteredProducts?.length > 0 ? (
           filteredProducts?.map((product) => (
             <ProductCard
+              key={product.id}
               product={product}
               onEdit={handleEdit}
               onDelete={handleDeleteConfirm}

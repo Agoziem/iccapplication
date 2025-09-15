@@ -192,7 +192,7 @@ const Testimonials = () => {
 
                   {/* Testimonial Content */}
                   <p className="card-text fs-6 mb-4 text-muted" style={{ lineHeight: "1.6" }}>
-                    "{testimonial.content}"
+                    {testimonial.content} 
                   </p>
 
                   {/* User Info & Actions */}

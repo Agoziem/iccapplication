@@ -105,8 +105,8 @@ const CbtQuiz: React.FC<CbtQuizProps> = ({ Test, setTest }) => {
     if (!currentSubject || !isMountedRef.current) return;
 
     try {
-      let nextQuestionIndex = currentQuestionIndex + 1;
-      let nextSubjectIndex = currentSubjectIndex;
+      const nextQuestionIndex = currentQuestionIndex + 1;
+      const nextSubjectIndex = currentSubjectIndex;
 
       // Move to the next question if it exists in the current subject
       if (nextQuestionIndex < currentSubject.questions.length) {
@@ -224,7 +224,7 @@ const CbtQuiz: React.FC<CbtQuizProps> = ({ Test, setTest }) => {
       Test.testSubject.forEach((subject) => {
         if (!subject || !Array.isArray(subject.questions) || !subject.id) return;
 
-        let subjectScore: SubjectScore = {
+        const subjectScore: SubjectScore = {
           id: subject.id,
           subjectname: subject.subjectname || 'Unknown Subject',
           score: 0,
@@ -312,23 +312,7 @@ const CbtQuiz: React.FC<CbtQuizProps> = ({ Test, setTest }) => {
     setTest(null);
   }, [resetStates, setTest]);
 
-  // Error boundary for invalid test data
-  if (!isValidTest) {
-    return (
-      <div className="alert alert-danger text-center">
-        <h5>Invalid Test Data</h5>
-        <p>The test data is not available or corrupted. Please try again.</p>
-        <button
-          className="btn btn-primary"
-          onClick={() => setTest(null)}
-        >
-          Back to Test Selection
-        </button>
-      </div>
-    );
-  }
-
-  // Navigation state validation
+  // Navigation state validation - moved before conditional returns
   const isFirstQuestion = currentSubjectIndex === 0 && currentQuestionIndex === 0;
   const isLastQuestion = useMemo(() => {
     if (!currentSubject) return false;
@@ -345,6 +329,22 @@ const CbtQuiz: React.FC<CbtQuizProps> = ({ Test, setTest }) => {
     }
     return false;
   }, [Test, currentSubject, currentSubjectIndex, currentQuestionIndex]);
+
+  // Error boundary for invalid test data
+  if (!isValidTest) {
+    return (
+      <div className="alert alert-danger text-center">
+        <h5>Invalid Test Data</h5>
+        <p>The test data is not available or corrupted. Please try again.</p>
+        <button
+          className="btn btn-primary"
+          onClick={() => setTest(null)}
+        >
+          Back to Test Selection
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="pt-3">

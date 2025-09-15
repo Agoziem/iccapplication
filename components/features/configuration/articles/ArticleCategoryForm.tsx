@@ -215,7 +215,7 @@ const ArticleCategoryForm: React.FC<ArticleCategoryFormProps> = ({
             // Delete confirmation
             <>
               <h5 className="mb-3">Delete Category</h5>
-              <p>Are you sure you want to delete "{item.category}"?</p>
+              <p>Are you sure you want to delete &ldquo;{item.category}&rdquo;?</p>
               <div className="d-flex justify-content-end gap-2">
                 <button
                   type="button"

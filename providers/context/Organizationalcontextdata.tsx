@@ -1,7 +1,10 @@
 "use client";
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React from "react";
 import Modal from "@/components/custom/Modal/modal";
 import { Service } from "@/types/items";
+
+const { createContext, useContext, useState } = React;
+type ReactNode = React.ReactNode;
 
 interface OrganizationContextValue {
   openModal: (service: Service) => void;

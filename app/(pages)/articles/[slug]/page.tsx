@@ -1,5 +1,7 @@
 import Article from "@/components/features/Articles/article";
-import { fetchArticleBySlug } from "@/data/hooks/articles.hooks";
+import { articleAPIendpoint } from "@/data/hooks/articles.hooks";
+import { AxiosInstance } from "@/data/instance";
+import { ArticleResponse } from "@/types/articles";
 
 export async function generateMetadata({
   params,
@@ -9,6 +11,13 @@ export async function generateMetadata({
   const { slug } = params;
 
   // Fetch product data
+  const fetchArticleBySlug = async (slug: string): Promise<ArticleResponse> => {
+    const response = await AxiosInstance.get(
+      `${articleAPIendpoint}/blogbyslug/${slug}/`
+    );
+    return response.data;
+  };
+
   const article = await fetchArticleBySlug(slug);
 
   return {

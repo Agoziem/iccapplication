@@ -1,3 +1,4 @@
+"use client";
 import styles from "./page.module.css";
 import HeaderSection from "@/components/sections/headerSection";
 import StatisticsSection from "@/components/sections/statisticsSection";

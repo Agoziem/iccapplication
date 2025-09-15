@@ -4,7 +4,6 @@ import Modal from "@/components/custom/Modal/modal";
 import FeedbackButton from "./FeedbackBtn";
 import TestimonialForm from "../../features/configuration/home/TestimonialForm";
 import { useCreateTestimonial, useOrganization } from "@/data/hooks/organization.hooks";
-import { Testimonial } from "@/types/organizations";
 import { ORGANIZATION_ID } from "@/data/constants";
 
 interface AddOrUpdateState {
@@ -14,7 +13,6 @@ interface AddOrUpdateState {
 
 const Feedback: React.FC = () => {
   const [showModal, setShowModal] = useState<boolean>(false);
-  const { data: OrganizationData } = useOrganization(Number(ORGANIZATION_ID));
   const { mutate: addTestimonial } = useCreateTestimonial();
   
   // Initial testimonial state

@@ -1,5 +1,8 @@
 "use client";
-import React, { createContext, useState, useEffect, useContext, ReactNode } from "react";
+import React from "react";
+
+const { createContext, useState, useEffect, useContext } = React;
+type ReactNode = React.ReactNode;
 
 interface Message {
   id: number;

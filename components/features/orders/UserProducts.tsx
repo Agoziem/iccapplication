@@ -224,7 +224,7 @@ const UserProducts: React.FC = React.memo(() => {
         <div className="mb-3">
           <h5 className="mb-1">Search Results</h5>
           <p className="text-muted small">
-            Found {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''} matching "{searchQuery}"
+            Found {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''} matching &ldquo;{searchQuery}&rdquo;
           </p>
         </div>
       )}

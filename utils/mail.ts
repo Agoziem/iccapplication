@@ -1,5 +1,3 @@
-"use server";
-
 import BulkEmail from "@/components/blocks/Templates/BulkEmail";
 import EmailResponse from "@/components/blocks/Templates/EmailResponse";
 import Onboarding from "@/components/blocks/Templates/Onboarding";

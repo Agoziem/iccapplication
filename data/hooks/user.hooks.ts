@@ -48,6 +48,11 @@ export const getUserByEmail = async (emailData: GetUserByEmail): Promise<User> =
   return response.data;
 };
 
+export const getUserById = async (userId: number): Promise<User> => {
+  const response = await AxiosInstanceWithToken.get(`${authAPIendpoint}/getuserbyid/${userId}/`);
+  return response.data;
+}; 
+
 export const updateUser = async (userId: number, userData: UserUpdate): Promise<User> => {
   const formData = converttoformData(userData);
   const response = await AxiosInstancemultipartWithToken.put(`${authAPIendpoint}/update/${userId}/`, formData);
@@ -138,6 +143,18 @@ export const useUserByEmail = (emailData: GetUserByEmail): UseQueryResult<User, 
     queryKey: USER_KEYS.byEmail(emailData.email),
     queryFn: () => getUserByEmail(emailData),
     enabled: !!emailData.email,
+    onError: (error: Error) => {
+      console.error('Error fetching user by email:', error);
+      throw error;
+    },
+  });
+};
+
+export const useUserById = (user_id: number): UseQueryResult<User, Error> => {
+  return useQuery({
+    queryKey: USER_KEYS.detail(user_id),
+    queryFn: () => getUserById(user_id),
+    enabled: !!user_id,
     onError: (error: Error) => {
       console.error('Error fetching user by email:', error);
       throw error;

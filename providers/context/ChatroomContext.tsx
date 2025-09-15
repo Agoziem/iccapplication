@@ -1,6 +1,9 @@
 "use client";
-import React, { createContext, useState, useEffect, useContext, ReactNode } from "react";
+import React from "react";
 import axios from "axios";
+
+const { createContext, useState, useEffect, useContext } = React;
+type ReactNode = React.ReactNode;
 
 interface ChatRoom {
   id: number;

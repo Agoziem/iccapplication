@@ -38,6 +38,90 @@ interface AlertState {
 
 // Create a simplified form schema that matches the actual API requirements
 
+// Separate TagInput component to avoid hooks in render
+const TagInput: React.FC<{
+  field: any;
+  errors: any;
+  handleInputChange: () => void;
+}> = ({ field, errors, handleInputChange }) => {
+  const [currentTag, setCurrentTag] = useState("");
+  const tags: string[] = field.value || [];
+
+  const addTag = () => {
+    if (currentTag.trim() && !tags.includes(currentTag.trim())) {
+      const newTags = [...tags, currentTag.trim()];
+      field.onChange(newTags);
+      setCurrentTag("");
+      handleInputChange();
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    const newTags = tags.filter((tag: string) => tag !== tagToRemove);
+    field.onChange(newTags);
+    handleInputChange();
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addTag();
+    }
+  };
+
+  return (
+    <div>
+      <div className="input-group mb-2">
+        <input
+          type="text"
+          id="article-tags"
+          className={`form-control ${
+            errors.tags ? "is-invalid" : ""
+          }`}
+          placeholder="Type a tag and press Enter or click Add"
+          value={currentTag}
+          onChange={(e) => setCurrentTag(e.target.value)}
+          onKeyPress={handleKeyPress}
+        />
+        <button
+          type="button"
+          className="btn btn-outline-primary"
+          onClick={addTag}
+        >
+          Add
+        </button>
+      </div>
+
+      {tags.length > 0 && (
+        <div className="tags-container mb-2">
+          {tags.map((tag: string, index: number) => (
+            <span
+              key={index}
+              className="badge bg-primary me-2 mb-1"
+              style={{ fontSize: "0.8em", padding: "0.4em 0.6em" }}
+            >
+              {tag}
+              <button
+                type="button"
+                className="btn-close btn-close-white ms-2"
+                style={{ fontSize: "0.6em" }}
+                onClick={() => removeTag(tag)}
+                aria-label={`Remove ${tag} tag`}
+              />
+            </span>
+          ))}
+        </div>
+      )}
+
+      {errors.tags && (
+        <div className="invalid-feedback d-block">
+          {errors.tags.message}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ArticleForm: React.FC<ArticleFormProps> = ({
   article,
   setArticle,
@@ -109,7 +193,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
       author: user?.id ?? 1,
       organization: typeof ORGANIZATION_ID === "string" ? parseInt(ORGANIZATION_ID) || 1 : ORGANIZATION_ID ?? 1,
     };
-  }, [isEditMode, article, user?.id, ORGANIZATION_ID]);
+  }, [isEditMode, article, user?.id]);
 
   // Form setup with discriminated union validation
   const {
@@ -278,6 +362,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
       showAlert,
       clearDraftArticle,
       closeEditMode,
+      editMode,
     ]
   );
 
@@ -478,92 +563,13 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
             <Controller
               name="tags"
               control={control}
-              render={({ field }) => {
-                const [currentTag, setCurrentTag] = useState("");
-                const tags = field.value || [];
-
-                const addTag = () => {
-                  if (currentTag.trim() && !tags.includes(currentTag.trim())) {
-                    const newTags = [...tags, currentTag.trim()];
-                    field.onChange(newTags);
-                    setCurrentTag("");
-                    handleInputChange();
-                  }
-                };
-
-                const removeTag = (tagToRemove: string) => {
-                  const newTags = tags.filter((tag) => tag !== tagToRemove);
-                  field.onChange(newTags);
-                  handleInputChange();
-                };
-
-                const handleKeyPress = (e: React.KeyboardEvent) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addTag();
-                  }
-                };
-
-                return (
-                  <div>
-                    <div className="input-group mb-2">
-                      <input
-                        type="text"
-                        id="article-tags"
-                        className={`form-control ${
-                          errors.tags ? "is-invalid" : ""
-                        }`}
-                        placeholder="Type a tag and press Enter or click Add"
-                        value={currentTag}
-                        onChange={(e) => setCurrentTag(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        disabled={isSubmitting}
-                        aria-describedby={
-                          errors.tags ? "tags-error" : undefined
-                        }
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-outline-primary"
-                        onClick={addTag}
-                        disabled={!currentTag.trim() || isSubmitting}
-                      >
-                        <i className="bi bi-plus me-1" />
-                        Add
-                      </button>
-                    </div>
-
-                    {/* Display Tags */}
-                    {tags.length > 0 && (
-                      <div className="d-flex flex-wrap gap-2 mb-2">
-                        {tags.map((tag, index) => (
-                          <span
-                            key={index}
-                            className="badge bg-secondary d-flex align-items-center"
-                          >
-                            {tag}
-                            <button
-                              type="button"
-                              className="btn-close btn-close-white ms-2"
-                              style={{ fontSize: "0.6em" }}
-                              onClick={() => removeTag(tag)}
-                              disabled={isSubmitting}
-                              aria-label={`Remove ${tag} tag`}
-                            />
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {errors.tags && (
-                      <div id="tags-error" className="text-danger">
-                        <i className="bi bi-exclamation-circle me-1" />
-                        {errors.tags.message as string}
-                      </div>
-                    )}
-                  </div>
-                );
-              }}
+              render={({ field }) => (
+                <TagInput 
+                  field={field} 
+                  errors={errors} 
+                  handleInputChange={handleInputChange} 
+                />
+              )}
             />
             <div className="form-text">
               Add relevant tags to help categorize your article. Press Enter or

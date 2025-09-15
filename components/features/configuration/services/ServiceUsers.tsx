@@ -291,7 +291,7 @@ const ServiceUsers: React.FC<ServiceUsersProps> = ({
           </h6>
           {searchQuery && (
             <small className="text-muted">
-              Showing results for "{searchQuery}"
+              Showing results for &ldquo;{searchQuery}&rdquo;
             </small>
           )}
         </div>

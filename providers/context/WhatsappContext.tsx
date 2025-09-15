@@ -1,7 +1,11 @@
 "use client";
 import { useSendTemplateMessage } from "@/data/hooks/whatsapp.hooks";
 import { Contact } from "@/types/whatsapp";
-import React, { createContext, useState, useContext, useRef, ReactNode, RefObject } from "react";
+import React from "react";
+
+const { createContext, useState, useContext, useRef } = React;
+type ReactNode = React.ReactNode;
+type RefObject<T> = React.RefObject<T>;
 
 
 interface WhatsappAPIContextValue {
