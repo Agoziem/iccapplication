@@ -67,7 +67,7 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(({
     addToCart(product, "product");
   }, [addToCart, product]);
   return (
-    <div className="card p-4 py-4">
+    <div className="card p-4 py-4" style={{ height: "205px" }}>
       <div className="d-flex align-items-center">
         <div className="me-3">
           {product.preview ? (
@@ -85,10 +85,10 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(({
         </div>
 
         <div
-          className="flex-fill d-flex flex-column justify-content-between"
+          className="flex-fill d-flex flex-column justify-content-between gap-1"
           style={{ height: "100%" }}
         >
-          <h6 className="flex-grow-1">{product?.name || 'Unnamed Product'}</h6>
+          <h6 className="flex-grow-1 line-clamp-1">{product?.name || 'Unnamed Product'}</h6>
           <p className="text-primary mb-1">
             {product?.description && product.description.length > 80 ? (
               <span>
@@ -114,7 +114,7 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(({
               product?.description || 'No description available'
             )}
           </p>
-          <div className="d-flex justify-content-between mt-3 flex-wrap">
+          <div className="d-flex justify-content-between gap-1 flex-wrap">
             <span className="fw-bold text-primary me-2">
               &#8358;{formattedPrice}
             </span>

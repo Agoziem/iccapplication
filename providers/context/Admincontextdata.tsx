@@ -3,6 +3,7 @@
 import React from "react";
 import { Product, Service, Video } from "@/types/items";
 import Modal from "@/components/custom/Modal/modal";
+import { formatPrice } from "@/utils/utilities";
 
 const { createContext, useContext, useState, useCallback, useMemo } = React;
 type ReactNode = React.ReactNode;
@@ -15,7 +16,7 @@ interface AdminContextValue {
   modalItem: ModalItem | null;
   openModal: (item: ModalItem) => void;
   closeModal: () => void;
-  
+
   // Admin state management (can be extended)
   isLoading: boolean;
   error: string | null;
@@ -29,7 +30,9 @@ interface AdminContextProviderProps {
   children: ReactNode;
 }
 
-const AdminContextProvider: React.FC<AdminContextProviderProps> = ({ children }) => {
+const AdminContextProvider: React.FC<AdminContextProviderProps> = ({
+  children,
+}) => {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [modalItem, setModalItem] = useState<ModalItem | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -64,22 +67,34 @@ const AdminContextProvider: React.FC<AdminContextProviderProps> = ({ children })
 
   // Helper function to get item display name
   const getItemDisplayName = useCallback((item: ModalItem): string => {
-    if ('name' in item && item.name) return item.name;
-    if ('title' in item && item.title) return item.title;
+    if ("name" in item && item.name) return item.name;
+    if ("title" in item && item.title) return item.title;
     return "Item Description";
   }, []);
 
   // Memoize context value to prevent unnecessary re-renders
-  const contextValue = useMemo((): AdminContextValue => ({
-    showModal,
-    modalItem,
-    openModal,
-    closeModal,
-    isLoading,
-    error,
-    setError,
-    clearError,
-  }), [showModal, modalItem, openModal, closeModal, isLoading, error, setError, clearError]);
+  const contextValue = useMemo(
+    (): AdminContextValue => ({
+      showModal,
+      modalItem,
+      openModal,
+      closeModal,
+      isLoading,
+      error,
+      setError,
+      clearError,
+    }),
+    [
+      showModal,
+      modalItem,
+      openModal,
+      closeModal,
+      isLoading,
+      error,
+      setError,
+      clearError,
+    ]
+  );
 
   return (
     <AdminContext.Provider value={contextValue}>
@@ -88,24 +103,34 @@ const AdminContextProvider: React.FC<AdminContextProviderProps> = ({ children })
       {/* Modal for Item Description */}
       <Modal showmodal={showModal} toggleModal={closeModal}>
         <div>
-          <h5 className="mb-3">{modalItem ? getItemDisplayName(modalItem) : "Item Description"}</h5>
+          <h5 className="mb-3">
+            {modalItem ? getItemDisplayName(modalItem) : "Item Description"}
+          </h5>
+          <hr />
           <div className="modal-body">
-            <p className="text-muted mb-3">
-              {modalItem?.description || "No description available."}
-            </p>
-            
+            <div
+              dangerouslySetInnerHTML={{
+                __html: modalItem?.description || "No description available",
+              }}
+              className="card-text text-primary small line-clamp-3"
+            />
+
             {/* Display additional item info if available */}
-            {modalItem && 'price' in modalItem && modalItem.price && (
+            {modalItem && "price" in modalItem && modalItem.price && (
               <div className="mb-2">
                 <strong>Price: </strong>
-                <span className="text-success">{modalItem.price}</span>
+                <span className="text-primary fw-bold">
+                  {formatPrice(modalItem.price)}
+                </span>
               </div>
             )}
-            
-            {modalItem && 'category' in modalItem && modalItem.category && (
+
+            {modalItem && "category" in modalItem && modalItem.category && (
               <div className="mb-2">
                 <strong>Category: </strong>
-                <span className="badge bg-secondary">{modalItem.category.category}</span>
+                <span className="badge bg-secondary">
+                  {modalItem.category.category}
+                </span>
               </div>
             )}
           </div>
@@ -143,7 +168,9 @@ const AdminContextProvider: React.FC<AdminContextProviderProps> = ({ children })
 const useAdminContext = (): AdminContextValue => {
   const context = useContext(AdminContext);
   if (!context) {
-    throw new Error("useAdminContext must be used within an AdminContextProvider");
+    throw new Error(
+      "useAdminContext must be used within an AdminContextProvider"
+    );
   }
   return context;
 };

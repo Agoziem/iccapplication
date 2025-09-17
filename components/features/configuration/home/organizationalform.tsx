@@ -8,17 +8,7 @@ import { useUpdateOrganization } from "@/data/hooks/organization.hooks";
 import { Organization } from "@/types/organizations";
 import { UpdateOrganizationSchema } from "@/schemas/organizations";
 import { UpdateOrganization } from "@/types/organizations";
-
-type UpdateOrganizationFormData = {
-  name: string;
-  description: string;
-  vision: string;
-  mission: string;
-  email: string;
-  phone: string;
-  address: string;
-  Organizationlogo?: File;
-};
+import toast from "react-hot-toast";
 
 interface OrganizationalFormProps {
   OrganizationData: Organization | undefined;
@@ -39,7 +29,7 @@ const OrganizationalForm = ({
     formState: { errors, isSubmitting },
     reset,
     setValue,
-  } = useForm<UpdateOrganizationFormData>({
+  } = useForm<UpdateOrganization>({
     resolver: zodResolver(UpdateOrganizationSchema),
     defaultValues: {
       name: "",
@@ -49,6 +39,7 @@ const OrganizationalForm = ({
       email: "",
       phone: "",
       address: "",
+      logo: "",
     },
   });
 
@@ -62,11 +53,12 @@ const OrganizationalForm = ({
       setValue("email", OrganizationData.email || "");
       setValue("phone", OrganizationData.phone || "");
       setValue("address", OrganizationData.address || "");
+      setValue("logo", OrganizationData.Organizationlogo || "");
     }
   }, [OrganizationData, setValue]);
 
   // Handle form submission
-  const onSubmit = async (data: UpdateOrganizationFormData) => {
+  const onSubmit = async (data: UpdateOrganization) => {
     startTransition(async () => {
       try {
         await updateOrganization({
@@ -79,35 +71,33 @@ const OrganizationalForm = ({
             email: data.email,
             phone: data.phone,
             address: data.address,
-            logo: data.Organizationlogo || OrganizationData?.Organizationlogo,
+            logo: data.logo,
           },
         });
         setEditMode(false);
+        toast.success("Organization updated successfully");
       } catch (error) {
         console.error("Error updating organization:", error);
+        toast.error("Failed to update organization. Please try again.");
       }
     });
   };
 
   return (
     <div className="p-3">
-      <h5 className="text-center mb-3">Edit Organization Details</h5>
-      <hr />
-      
       <form onSubmit={handleFormSubmit(onSubmit)}>
         {/* Organization Logo */}
         <div className="mb-4">
-          <label className="form-label fw-bold text-primary">Organization Logo</label>
+          <label className="form-label fw-bold text-primary">
+            Organization Logo
+          </label>
           <Controller
-            name="Organizationlogo"
+            name="logo"
             control={control}
-            render={({ field: { onChange, onBlur, name } }) => (
+            render={({ field }) => (
               <ImageUploader
-                name={name}
-                value={OrganizationData?.Organizationlogo}
-                onChange={onChange}
-                onBlur={onBlur}
-                error={errors.Organizationlogo?.message}
+                {...field}
+                error={errors.logo?.message}
                 placeholder="Upload organization logo"
               />
             )}
@@ -139,7 +129,10 @@ const OrganizationalForm = ({
 
         {/* Organization Description */}
         <div className="mb-3">
-          <label htmlFor="description" className="form-label fw-bold text-primary">
+          <label
+            htmlFor="description"
+            className="form-label fw-bold text-primary"
+          >
             Organization Description <span className="text-danger">*</span>
           </label>
           <Controller
@@ -148,7 +141,9 @@ const OrganizationalForm = ({
             render={({ field }) => (
               <textarea
                 {...field}
-                className={`form-control ${errors.description ? "is-invalid" : ""}`}
+                className={`form-control ${
+                  errors.description ? "is-invalid" : ""
+                }`}
                 id="description"
                 rows={4}
                 placeholder="Enter organization description"

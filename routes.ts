@@ -5,6 +5,9 @@ export const publicRoutes = [
   "/articles",
   "/department",
   "/feedback",
+  "/services",
+  "/products",
+  "/videos"
 ];
 
 export const isPublicRouteOrIncludes = (pathname : string) => {

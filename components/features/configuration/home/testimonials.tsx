@@ -9,9 +9,13 @@ import Alert from "@/components/custom/Alert/Alert";
 import StarRating from "@/components/custom/StarRating/StarRating";
 import TestimonialForm from "./TestimonialForm";
 import Pagination from "@/components/custom/Pagination/Pagination";
-import { useDeleteTestimonial, useTestimonials } from "@/data/hooks/organization.hooks";
+import {
+  useDeleteTestimonial,
+  useTestimonials,
+} from "@/data/hooks/organization.hooks";
 import { Testimonial } from "@/types/organizations";
 import { ORGANIZATION_ID } from "@/data/constants";
+import { parseAsInteger, useQueryState } from "nuqs";
 
 type AlertState = {
   show: boolean;
@@ -23,13 +27,17 @@ const Testimonials = () => {
   const [testimonial, setTestimonial] = useState<Testimonial | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [alert, setAlert] = useState<AlertState>({ show: false, message: "", type: "info" });
+  const [alert, setAlert] = useState<AlertState>({
+    show: false,
+    message: "",
+    type: "info",
+  });
   const [addorupdate, setAddOrUpdate] = useState({ mode: "add", state: false });
-
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const page = searchParams.get("page") || "1";
-  const pageSize = "10";
+  const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
+  const [pageSize, setPageSize] = useQueryState(
+    "page_size",
+    parseAsInteger.withDefault(10)
+  );
   const [isPending, startTransition] = useTransition();
   const [isDeleting, startDeletion] = useTransition();
 
@@ -37,13 +45,11 @@ const Testimonials = () => {
   const { mutateAsync: deleteTestimonial } = useDeleteTestimonial();
 
   // Fetch Testimonials
-  const { data: testimonials, isLoading: loadingTestimonials } = useTestimonials(
-    parseInt(ORGANIZATION_ID || "0"),
-    {
-      page: parseInt(page, 10),
-      page_size: parseInt(pageSize, 10),
-    }
-  );
+  const { data: testimonials, isLoading: loadingTestimonials } =
+    useTestimonials(parseInt(ORGANIZATION_ID || "0"), {
+      page: page,
+      page_size: pageSize,
+    });
 
   // Handle alert display
   const handleAlert = (message: string, type: AlertState["type"]) => {
@@ -56,7 +62,7 @@ const Testimonials = () => {
   // Handle page change
   const handlePageChange = (newPage: string | number) => {
     const pageNum = typeof newPage === "string" ? parseInt(newPage) : newPage;
-    router.push(`?page=${pageNum}&page_size=${pageSize}`, { scroll: false });
+    setPage(pageNum);
   };
 
   // Open modal for add/edit
@@ -84,7 +90,9 @@ const Testimonials = () => {
         setTestimonial(null);
       } catch (error) {
         handleAlert(
-          error instanceof Error ? error.message : "Failed to delete testimonial",
+          error instanceof Error
+            ? error.message
+            : "Failed to delete testimonial",
           "danger"
         );
       }
@@ -115,7 +123,9 @@ const Testimonials = () => {
   // Handle form success
   const handleFormSuccess = () => {
     handleAlert(
-      addorupdate.mode === "add" ? "Testimonial created successfully!" : "Testimonial updated successfully!",
+      addorupdate.mode === "add"
+        ? "Testimonial created successfully!"
+        : "Testimonial updated successfully!",
       "success"
     );
     closeModal();
@@ -123,7 +133,10 @@ const Testimonials = () => {
 
   if (loadingTestimonials) {
     return (
-      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "400px" }}>
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ minHeight: "400px" }}
+      >
         <PulseLoader color="#0d6efd" size={15} />
       </div>
     );
@@ -131,13 +144,14 @@ const Testimonials = () => {
 
   return (
     <div className="container-fluid">
-      {/* Header */}
-      <div className="row mb-4">
+      {/* Testimonials Header */}
+      <div className="row mb-3 align-items-center">
         <div className="col-md-6">
-          <div className="d-flex align-items-center">
-            <FiMessageSquare size={32} className="text-primary me-2" />
-            <h4 className="mb-0">Testimonials Management</h4>
-          </div>
+          <h5 className="mb-1">All Testimonials</h5>
+          <p className="mb-0 text-primary">
+            {testimonials?.count ?? 0} Testimonial
+            {(testimonials?.count ?? 0) !== 1 ? "s" : ""} in Total
+          </p>
         </div>
         <div className="col-md-6 text-end">
           <button
@@ -147,16 +161,6 @@ const Testimonials = () => {
           >
             Add New Testimonial
           </button>
-        </div>
-      </div>
-
-      {/* Testimonials Header */}
-      <div className="row mb-3 align-items-center">
-        <div className="col-md-6">
-          <h5 className="mb-1">All Testimonials</h5>
-          <p className="mb-0 text-primary">
-            {(testimonials?.count ?? 0)} Testimonial{(testimonials?.count ?? 0) !== 1 ? "s" : ""} in Total
-          </p>
         </div>
       </div>
 
@@ -180,7 +184,10 @@ const Testimonials = () => {
         ) : (
           <div className="col-12">
             {testimonials?.results?.map((testimonial) => (
-              <div key={testimonial.id} className="card my-3 border-0 shadow-sm">
+              <div
+                key={testimonial.id}
+                className="card my-3 border-0 shadow-sm"
+              >
                 <div className="card-body p-4">
                   {/* Quote Icon */}
                   <div className="d-flex justify-content-end mb-2">
@@ -191,8 +198,11 @@ const Testimonials = () => {
                   </div>
 
                   {/* Testimonial Content */}
-                  <p className="card-text fs-6 mb-4 text-muted" style={{ lineHeight: "1.6" }}>
-                    {testimonial.content} 
+                  <p
+                    className="card-text fs-6 mb-4 text-muted"
+                    style={{ lineHeight: "1.6" }}
+                  >
+                    {testimonial.content}
                   </p>
 
                   {/* User Info & Actions */}
@@ -225,8 +235,12 @@ const Testimonials = () => {
 
                       {/* User Info */}
                       <div>
-                        <h6 className="mb-1 fw-bold">{testimonial.name || "Anonymous"}</h6>
-                        <p className="mb-1 small text-muted">{testimonial.role || "Customer"}</p>
+                        <h6 className="mb-1 fw-bold">
+                          {testimonial.name || "Anonymous"}
+                        </h6>
+                        <p className="mb-1 small text-muted">
+                          {testimonial.role || "Customer"}
+                        </p>
                         <div className="d-flex align-items-center">
                           <StarRating rating={testimonial.rating || 5} />
                           <small className="text-muted ms-2">
@@ -240,10 +254,9 @@ const Testimonials = () => {
                     <div className="d-flex flex-column align-items-md-end">
                       {/* Date */}
                       <div className="text-muted small mb-3">
-                        {testimonial.created_at 
+                        {testimonial.created_at
                           ? new Date(testimonial.created_at).toDateString()
-                          : "No date"
-                        }
+                          : "No date"}
                       </div>
 
                       {/* Action Buttons */}
@@ -273,12 +286,12 @@ const Testimonials = () => {
       </div>
 
       {/* Pagination */}
-      {testimonials && testimonials.count > parseInt(pageSize) && (
+      {testimonials && testimonials.count > pageSize && (
         <div className="row mt-4">
           <div className="col-12">
             <Pagination
-              currentPage={parseInt(page)}
-              totalPages={Math.ceil(testimonials.count / parseInt(pageSize))}
+              currentPage={page}
+              totalPages={Math.ceil(testimonials.count / pageSize)}
               handlePageChange={handlePageChange}
             />
           </div>
@@ -286,7 +299,11 @@ const Testimonials = () => {
       )}
 
       {/* Add/Edit Testimonial Modal */}
-      <Modal showmodal={showModal} toggleModal={closeModal} overlayclose={false}>
+      <Modal
+        showmodal={showModal}
+        toggleModal={closeModal}
+        overlayclose={false}
+      >
         <TestimonialForm
           testimonial={testimonial}
           editMode={addorupdate.mode === "update"}
@@ -300,9 +317,12 @@ const Testimonials = () => {
         <div className="p-3">
           <p className="text-center">Delete Testimonial</p>
           <hr />
-          <h5 className="text-center mb-4">{testimonial?.name || "Anonymous"}</h5>
+          <h5 className="text-center mb-4">
+            {testimonial?.name || "Anonymous"}
+          </h5>
           <p className="text-center text-muted mb-4">
-            Are you sure you want to delete this testimonial? This action cannot be undone.
+            Are you sure you want to delete this testimonial? This action cannot
+            be undone.
           </p>
           <div className="d-flex justify-content-center gap-2">
             <button
@@ -319,10 +339,7 @@ const Testimonials = () => {
                 "Delete"
               )}
             </button>
-            <button
-              className="btn btn-secondary"
-              onClick={closeModal}
-            >
+            <button className="btn btn-secondary" onClick={closeModal}>
               Cancel
             </button>
           </div>

@@ -251,9 +251,7 @@ const SignupPage = () => {
                     render={({ field }) => (
                       <PasswordInput
                         {...field}
-                        className={`form-control ${
-                          errors.password ? "is-invalid" : ""
-                        }`}
+                        className={`${errors.password ? "is-invalid" : ""}`}
                         placeholder="Enter your password"
                         required
                       />
@@ -274,7 +272,7 @@ const SignupPage = () => {
                     render={({ field }) => (
                       <PasswordInput
                         {...field}
-                        className={`form-control ${
+                        className={`${
                           errors.confirmPassword ? "is-invalid" : ""
                         }`}
                         placeholder="Confirm your password"

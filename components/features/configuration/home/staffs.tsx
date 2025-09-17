@@ -1,7 +1,14 @@
 "use client";
 import React, { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FiUsers, FiEdit, FiTrash2, FiMail, FiPhone, FiMapPin } from "react-icons/fi";
+import {
+  FiUsers,
+  FiEdit,
+  FiTrash2,
+  FiMail,
+  FiPhone,
+  FiMapPin,
+} from "react-icons/fi";
 import { FaFacebook, FaInstagram, FaTwitter, FaLinkedin } from "react-icons/fa";
 import { PulseLoader } from "react-spinners";
 import Modal from "@/components/custom/Modal/modal";
@@ -12,6 +19,7 @@ import { useDeleteStaff, useStaffs } from "@/data/hooks/organization.hooks";
 import { Staff } from "@/types/organizations";
 import { ORGANIZATION_ID } from "@/data/constants";
 import "./homeconfig.css";
+import { parseAsInteger, useQueryState } from "nuqs";
 
 type AlertState = {
   show: boolean;
@@ -23,14 +31,18 @@ const Staffs = () => {
   const [staff, setStaff] = useState<Staff | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [alert, setAlert] = useState<AlertState>({ show: false, message: "", type: "info" });
+  const [alert, setAlert] = useState<AlertState>({
+    show: false,
+    message: "",
+    type: "info",
+  });
   const [addorupdate, setAddOrUpdate] = useState({ mode: "add", state: false });
   const [openIndex, setOpenIndex] = useState<number | null>(null);
-
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const page = searchParams.get("page") || "1";
-  const pageSize = "10";
+  const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
+  const [pageSize, setPageSize] = useQueryState(
+    "page_size",
+    parseAsInteger.withDefault(10)
+  );
   const [isPending, startTransition] = useTransition();
   const [isDeleting, startDeletion] = useTransition();
 
@@ -41,8 +53,8 @@ const Staffs = () => {
   const { data: staffs, isLoading: loadingStaffs } = useStaffs(
     parseInt(ORGANIZATION_ID || "0"),
     {
-      page: parseInt(page, 10),
-      page_size: parseInt(pageSize, 10),
+      page: page,
+      page_size: pageSize,
     }
   );
 
@@ -57,7 +69,7 @@ const Staffs = () => {
   // Handle page change
   const handlePageChange = (newPage: string | number) => {
     const pageNum = typeof newPage === "string" ? parseInt(newPage) : newPage;
-    router.push(`?page=${pageNum}&page_size=${pageSize}`, { scroll: false });
+    setPage(pageNum);
   };
 
   // Handle toggle accordion
@@ -90,7 +102,9 @@ const Staffs = () => {
         setStaff(null);
       } catch (error) {
         handleAlert(
-          error instanceof Error ? error.message : "Failed to delete staff member",
+          error instanceof Error
+            ? error.message
+            : "Failed to delete staff member",
           "danger"
         );
       }
@@ -121,7 +135,9 @@ const Staffs = () => {
   // Handle form success
   const handleFormSuccess = () => {
     handleAlert(
-      addorupdate.mode === "add" ? "Staff member created successfully!" : "Staff member updated successfully!",
+      addorupdate.mode === "add"
+        ? "Staff member created successfully!"
+        : "Staff member updated successfully!",
       "success"
     );
     closeModal();
@@ -129,7 +145,10 @@ const Staffs = () => {
 
   if (loadingStaffs) {
     return (
-      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "400px" }}>
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ minHeight: "400px" }}
+      >
         <PulseLoader color="#0d6efd" size={15} />
       </div>
     );
@@ -137,12 +156,15 @@ const Staffs = () => {
 
   return (
     <div className="container-fluid">
-      {/* Header */}
-      <div className="row mb-4">
-        <div className="col-md-6">
-          <div className="d-flex align-items-center">
-            <FiUsers size={32} className="text-primary me-2" />
-            <h4 className="mb-0">Staff Management</h4>
+      {/* Staff Header */}
+      <div className="row mb-3 align-items-center">
+        <div className="col-md-6 d-flex align-items-center">
+          <div>
+            <h5 className="mb-1">All Staff Members</h5>
+            <p className="mb-0 text-primary">
+              {staffs?.count ?? 0} Staff Member
+              {(staffs?.count ?? 0) !== 1 ? "s" : ""} in Total
+            </p>
           </div>
         </div>
         <div className="col-md-6 text-end">
@@ -153,16 +175,6 @@ const Staffs = () => {
           >
             Add New Staff Member
           </button>
-        </div>
-      </div>
-
-      {/* Staff Header */}
-      <div className="row mb-3 align-items-center">
-        <div className="col-md-6">
-          <h5 className="mb-1">All Staff Members</h5>
-          <p className="mb-0 text-primary">
-            {(staffs?.count ?? 0)} Staff Member{(staffs?.count ?? 0) !== 1 ? "s" : ""} in Total
-          </p>
         </div>
       </div>
 
@@ -181,7 +193,9 @@ const Staffs = () => {
           <div className="col-12 text-center py-5">
             <FiUsers size={64} className="text-muted mb-3" />
             <h5 className="text-muted">No staff members found</h5>
-            <p className="text-muted">Start by adding your first staff member</p>
+            <p className="text-muted">
+              Start by adding your first staff member
+            </p>
           </div>
         ) : (
           <div className="col-12">
@@ -219,18 +233,23 @@ const Staffs = () => {
 
                       {/* Staff Info */}
                       <div className="flex-grow-1">
-                        <h5 className="mb-1 fw-bold">
-                          {staffMember.first_name} {staffMember.last_name} {staffMember.other_names || ""}
-                        </h5>
-                        <p className="text-muted mb-3">{staffMember.role || "Staff Member"}</p>
+                        <h6 className="mb-1 fw-bold">
+                          {staffMember.first_name} {staffMember.last_name}{" "}
+                          {staffMember.other_names || ""}
+                        </h6>
+                        <p className="text-muted mb-3">
+                          {staffMember.role || "Staff Member"}
+                        </p>
 
                         {/* Action Buttons */}
                         <div className="d-flex flex-wrap gap-2">
                           <button
-                            className="btn btn-sm btn-outline-info"
+                            className="btn btn-sm btn-outline-secondary"
                             onClick={() => handleToggle(index)}
                           >
-                            {openIndex === index ? "Hide Details" : "View Details"}
+                            {openIndex === index
+                              ? "Hide Details"
+                              : "View Details"}
                           </button>
                           <button
                             className="btn btn-sm btn-outline-primary"
@@ -255,24 +274,31 @@ const Staffs = () => {
 
                   {/* Collapsible Details */}
                   {openIndex === index && (
-                    <div className="border-top bg-light">
+                    <div className="border-top bg-lighter">
                       <div className="card-body p-4">
                         <h6 className="mb-3 fw-bold">Contact Details</h6>
                         <div className="row g-4">
                           {/* Contact Information */}
                           <div className="col-md-6">
                             <div className="mb-3">
-                              <h6 className="mb-1 text-muted small">Staff ID</h6>
-                              <p className="mb-0">{staffMember.id || "Not available"}</p>
+                              <h6 className="mb-1 text-secondary fw-bold small">
+                                Staff ID
+                              </h6>
+                              <p className="mb-0">
+                                {staffMember.id || "Not available"}
+                              </p>
                             </div>
-                            
+
                             {staffMember.email && (
                               <div className="mb-3">
-                                <h6 className="mb-1 text-muted small d-flex align-items-center">
+                                <h6 className="mb-1 text-secondary fw-bold small d-flex align-items-center">
                                   <FiMail size={14} className="me-1" />
                                   Email
                                 </h6>
-                                <a href={`mailto:${staffMember.email}`} className="text-decoration-none">
+                                <a
+                                  href={`mailto:${staffMember.email}`}
+                                  className="text-decoration-none"
+                                >
                                   {staffMember.email}
                                 </a>
                               </div>
@@ -280,11 +306,14 @@ const Staffs = () => {
 
                             {staffMember.phone && (
                               <div className="mb-3">
-                                <h6 className="mb-1 text-muted small d-flex align-items-center">
+                                <h6 className="mb-1 text-secondary fw-bold small d-flex align-items-center">
                                   <FiPhone size={14} className="me-1" />
                                   Phone
                                 </h6>
-                                <a href={`tel:${staffMember.phone}`} className="text-decoration-none">
+                                <a
+                                  href={`tel:${staffMember.phone}`}
+                                  className="text-decoration-none"
+                                >
                                   {staffMember.phone}
                                 </a>
                               </div>
@@ -292,7 +321,7 @@ const Staffs = () => {
 
                             {staffMember.address && (
                               <div className="mb-3">
-                                <h6 className="mb-1 text-muted small d-flex align-items-center">
+                                <h6 className="mb-1 text-secondary fw-bold small d-flex align-items-center">
                                   <FiMapPin size={14} className="me-1" />
                                   Address
                                 </h6>
@@ -303,7 +332,9 @@ const Staffs = () => {
 
                           {/* Social Media Links */}
                           <div className="col-md-6">
-                            <h6 className="mb-3 text-muted small">Social Media Links</h6>
+                            <h6 className="mb-3 text-secondary fw-bold small">
+                              Social Media Links
+                            </h6>
                             <div className="d-flex flex-wrap gap-2">
                               {staffMember.facebooklink && (
                                 <a
@@ -349,9 +380,14 @@ const Staffs = () => {
                                   <FaLinkedin size={16} />
                                 </a>
                               )}
-                              {!staffMember.facebooklink && !staffMember.instagramlink && !staffMember.twitterlink && !staffMember.linkedinlink && (
-                                <p className="text-muted mb-0">No social media links available</p>
-                              )}
+                              {!staffMember.facebooklink &&
+                                !staffMember.instagramlink &&
+                                !staffMember.twitterlink &&
+                                !staffMember.linkedinlink && (
+                                  <p className="text-muted mb-0">
+                                    No social media links available
+                                  </p>
+                                )}
                             </div>
                           </div>
                         </div>
@@ -366,12 +402,12 @@ const Staffs = () => {
       </div>
 
       {/* Pagination */}
-      {staffs && staffs.count > parseInt(pageSize) && (
+      {staffs && staffs.count > pageSize && (
         <div className="row mt-4">
           <div className="col-12">
             <Pagination
-              currentPage={parseInt(page)}
-              totalPages={Math.ceil(staffs.count / parseInt(pageSize))}
+              currentPage={page}
+              totalPages={Math.ceil(staffs.count / pageSize)}
               handlePageChange={handlePageChange}
             />
           </div>
@@ -379,7 +415,11 @@ const Staffs = () => {
       )}
 
       {/* Add/Edit Staff Modal */}
-      <Modal showmodal={showModal} toggleModal={closeModal} overlayclose={false}>
+      <Modal
+        showmodal={showModal}
+        toggleModal={closeModal}
+        overlayclose={false}
+      >
         <StaffForm
           staff={staff}
           editMode={addorupdate.mode === "update"}
@@ -397,7 +437,8 @@ const Staffs = () => {
             {staff?.first_name} {staff?.last_name}
           </h5>
           <p className="text-center text-muted mb-4">
-            Are you sure you want to delete this staff member? This action cannot be undone.
+            Are you sure you want to delete this staff member? This action
+            cannot be undone.
           </p>
           <div className="d-flex justify-content-center gap-2">
             <button
@@ -414,10 +455,7 @@ const Staffs = () => {
                 "Delete"
               )}
             </button>
-            <button
-              className="btn btn-secondary"
-              onClick={closeModal}
-            >
+            <button className="btn btn-secondary" onClick={closeModal}>
               Cancel
             </button>
           </div>

@@ -27,7 +27,7 @@ const CardFilter: React.FC<CardFilterProps> = React.memo(({ filterChange }) => {
         aria-expanded="false"
         aria-label="Filter options"
       >
-        <i className="bi bi-three-dots" aria-hidden="true"></i>
+        <i className="bi bi-three-dots text-primary" aria-hidden="true"></i>
       </button>
       
       <ul className="dropdown-menu dropdown-menu-end dropdown-menu-arrow">

@@ -32,8 +32,8 @@ export const VIDEO_KEYS = {
 } as const;
 
 // Video Management
-export const fetchVideos = async (organizationId: number): Promise<PaginatedVideoResponse> => {
-  const response = await AxiosInstance.get(`${videosAPIendpoint}/videos/${organizationId}/`);
+export const fetchVideos = async (organizationId: number, params?: Record<string, any>): Promise<PaginatedVideoResponse> => {
+  const response = await AxiosInstance.get(`${videosAPIendpoint}/videos/${organizationId}/`, { params });
   return response.data;
 };
 
@@ -64,13 +64,13 @@ export const deleteVideo = async (videoId: number): Promise<DeleteResponse> => {
   return response.data;
 };
 
-export const fetchTrendingVideos = async (organizationId: number): Promise<PaginatedVideoResponse> => {
-  const response = await AxiosInstance.get(`${videosAPIendpoint}/trendingvideos/${organizationId}/`);
+export const fetchTrendingVideos = async (organizationId: number, params?: Record<string, any>): Promise<PaginatedVideoResponse> => {
+  const response = await AxiosInstance.get(`${videosAPIendpoint}/trendingvideos/${organizationId}/`, { params });
   return response.data;
 };
 
-export const fetchUserBoughtVideos = async (organizationId: number, userId: number): Promise<PaginatedVideoResponse> => {
-  const response = await AxiosInstance.get(`${videosAPIendpoint}/userboughtvideos/${organizationId}/${userId}/`);
+export const fetchUserBoughtVideos = async (organizationId: number, userId: number, params?: Record<string, any>): Promise<PaginatedVideoResponse> => {
+  const response = await AxiosInstance.get(`${videosAPIendpoint}/userboughtvideos/${organizationId}/${userId}/`, { params });
   return response.data;
 };
 
@@ -96,8 +96,8 @@ export const deleteVideoCategory = async (categoryId: number): Promise<DeleteRes
 };
 
 // Video SubCategory Management
-export const fetchVideoSubCategories = async (categoryId: number): Promise<VideoSubCategory[]> => {
-  const response = await AxiosInstance.get(`${videosAPIendpoint}/subcategories/${categoryId}/`);
+export const fetchVideoSubCategories = async (categoryId: number, params?: Record<string, any>): Promise<VideoSubCategory[]> => {
+  const response = await AxiosInstance.get(`${videosAPIendpoint}/subcategories/${categoryId}/`, { params });
   return response.data;
 };
 
@@ -127,7 +127,7 @@ export const deleteVideoSubCategory = async (subCategoryId: number): Promise<Del
 export const useVideos = (organizationId: number, params?: Record<string, any>): UseQueryResult<PaginatedVideoResponse, Error> => {
   return useQuery({
     queryKey: [...VIDEO_KEYS.list(organizationId), params],
-    queryFn: () => fetchVideos(organizationId),
+    queryFn: () => fetchVideos(organizationId, params),
     onError: (error: Error) => {
       console.error('Error fetching videos:', error);
       throw error;
@@ -162,7 +162,7 @@ export const useVideoByToken = (videoToken: string): UseQueryResult<Video, Error
 export const useTrendingVideos = (organizationId: number, params?: Record<string, any>): UseQueryResult<PaginatedVideoResponse, Error> => {
   return useQuery({
     queryKey: [...VIDEO_KEYS.trending(organizationId), params],
-    queryFn: () => fetchTrendingVideos(organizationId),
+    queryFn: () => fetchTrendingVideos(organizationId, params),
     onError: (error: Error) => {
       console.error('Error fetching trending videos:', error);
       throw error;
@@ -173,7 +173,7 @@ export const useTrendingVideos = (organizationId: number, params?: Record<string
 export const useUserBoughtVideos = (organizationId: number, userId: number, params?: Record<string, any>): UseQueryResult<PaginatedVideoResponse, Error> => {
   return useQuery({
     queryKey: [...VIDEO_KEYS.userBought(organizationId, userId), params],
-    queryFn: () => fetchUserBoughtVideos(organizationId, userId),
+    queryFn: () => fetchUserBoughtVideos(organizationId, userId, params),
     enabled: !!organizationId && !!userId,
     onError: (error: Error) => {
       console.error('Error fetching user bought videos:', error);
@@ -293,7 +293,7 @@ export const useDeleteVideoCategory = (): UseMutationResult<DeleteResponse, Erro
 export const useVideoSubCategories = (categoryId: number, params?: Record<string, any>): UseQueryResult<VideoSubCategory[], Error> => {
   return useQuery({
     queryKey: [...VIDEO_KEYS.subCategories(categoryId), params],
-    queryFn: () => fetchVideoSubCategories(categoryId),
+    queryFn: () => fetchVideoSubCategories(categoryId, params),
     enabled: !!categoryId,
     onError: (error: Error) => {
       console.error('Error fetching video subcategories:', error);

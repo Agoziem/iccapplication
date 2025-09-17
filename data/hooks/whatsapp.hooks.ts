@@ -78,7 +78,7 @@ export const sendTemplateMessage = async (
 
 // Template Management
 export const getWhatsAppTemplates = async (): Promise<WATemplateArray> => {
-  const response = await AxiosInstance.get(
+  const response = await AxiosInstanceWithToken.get(
     `${WHATSAPP_API_ENDPOINT}/templates/`
   );
   return response.data;

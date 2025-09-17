@@ -16,7 +16,7 @@ interface ArticlesListProps {
   setEditMode: React.Dispatch<React.SetStateAction<boolean>>;
   loading: boolean;
   currentPage: number;
-  pageSize: string;
+  pageSize: number;
 }
 
 interface AlertState {
@@ -116,8 +116,8 @@ const ArticleList: React.FC<ArticlesListProps> = ({
                     )}
                   </div>
                   <div className="flex-fill">
-                    <h6 className="text-wrap text-break">{article.title}</h6>
-                    <p className="text-wrap text-break">{article.subtitle}</p>
+                    <h6 className="line-clamp-2">{article.title}</h6>
+                    <p className="line-clamp-3">{article.subtitle}</p>
                   </div>
                 </div>
 
@@ -147,10 +147,10 @@ const ArticleList: React.FC<ArticlesListProps> = ({
           {/* ServerSide Pagination */}
           {!loading &&
             articles &&
-            Math.ceil(articles.count / parseInt(pageSize)) > 1 && (
+            Math.ceil(articles.count / pageSize) > 1 && (
               <Pagination
                 currentPage={currentPage}
-                totalPages={Math.ceil(articles.count / parseInt(pageSize))}
+                totalPages={Math.ceil(articles.count / pageSize)}
                 handlePageChange={handlePageChange}
               />
             )}

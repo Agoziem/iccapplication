@@ -13,34 +13,33 @@ const CartButton: React.FC<CartButtonProps> = ({
   className = "",
   style = {},
   checkoutText = "Check out now",
-  emptyCartText = "View your Cart"
+  emptyCartText = "View your Cart",
 }) => {
-  const { cart } = useCart();
-  
+  const { cart, setShowOffCanvas } = useCart();
+
   const buttonText = cart.length > 0 ? checkoutText : emptyCartText;
-  
+
   const defaultStyle: React.CSSProperties = {
     cursor: "pointer",
     backgroundColor: "var(--bgDarkerColor)",
     color: "var(--white)",
     borderRadius: "5px",
-    ...style
+    ...style,
   };
 
   return (
     <div
       className={`px-3 py-2 position-relative mb-2 mb-md-0 ${className}`}
       style={defaultStyle}
-      data-bs-toggle="offcanvas"
-      data-bs-target="#offcanvasTop"
-      aria-controls="offcanvasTop"
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.currentTarget.click();
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          setShowOffCanvas(true);
         }
       }}
+      onClick={() => setShowOffCanvas(true)}
     >
       {buttonText}
       <i className="bi bi-cart3 ms-2 h6" />

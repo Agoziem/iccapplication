@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, forwardRef, useEffect } from "react";
 import { FaTimes } from "react-icons/fa";
 import { FaRegFileImage } from "react-icons/fa6";
@@ -9,12 +8,15 @@ import Alert from "../Alert/Alert";
 interface ImageUploaderProps {
   name?: string;
   value?: File | string | null;
-  onChange?: (file: File | null) => void;
+  onChange?: (file: File | string) => void; // Changed from File | null to File | undefined
   onBlur?: () => void;
   error?: string;
   disabled?: boolean;
   maxSize?: number; // in bytes
   placeholder?: string;
+  width?: number;
+  height?: number;
+  rounded?: boolean; // New prop to control rounded corners
 }
 
 interface AlertState {
@@ -23,22 +25,28 @@ interface AlertState {
 }
 
 const ImageUploader = forwardRef<HTMLInputElement, ImageUploaderProps>(
-  ({
-    name = "image",
-    value,
-    onChange,
-    onBlur,
-    error,
-    disabled = false,
-    maxSize = 8 * 1024 * 1024, // 8MB default
-    placeholder = "Upload Image"
-  }, ref) => {
+  (
+    {
+      name = "image",
+      value,
+      onChange,
+      onBlur,
+      error,
+      disabled = false,
+      maxSize = 8 * 1024 * 1024, // 8MB default
+      placeholder = "Upload Image",
+      width = 80,
+      height = 80,
+      rounded = true
+    },
+    ref
+  ) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [fileName, setFileName] = useState<string>("No Selected file");
     const [image, setImage] = useState<string | null>(null);
     const [errorAlert, setErrorAlert] = useState<AlertState>({
       show: false,
-      message: ""
+      message: "",
     });
 
     const showError = (message: string) => {
@@ -60,7 +68,9 @@ const ImageUploader = forwardRef<HTMLInputElement, ImageUploaderProps>(
 
       // File size validation
       if (selectedFile.size > maxSize) {
-        showError(`File size should not exceed ${Math.round(maxSize / (1024 * 1024))}MB`);
+        showError(
+          `File size should not exceed ${Math.round(maxSize / (1024 * 1024))}MB`
+        );
         return;
       }
 
@@ -72,9 +82,10 @@ const ImageUploader = forwardRef<HTMLInputElement, ImageUploaderProps>(
     const handleUploadClick = (e: React.MouseEvent) => {
       e.preventDefault();
       if (disabled) return;
-      if (ref && 'current' in ref) {
+      if (ref && "current" in ref) {
         ref.current?.click();
       } else {
+        console.log(fileInputRef);
         fileInputRef.current?.click();
       }
     };
@@ -83,20 +94,20 @@ const ImageUploader = forwardRef<HTMLInputElement, ImageUploaderProps>(
       if (disabled) return;
       setFileName("No Selected file");
       setImage(null);
-      onChange?.(null);
-      if (ref && 'current' in ref && ref.current) {
-        ref.current.value = '';
+      onChange?.(""); // Changed from null to undefined
+      if (ref && "current" in ref && ref.current) {
+        ref.current.value = "";
       } else if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = "";
       }
-    };
-
+    }; 
+    
     // Initialize from value prop
     useEffect(() => {
       if (value) {
-        if (typeof value === 'string') {
+        if (typeof value === "string") {
           setImage(value);
-          setFileName(value.split('/').pop() || 'Selected file');
+          setFileName(value.split("/").pop() || "Selected file");
         } else if (value instanceof File) {
           setFileName(value.name);
           setImage(URL.createObjectURL(value));
@@ -109,6 +120,9 @@ const ImageUploader = forwardRef<HTMLInputElement, ImageUploaderProps>(
 
     return (
       <div>
+        {(errorAlert.show || error) && (
+          <Alert type="danger">{errorAlert.message || error}</Alert>
+        )}
         <div className="d-flex align-items-center mt-2">
           <input
             ref={ref || fileInputRef}
@@ -123,23 +137,22 @@ const ImageUploader = forwardRef<HTMLInputElement, ImageUploaderProps>(
           />
 
           {/* selected image display */}
-          {(errorAlert.show || error) && <Alert type="danger">{errorAlert.message || error}</Alert>}
           <div>
             {image ? (
               <img
                 src={image}
-                className="rounded-circle object-fit-cover me-3"
+                className={`object-fit-cover me-3 ${rounded ? "rounded" : "rounded-circle"}`}
                 alt="profile"
-                height={75}
-                width={75}
+                height={height}
+                width={width}
                 style={{ objectPosition: "top center" }}
               />
             ) : (
               <div
-                className="rounded-circle text-white d-flex justify-content-center align-items-center me-2"
+                className={`text-white d-flex justify-content-center align-items-center me-2 ${rounded ? "rounded" : "rounded-circle"}`}
                 style={{
-                  width: 80,
-                  height: 80,
+                  width: height,
+                  height: width,
                   fontSize: 40,
                   backgroundColor: "var(--bgDarkerColor)",
                 }}
@@ -157,10 +170,13 @@ const ImageUploader = forwardRef<HTMLInputElement, ImageUploaderProps>(
                 color: "var(--bgDarkerColor)",
               }}
             >
-              Only .jpg, .jpeg, .png files are allowed. Max size: {Math.round(maxSize / (1024 * 1024))}MB
+              Only .jpg, .jpeg, .png files are allowed. Max size:{" "}
+              {Math.round(maxSize / (1024 * 1024))}MB
             </div>
             <button
-              className={`btn btn-sm btn-accent-primary shadow-none mt-1 ${disabled ? 'disabled' : ''}`}
+              className={`btn btn-sm btn-accent-primary shadow-none mt-1 ${
+                disabled ? "disabled" : ""
+              }`}
               onClick={handleUploadClick}
               disabled={disabled}
             >

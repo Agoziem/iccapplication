@@ -156,45 +156,33 @@ const ArticleCategoryForm: React.FC<ArticleCategoryFormProps> = ({
       {alert.show && <Alert type={alert.type}>{alert.message}</Alert>}
 
       {/* Categories List */}
-      <div className="row">
+      <div className="">
         {categories.length > 0 ? (
-          categories.map((category) => (
-            <div key={category.id} className="col-12 col-md-6 col-lg-4 mb-3">
-              <div className="card h-100">
-                <div className="card-body">
-                  <h6 className="card-title text-truncate">
-                    {category.category}
-                  </h6>
-                  {category.description && (
-                    <p className="card-text small text-muted text-truncate">
-                      {category.description}
-                    </p>
-                  )}
-                </div>
-                <div className="card-footer bg-transparent">
-                  <div className="d-flex justify-content-end gap-2">
-                    <button
-                      className="btn btn-sm btn-outline-primary"
-                      onClick={() => handleEdit(category)}
-                      disabled={isUpdating}
-                    >
-                      <i className="bi bi-pencil me-1" />
-                      Edit
-                    </button>
-                    <button
-                      className="btn btn-sm btn-outline-danger"
-                      onClick={() => {
-                        setItem(category);
-                        setModal(true);
-                      }}
-                      disabled={isDeleting}
-                    >
-                      <i className="bi bi-trash me-1" />
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
+          categories.map((category, i) => (
+            <div
+              key={category.id}
+              className={`badge bg-secondary-light text-secondary mt-2 p-2 px-3 ${
+                categories.length === i + 1 ? "" : "me-2"
+              }`}
+            >
+              <span
+                onClick={() => handleEdit(category)}
+                style={{
+                  cursor: `${isUpdating ? "not-allowed" : "pointer"}`,
+                }}
+              >
+                {category.category}
+              </span>
+              <TiTimes
+                className="ms-2"
+                style={{
+                  cursor: `${isDeleting ? "not-allowed" : "pointer"}`,
+                }}
+                onClick={() => {
+                  setItem(category);
+                  setModal(true);
+                }}
+              />
             </div>
           ))
         ) : (
@@ -215,7 +203,9 @@ const ArticleCategoryForm: React.FC<ArticleCategoryFormProps> = ({
             // Delete confirmation
             <>
               <h5 className="mb-3">Delete Category</h5>
-              <p>Are you sure you want to delete &ldquo;{item.category}&rdquo;?</p>
+              <p>
+                Are you sure you want to delete &ldquo;{item.category}&rdquo;?
+              </p>
               <div className="d-flex justify-content-end gap-2">
                 <button
                   type="button"

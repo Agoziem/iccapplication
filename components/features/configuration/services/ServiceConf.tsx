@@ -8,6 +8,7 @@ import { useService, useServiceUsers } from "@/data/hooks/service.hooks";
 import ServiceUsers from "./ServiceUsers";
 import Pagination from "@/components/custom/Pagination/Pagination";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
+import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
 
 export interface StatusCategory {
   id: number;
@@ -47,13 +48,18 @@ const categories: StatusCategory[] = [
 
 
 const ServiceConfig: React.FC = () => {
-  const { serviceid } = useParams() as { serviceid: string };
+  const { id } = useParams() as { id: string };
   const router = useRouter();
-  const searchParams = useSearchParams();
 
-  const currentCategory = searchParams.get("category") || categories[0].name;
-  const page = searchParams.get("page") || "1";
-  const pageSize = "20";
+  const [currentCategory, setCurrentCategory] = useQueryState(
+    "category",
+    parseAsString.withDefault("All")
+  );
+  const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
+  const [pageSize, setPageSize] = useQueryState(
+    "page_size",
+    parseAsInteger.withDefault(10)
+  );
 
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -62,16 +68,16 @@ const ServiceConfig: React.FC = () => {
     data: service,
     isLoading: loadingService,
     error: serviceError,
-  } = useService(Number(serviceid));
+  } = useService(Number(id));
 
   const { 
     data: users, 
     isLoading: loadingUsers,
     error: usersError,
-  } = useServiceUsers(Number(serviceid), {
+  } = useServiceUsers(Number(id), {
     category: currentCategory,
-    page: parseInt(page),
-    page_size: parseInt(pageSize),
+    page: page,
+    page_size: pageSize,
   });
 
   // Get current category data
@@ -83,18 +89,14 @@ const ServiceConfig: React.FC = () => {
   // Handle page change
   const handlePageChange = (newPage: string | number) => {
     const pageNum = typeof newPage === "string" ? parseInt(newPage) : newPage;
-    router.push(
-      `?category=${currentCategory}&page=${pageNum}`,
-      { scroll: false }
-    );
+    if (!isNaN(pageNum) && pageNum > 0) {
+      setPage(pageNum);
+    }
   };
 
   // Handle category change
   const handleCategoryChange = (categoryName: string) => {
-    router.push(
-      `?category=${categoryName}&page=1`,
-      { scroll: false }
-    );
+    setCurrentCategory(categoryName);
   };
 
   // Loading state
@@ -267,11 +269,11 @@ const ServiceConfig: React.FC = () => {
           )}
 
           {/* Pagination */}
-          {!loadingUsers && users && Math.ceil(users.count / parseInt(pageSize)) > 1 && (
+          {!loadingUsers && users && Math.ceil(users.count / pageSize) > 1 && (
             <div className="d-flex justify-content-center mt-4">
               <Pagination
-                currentPage={parseInt(page)}
-                totalPages={Math.ceil(users.count / parseInt(pageSize))}
+                currentPage={page}
+                totalPages={Math.ceil(users.count / pageSize)}
                 handlePageChange={handlePageChange}
               />
             </div>

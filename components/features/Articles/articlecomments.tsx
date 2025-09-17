@@ -1,6 +1,9 @@
 import React, { useState, useCallback, useEffect } from "react";
 import Modal from "../../custom/Modal/modal";
-import { useDeleteComment, useUpdateComment } from "@/data/hooks/articles.hooks";
+import {
+  useDeleteComment,
+  useUpdateComment,
+} from "@/data/hooks/articles.hooks";
 import { Comment, UpdateComment } from "@/types/articles";
 import { useMyProfile } from "@/data/hooks/user.hooks";
 import { useForm } from "react-hook-form";
@@ -18,16 +21,18 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
   comments,
   className = "",
   style = {},
-  maxInitialComments = 6
+  maxInitialComments = 6,
 }) => {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [deleteMode, setDeleteMode] = useState<boolean>(false);
   const [commentToEdit, setCommentToEdit] = useState<Comment | null>(null);
   const [showAllComments, setShowAllComments] = useState<boolean>(false);
-  
+
   const { data: user } = useMyProfile();
-  const { mutate: deleteComment, isLoading: isDeletingComment } = useDeleteComment();
-  const { mutate: updateComment, isLoading: isUpdatingComment } = useUpdateComment();
+  const { mutate: deleteComment, isLoading: isDeletingComment } =
+    useDeleteComment();
+  const { mutate: updateComment, isLoading: isUpdatingComment } =
+    useUpdateComment();
 
   // React Hook Form setup
   const {
@@ -38,8 +43,8 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
   } = useForm<UpdateComment>({
     resolver: zodResolver(updateCommentSchema),
     defaultValues: {
-      comment: ""
-    }
+      comment: "",
+    },
   });
 
   const closeModal = useCallback(() => {
@@ -76,7 +81,7 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
         },
         onError: (error) => {
           console.error("Failed to delete comment:", error);
-        }
+        },
       });
     } catch (error) {
       console.error("Failed to delete comment:", error);
@@ -84,36 +89,44 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
   }, [commentToEdit, deleteComment, closeModal]);
 
   // Update Comment Handler
-  const handleUpdateComment = useCallback(async (data: UpdateComment) => {
-    if (!commentToEdit?.id) {
-      console.error("No comment to update");
-      return;
-    }
+  const handleUpdateComment = useCallback(
+    async (data: UpdateComment) => {
+      if (!commentToEdit?.id) {
+        console.error("No comment to update");
+        return;
+      }
 
-    const updateData: UpdateComment & { id: number } = {
-      id: commentToEdit.id,
-      comment: data.comment
-    };
+      const updateData: UpdateComment & { id: number } = {
+        id: commentToEdit.id,
+        comment: data.comment,
+      };
 
-    try {
-      updateComment(updateData, {
-        onSuccess: () => {
-          closeModal();
-        },
-        onError: (error) => {
-          console.error("Failed to update comment:", error);
-        }
-      });
-    } catch (error) {
-      console.error("Failed to update comment:", error);
-    }
-  }, [commentToEdit, updateComment, closeModal]);
+      try {
+        updateComment(updateData, {
+          onSuccess: () => {
+            closeModal();
+          },
+          onError: (error) => {
+            console.error("Failed to update comment:", error);
+          },
+        });
+      } catch (error) {
+        console.error("Failed to update comment:", error);
+      }
+    },
+    [commentToEdit, updateComment, closeModal]
+  );
 
-  const canEditComment = useCallback((comment: Comment): boolean => {
-    return user?.id !== undefined && 
-           comment.user?.id !== undefined && 
-           user.id === comment.user.id;
-  }, [user?.id]);
+  const canEditComment = useCallback(
+    (comment: Comment): boolean => {
+      return (
+        user?.id !== undefined &&
+        comment.user?.id !== undefined &&
+        user.id === comment.user.id
+      );
+    },
+    [user?.id]
+  );
 
   // Validation for comments array
   if (!comments || !Array.isArray(comments)) {
@@ -124,7 +137,9 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
     );
   }
 
-  const displayComments = showAllComments ? comments : comments.slice(0, maxInitialComments);
+  const displayComments = showAllComments
+    ? comments
+    : comments.slice(0, maxInitialComments);
   const hasMoreComments = comments.length > maxInitialComments;
 
   return (
@@ -134,7 +149,7 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
         if (!comment || !comment.id) {
           return null;
         }
-        
+
         return (
           <div key={comment.id} className="mb-4">
             <div className="d-flex">
@@ -142,7 +157,7 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
                 {comment.user?.img ? (
                   <img
                     src={comment.user.img}
-                    alt={`${comment.user.username || 'User'} avatar`}
+                    alt={`${comment.user.username || "User"} avatar`}
                     className="rounded-circle object-fit-cover me-3"
                     style={{
                       width: 50,
@@ -161,27 +176,29 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
                     }}
                     aria-label="User avatar"
                   >
-                    {comment.user?.username?.[0]?.toUpperCase() || 'A'}
+                    {comment.user?.username?.[0]?.toUpperCase() || "A"}
                   </div>
                 )}
               </div>
-              
+
               <div className="ms-3 flex-grow-1">
                 <div className="d-flex justify-content-between align-items-start">
-                  <p className="mb-0 fw-bold">{comment.user?.username || 'Anonymous'}</p>
+                  <p className="mb-0 fw-bold">
+                    {comment.user?.username || "Anonymous"}
+                  </p>
                   <small className="text-muted">
-                    {comment.date 
-                      ? new Date(comment.date).toDateString() 
-                      : 'Unknown Date'}
+                    {comment.date
+                      ? new Date(comment.date).toDateString()
+                      : "Unknown Date"}
                   </small>
                 </div>
-                
+
                 <p className="mb-2 mt-1">
-                  {(comment.comment || '').length > 300
-                    ? (comment.comment || '').slice(0, 300) + "..."
-                    : (comment.comment || '')}
+                  {(comment.comment || "").length > 300
+                    ? (comment.comment || "").slice(0, 300) + "..."
+                    : comment.comment || ""}
                 </p>
-                
+
                 {canEditComment(comment) && (
                   <div className="d-flex gap-3">
                     <button
@@ -208,10 +225,10 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
           </div>
         );
       })}
-      
+
       {hasMoreComments && !showAllComments && (
         <div className="text-center mt-4">
-          <button 
+          <button
             type="button"
             className="btn btn-outline-primary"
             onClick={() => setShowAllComments(true)}
@@ -223,7 +240,7 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
 
       {hasMoreComments && showAllComments && (
         <div className="text-center mt-4">
-          <button 
+          <button
             type="button"
             className="btn btn-outline-secondary"
             onClick={() => setShowAllComments(false)}
@@ -234,15 +251,13 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
       )}
 
       {/* Modal for Edit/Delete Comments */}
-      <Modal
-        showmodal={showModal}
-        toggleModal={closeModal}
-      >
+      <Modal showmodal={showModal} toggleModal={closeModal}>
         {deleteMode ? (
           <div className="modal-body">
             <h4 className="text-center mb-4">Delete Comment</h4>
             <p className="text-center mb-4">
-              Are you sure you want to delete this comment? This action cannot be undone.
+              Are you sure you want to delete this comment? This action cannot
+              be undone.
             </p>
             <div className="d-flex justify-content-end gap-3">
               <button
@@ -253,7 +268,11 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
               >
                 {isDeletingComment ? (
                   <>
-                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    <span
+                      className="spinner-border spinner-border-sm me-2"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
                     Deleting...
                   </>
                 ) : (
@@ -280,7 +299,9 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
                 </label>
                 <textarea
                   {...register("comment")}
-                  className={`form-control ${errors.comment ? 'is-invalid' : ''}`}
+                  className={`form-control ${
+                    errors.comment ? "is-invalid" : ""
+                  }`}
                   id="editComment"
                   rows={4}
                   placeholder="Edit your comment..."
@@ -291,7 +312,7 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
                   </div>
                 )}
               </div>
-              
+
               <div className="d-flex justify-content-end gap-3">
                 <button
                   type="submit"
@@ -300,7 +321,11 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
                 >
                   {isSubmitting || isUpdatingComment ? (
                     <>
-                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                      <span
+                        className="spinner-border spinner-border-sm me-2"
+                        role="status"
+                        aria-hidden="true"
+                      ></span>
                       Updating...
                     </>
                   ) : (

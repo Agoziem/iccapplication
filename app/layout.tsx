@@ -6,6 +6,7 @@ import OffCanvas from "@/components/custom/Offcanvas/OffCanvas";
 import Providers from "@/providers";
 import { Toaster } from "react-hot-toast";
 import { Metadata } from "next";
+import BootstrapJs from "@/components/BootstrapJs";
 
 export const metadata: Metadata = {
   title: "ICC Online Center",
@@ -25,6 +26,7 @@ export default function RootLayout({
           {children}
           <OffCanvas />
           <Toaster />
+          <BootstrapJs />
         </Providers>
       </body>
     </html>

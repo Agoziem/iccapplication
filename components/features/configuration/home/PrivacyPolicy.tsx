@@ -9,6 +9,7 @@ import {
   useUpdateOrganization,
 } from "@/data/hooks/organization.hooks";
 import { ORGANIZATION_ID } from "@/data/constants";
+import toast from "react-hot-toast";
 
 type PrivacyPolicyFormData = {
   privacy_policy: string;
@@ -55,10 +56,12 @@ const PrivacyPolicy = () => {
             privacy_policy: data.privacy_policy,
           },
         });
-
-        // Show success feedback (you might want to add a toast notification here)
+        toast.success("Privacy Policy updated successfully");
         console.log("Privacy Policy updated successfully");
       } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to update Privacy Policy"
+        );
         console.error("Error updating Privacy Policy:", error);
       }
     });

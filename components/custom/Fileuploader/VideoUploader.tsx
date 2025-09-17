@@ -6,7 +6,7 @@ import Alert from "../Alert/Alert";
 
 interface VideoUploaderProps {
   value?: File | string | null;
-  onChange?: (file: File | null) => void;
+  onChange?: (file: File | string) => void;
   name?: string;
   maxSize?: number;
   disabled?: boolean;
@@ -73,7 +73,7 @@ const VideoUploader = forwardRef<HTMLInputElement, VideoUploaderProps>(({
   const handleRemoveFile = () => {
     setFileName("No Selected file");
     setVideo(null);
-    onChange?.(null);
+    onChange?.("");
     
     if (fileInputRef.current) {
       fileInputRef.current.value = "";

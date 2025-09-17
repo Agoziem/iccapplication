@@ -9,6 +9,7 @@ import { useMyProfile } from "@/data/hooks/user.hooks";
 import { useVideos } from "@/data/hooks/video.hooks";
 import { ORGANIZATION_ID } from "@/data/constants";
 import { Video } from "@/types/items";
+import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
 
 /**
  * Enhanced UserVideos component with comprehensive error handling and safety checks
@@ -18,103 +19,84 @@ import { Video } from "@/types/items";
 const UserVideos: React.FC = React.memo(() => {
   const { data: user } = useMyProfile();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  
-  // Safe URL parameter extraction
-  const currentCategory = searchParams?.get("category") || "All";
-  const page = searchParams?.get("page") || "1";
-  const pageSize = "10";
-  
+  const [currentCategory, setCurrentCategory] = useQueryState(
+    "category",
+    parseAsString.withDefault("All")
+  );
+  const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
+  const [pageSize, setPageSize] = useQueryState(
+    "page_size",
+    parseAsInteger.withDefault(10)
+  );
+
+
   // Safe state management
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null);
 
   // Safe data fetching with validation
   const {
     data: videos,
     isLoading: loadingVideos,
     error: queryError,
-    isError
-  } = useVideos(
-    parseInt(ORGANIZATION_ID) || 0,
-    {
-      page: page,
-      page_size: pageSize,
-      category: currentCategory !== "All" ? currentCategory : null,
-    }
-  );
+    isError,
+  } = useVideos(parseInt(ORGANIZATION_ID) || 0, {
+    page: page,
+    page_size: pageSize,
+    category: currentCategory !== "All" ? currentCategory : null,
+  });
 
   // Effect to handle query errors
   useEffect(() => {
     if (isError) {
-      setError(queryError?.message || 'Failed to load videos');
+      setError(queryError?.message || "Failed to load videos");
     } else {
       setError(null);
     }
   }, [isError, queryError]);
 
   // Safe page change handler
-  const handlePageChange = useCallback((newPage: string | number) => {
-    const pageValue = typeof newPage === 'number' ? newPage.toString() : newPage;
-    
-    if (!pageValue || typeof pageValue !== 'string') {
-      console.error('Invalid page number:', newPage);
-      return;
-    }
-
-    const pageNum = parseInt(pageValue, 10);
-    if (isNaN(pageNum) || pageNum < 1) {
-      console.error('Invalid page number:', newPage);
-      return;
-    }
-
-    try {
-      const url = `?category=${encodeURIComponent(currentCategory)}&page=${pageNum}&page_size=${pageSize}`;
-      router.push(url, { scroll: false });
-    } catch (error) {
-      console.error('Navigation error:', error);
-      setError('Navigation failed. Please try again.');
-    }
-  }, [currentCategory, pageSize, router]);
+  const handlePageChange = useCallback(
+    (newPage: string | number) => {
+      const pageNumber =
+        typeof newPage === "string" ? parseInt(newPage, 10) : newPage;
+      if (isNaN(pageNumber) || pageNumber < 1) {
+        console.error("Invalid page number:", newPage);
+        return;
+      }
+      setPage(pageNumber);
+    },
+    [currentCategory, pageSize, router]
+  );
 
   // Safe category change handler
-  const handleCategoryChange = useCallback((category: string) => {
-    if (!category || typeof category !== 'string') {
-      console.error('Invalid category:', category);
-      return;
-    }
-
-    try {
-      const url = `?category=${encodeURIComponent(category)}&page=1&page_size=${pageSize}`;
-      router.push(url, { scroll: false });
-    } catch (error) {
-      console.error('Navigation error:', error);
-      setError('Navigation failed. Please try again.');
-    }
-  }, [pageSize, router]);
+  const handleCategoryChange = useCallback(
+    (category: string) => {
+      setCurrentCategory(category);
+      setPage(1); // Reset to first page on category change
+    },
+    [page, pageSize, router]
+  );
 
   // Safe filtered videos with validation
   const filteredVideos = useMemo(() => {
     try {
       if (!videos?.results || !Array.isArray(videos.results)) return [];
-      
-      const validVideos = videos.results.filter(video => 
-        video && 
-        typeof video === 'object' && 
-        video.id && 
-        (video.title)
+
+      const validVideos = videos.results.filter(
+        (video) => video && typeof video === "object" && video.id && video.title
       );
 
-      if (!searchQuery || typeof searchQuery !== 'string') return validVideos;
+      if (!searchQuery || typeof searchQuery !== "string") return validVideos;
 
       const query = searchQuery.toLowerCase().trim();
       if (!query) return validVideos;
 
       return validVideos.filter((video) => {
-        const title = video.title || '';
-        const description = video.description || '';
-        const category = video.category?.category || '';
-        
+        const title = video.title || "";
+        const description = video.description || "";
+        const category = video.category?.category || "";
+
         return (
           title.toLowerCase().includes(query) ||
           description.toLowerCase().includes(query) ||
@@ -122,32 +104,36 @@ const UserVideos: React.FC = React.memo(() => {
         );
       });
     } catch (error) {
-      console.error('Error filtering videos:', error);
-      setError('Error processing videos data');
+      console.error("Error filtering videos:", error);
+      setError("Error processing videos data");
       return [];
     }
   }, [videos, searchQuery]);
 
   // Safe description truncation
-  const getTruncatedDescription = useCallback((description: string | undefined, maxLength = 80) => {
-    if (!description || typeof description !== 'string') return 'No description available';
-    
-    if (description.length <= maxLength) return description;
-    
-    return `${description.substring(0, maxLength).trim()}...`;
-  }, []);
+  const getTruncatedDescription = useCallback(
+    (description: string | undefined, maxLength = 80) => {
+      if (!description || typeof description !== "string")
+        return "No description available";
+
+      if (description.length <= maxLength) return description;
+
+      return `${description.substring(0, maxLength).trim()}...`;
+    },
+    []
+  );
 
   // Safe video token extraction
   const getVideoToken = useCallback((video: Video) => {
     const token = video?.video_token;
-    if (!token || typeof token !== 'string') return null;
+    if (!token || typeof token !== "string") return null;
     return token;
   }, []);
 
   // Safe count display
   const getVideoCount = useMemo(() => {
     const count = videos?.count;
-    if (typeof count !== 'number' || isNaN(count)) return 0;
+    if (typeof count !== "number" || isNaN(count)) return 0;
     return Math.max(0, count);
   }, [videos?.count]);
 
@@ -168,12 +154,18 @@ const UserVideos: React.FC = React.memo(() => {
   // Error state
   if (error) {
     return (
-      <div className="alert alert-danger d-flex align-items-center" role="alert">
+      <div
+        className="alert alert-danger d-flex align-items-center"
+        role="alert"
+      >
         <i className="bi bi-exclamation-triangle-fill me-2"></i>
         <div>
           <strong>Error:</strong> {error}
           <br />
-          <small>Please try refreshing the page or contact support if the issue persists.</small>
+          <small>
+            Please try refreshing the page or contact support if the issue
+            persists.
+          </small>
         </div>
       </div>
     );
@@ -182,11 +174,12 @@ const UserVideos: React.FC = React.memo(() => {
   // No user state
   if (!user) {
     return (
-      <div className="alert alert-warning d-flex align-items-center" role="alert">
+      <div
+        className="alert alert-warning d-flex align-items-center"
+        role="alert"
+      >
         <i className="bi bi-person-exclamation me-2"></i>
-        <div>
-          Please sign in to view your purchased videos.
-        </div>
+        <div>Please sign in to view your purchased videos.</div>
       </div>
     );
   }
@@ -215,24 +208,26 @@ const UserVideos: React.FC = React.memo(() => {
         <div className="mb-3">
           <h5 className="mb-1">Search Results</h5>
           <p className="text-muted small">
-            Found {filteredVideos.length} video{filteredVideos.length !== 1 ? 's' : ''} matching &ldquo;{searchQuery}&rdquo;
+            Found {filteredVideos.length} video
+            {filteredVideos.length !== 1 ? "s" : ""} matching &ldquo;
+            {searchQuery}&rdquo;
           </p>
         </div>
       )}
 
       {/* Videos Grid */}
-      <div className="row g-3">
+      <div className="row g-3 mt-2 ">
         {filteredVideos.length > 0 ? (
           filteredVideos.map((video) => {
-            const videoTitle = video.title || 'Untitled Video';
-            const videoCategory = video.category?.category || 'Uncategorized';
+            const videoTitle = video.title || "Untitled Video";
+            const videoCategory = video.category?.category || "Uncategorized";
             const videoDescription = getTruncatedDescription(video.description);
             const videoToken = getVideoToken(video);
             const hasThumbnail = video.thumbnail && video.img_url;
 
             return (
-              <div key={video.id} className="col-12 col-md-6 col-lg-4">
-                <div className="card h-100 p-3 border-0 shadow-sm">
+              <div key={video.id} className="col-12 col-md-6 col-lg-4 ">
+                <div className="card h-100 p-4">
                   <div className="d-flex align-items-start gap-3">
                     {/* Video Thumbnail */}
                     <div className="flex-shrink-0">
@@ -246,30 +241,38 @@ const UserVideos: React.FC = React.memo(() => {
                           style={{ objectPosition: "center" }}
                         />
                       ) : null}
-                      <div style={{ display: hasThumbnail ? 'none' : 'block' }}>
+                      <div style={{ display: hasThumbnail ? "none" : "block" }}>
                         <VideosPlaceholder />
                       </div>
                     </div>
 
                     {/* Video Info */}
-                    <div className="flex-grow-1 min-w-0">
-                      <h6 className="text-capitalize mb-1 text-truncate" title={videoTitle}>
+                    <div className="flex-grow-1" style={{ minWidth: 0 }}>
+                      <h6
+                        className="text-capitalize mb-1 text-truncate"
+                        title={videoTitle}
+                      >
                         {videoTitle}
                       </h6>
-                      <p className="small text-muted mb-2" title={video.description}>
+                      <p
+                        className="small text-muted mb-2 line-clamp-3"
+                        title={video.description}
+                      >
                         {videoDescription}
                       </p>
-                      
+
                       {/* Footer Section */}
-                      <div className="d-flex justify-content-between align-items-center mt-auto">
+                      <div className="d-flex flex-column gap-2  justify-content-between align-items-start mt-auto">
                         <p className="small text-muted mb-0">
                           {videoCategory} Video
                         </p>
-                        
+
                         {videoToken ? (
                           <Link
-                            href={`/dashboard/my-orders/video/?videotoken=${encodeURIComponent(videoToken)}`}
-                            className="btn btn-primary btn-sm"
+                            href={`/dashboard/my-orders/video/?videotoken=${encodeURIComponent(
+                              videoToken
+                            )}`}
+                            className="badge bg-primary text-white py-2 px-3"
                             aria-label={`Watch ${videoTitle} video`}
                           >
                             <i className="bi bi-play-circle me-1"></i>
@@ -296,13 +299,12 @@ const UserVideos: React.FC = React.memo(() => {
               />
               <h4 className="text-muted mb-2">No Videos Found</h4>
               <p className="text-muted">
-                {searchQuery 
-                  ? `No videos match your search for "${searchQuery}"` 
-                  : "You haven't purchased any videos yet"
-                }
+                {searchQuery
+                  ? `No videos match your search for "${searchQuery}"`
+                  : "You haven't purchased any videos yet"}
               </p>
               {searchQuery && (
-                <button 
+                <button
                   className="btn btn-outline-primary btn-sm"
                   onClick={() => setSearchQuery("")}
                 >
@@ -315,11 +317,11 @@ const UserVideos: React.FC = React.memo(() => {
       </div>
 
       {/* Pagination */}
-      {!loadingVideos && videos && getVideoCount > parseInt(pageSize) && (
+      {!loadingVideos && videos && getVideoCount > pageSize && (
         <div className="mt-4 d-flex justify-content-center">
           <Pagination
             currentPage={String(page)}
-            totalPages={Math.ceil(getVideoCount / parseInt(pageSize))}
+            totalPages={Math.ceil(getVideoCount / pageSize)}
             handlePageChange={handlePageChange}
           />
         </div>
@@ -329,6 +331,6 @@ const UserVideos: React.FC = React.memo(() => {
 });
 
 // Add display name for debugging
-UserVideos.displayName = 'UserVideos';
+UserVideos.displayName = "UserVideos";
 
 export default UserVideos;

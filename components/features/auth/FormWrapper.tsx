@@ -38,15 +38,23 @@ const FormWrapper: React.FC<FormWrapperProps> = ({
 
         {/* Social icons */}
         {showSocial && (
-          <div className="d-md-flex justify-content-center mb-4">
+          <div>
             {GOOGLE_CLIENT_ID && (
               <div className="mb-4">
-                <CustomGoogleLogin
-                  redirectPath={next}
-                  buttonText={
-                    backButtonHrefText === "Sign up" ? "Sign in" : "Sign up"
-                  }
-                />
+                <CustomGoogleLogin redirectPath={next}>
+                  <div
+                    className="d-flex align-items-center justify-content-center me-0 me-md-3 p-2 px-3 mb-4 mb-md-0"
+                    style={{
+                      border: "1.2px solid #98889573",
+                      borderRadius: "5px",
+                      cursor: "pointer",
+                      width: "100%",
+                    }}
+                  >
+                    <FcGoogle className="h5 mb-0 me-2" />
+                    {backButtonHrefText === "Sign up" ? "Sign in with Google" : "Sign up with Google"}
+                  </div>
+                </CustomGoogleLogin>
               </div>
             )}
           </div>

@@ -54,7 +54,7 @@ const CbtForm: React.FC<CbtFormProps> = ({
     type: "info",
   });
   const { data: exams , isLoading: loadingExams } = useTests(parseInt(ORGANIZATION_ID) || null);
-  const { mutateAsync: startExam, isLoading: startingExam } = usePracticeTest(); // hook to start Exam
+  const { mutateAsync: startExam } = usePracticeTest(); // hook to start Exam
 
   // Helper function to convert Subject[] to MultiSelectItem[]
   const subjectsToMultiSelectItems = (
@@ -384,16 +384,16 @@ const CbtForm: React.FC<CbtFormProps> = ({
               <button
                 type="submit"
                 className="btn btn-primary w-100"
-                disabled={loadingExams || submitting || startingExam || !isValid}
+                disabled={loadingExams || submitting || !isValid}
               >
-                {(submitting || startingExam) && (
+                {(submitting) && (
                   <span
                     className="spinner-border spinner-border-sm me-2"
                     role="status"
                     aria-hidden="true"
                   ></span>
                 )}
-                {submitting || startingExam ? "Starting Practice..." : "Start Practice"}
+                {submitting ? "Starting Practice..." : "Start Practice"}
               </button>
             </div>
           </form>

@@ -22,7 +22,7 @@ const HorizontalCard: React.FC<HorizontalCardProps> = React.memo(({
 }) => {
   // Memoized formatted body value
   const formattedBody = useMemo(() => {
-    if (loading) return "Loading...";
+    if (loading) return "...";
     if (typeof cardbody === "number") {
       return new Intl.NumberFormat('en-US').format(cardbody);
     }

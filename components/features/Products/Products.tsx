@@ -1,5 +1,11 @@
 "use client";
-import React, { useContext, useEffect, useMemo, useState, useCallback } from "react";
+import React, {
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+} from "react";
 import { useSearchParams } from "next/navigation";
 import { useAdminContext } from "@/providers/context/Admincontextdata";
 import CartButton from "@/components/custom/Offcanvas/CartButton";
@@ -8,11 +14,16 @@ import ProductCard from "@/components/features/Products/ProductCard";
 import { RiShoppingBasketFill } from "react-icons/ri";
 import Pagination from "@/components/custom/Pagination/Pagination";
 import { useRouter } from "next/navigation";
-import { useProductCategories, useProducts, useTrendingProducts } from "@/data/hooks/product.hooks";
+import {
+  useProductCategories,
+  useProducts,
+  useTrendingProducts,
+} from "@/data/hooks/product.hooks";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
 import AnimationContainer from "@/components/animation/animation-container";
 import { ORGANIZATION_ID } from "@/data/constants";
 import { Category } from "@/types/categories";
+import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
 
 type ExtendedCategory = Category & {
   description: string;
@@ -25,10 +36,15 @@ type ExtendedCategory = Category & {
  */
 const Products: React.FC = React.memo(() => {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const currentCategory = searchParams?.get("category") || "All";
-  const page = searchParams?.get("page") || "1";
-  const pageSize = "10";
+  const [currentCategory, setCurrentCategory] = useQueryState(
+    "category",
+    parseAsString.withDefault("All")
+  );
+  const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
+  const [pageSize, setPageSize] = useQueryState(
+    "page_size",
+    parseAsInteger.withDefault(10)
+  );
   const [allCategories, setAllCategories] = useState<ExtendedCategory[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>(""); // State for search input
 
@@ -46,9 +62,9 @@ const Products: React.FC = React.memo(() => {
     if (categories.length > 0) {
       const allCategoriesWithAll: ExtendedCategory[] = [
         { id: 0, category: "All", description: "All Categories" },
-        ...categories.map(cat => ({
+        ...categories.map((cat) => ({
           ...cat,
-          description: cat.description || cat.category || 'Category'
+          description: cat.description || cat.category || "Category",
         })),
       ];
       setAllCategories(allCategoriesWithAll);
@@ -83,43 +99,28 @@ const Products: React.FC = React.memo(() => {
   // -----------------------------------------
   // Handle page change with proper type safety
   // -----------------------------------------
-  const handlePageChange = useCallback((newPage: string | number) => {
-    const pageValue = typeof newPage === 'number' ? newPage : parseInt(newPage, 10);
-    
-    if (isNaN(pageValue) || pageValue < 1) {
-      console.error('Invalid page number:', newPage);
-      return;
-    }
-
-    try {
-      router.push(
-        `?category=${encodeURIComponent(currentCategory)}&page=${pageValue}&page_size=${pageSize}`,
-        {
-          scroll: false,
-        }
-      );
-    } catch (error) {
-      console.error('Navigation error:', error);
-    }
-  }, [currentCategory, pageSize, router]);
+  const handlePageChange = useCallback(
+    (newPage: string | number) => {
+      if (typeof newPage === "string") {
+        const pageNum = parseInt(newPage, 10);
+        setPage(isNaN(pageNum) || pageNum < 1 ? 1 : pageNum);
+      } else {
+        setPage(newPage < 1 ? 1 : newPage);
+      }
+    },
+    [currentCategory, pageSize, router]
+  );
 
   // -------------------------------
   // Handle category change with proper validation
   // -------------------------------
-  const handleCategoryChange = useCallback((category: string) => {
-    if (!category || typeof category !== 'string') {
-      console.error('Invalid category:', category);
-      return;
-    }
-
-    try {
-      router.push(`?category=${encodeURIComponent(category)}&page=1&page_size=${pageSize}`, {
-        scroll: false,
-      });
-    } catch (error) {
-      console.error('Category navigation error:', error);
-    }
-  }, [pageSize, router]);
+  const handleCategoryChange = useCallback(
+    (category: string) => {
+      setCurrentCategory(category);
+      setPage(1)
+    },
+    [pageSize, router]
+  );
 
   // Memoized filtered products based on search query
   const filteredProducts = useMemo(() => {
@@ -188,7 +189,7 @@ const Products: React.FC = React.memo(() => {
       </div>
 
       {/* Products Section */}
-      {searchQuery && <h5>Search Results</h5>}
+      {searchQuery && <h5>Search Results for &ldquo;{searchQuery}&rdquo;</h5>}
       <div className="row">
         {
           // loading
@@ -201,15 +202,18 @@ const Products: React.FC = React.memo(() => {
             </div>
           ) : filteredProducts?.length > 0 ? (
             filteredProducts?.map((product, index) => (
-              <AnimationContainer
-                delay={0.1 * index}
-                key={product.id}
-                className="col-12 col-md-4"
-              >
-                <ProductCard
-                  product={product}
-                />
-              </AnimationContainer>
+              // <AnimationContainer
+              //   delay={0.1 * index}
+              //   key={product.id}
+              //   className="col-12 col-md-4"
+              // >
+              //   <ProductCard
+              //     product={product}
+              //   />
+              // </AnimationContainer>
+              <div key={product.id} className="col-12 col-md-4">
+                <ProductCard product={product} />
+              </div>
             ))
           ) : (
             // Show "no services available" message if no services at all
@@ -228,10 +232,10 @@ const Products: React.FC = React.memo(() => {
 
         {!loadingProducts &&
           products &&
-          Math.ceil(products.count / parseInt(pageSize)) > 1 && (
+          Math.ceil(products.count / pageSize) > 1 && (
             <Pagination
               currentPage={page}
-              totalPages={Math.ceil(products.count / parseInt(pageSize))}
+              totalPages={Math.ceil(products.count / pageSize)}
               handlePageChange={handlePageChange}
             />
           )}
@@ -250,9 +254,7 @@ const Products: React.FC = React.memo(() => {
         {!loadingTrendingProducts && safeTrendingProducts.length > 0
           ? safeTrendingProducts.map((product) => (
               <div key={product.id} className="col-12 col-md-4">
-                <ProductCard
-                  product={product}
-                />
+                <ProductCard product={product} />
               </div>
             ))
           : null}
@@ -262,6 +264,6 @@ const Products: React.FC = React.memo(() => {
 });
 
 // Add display name for debugging
-Products.displayName = 'Products';
+Products.displayName = "Products";
 
 export default Products;

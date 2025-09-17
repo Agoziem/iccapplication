@@ -22,6 +22,7 @@ import { Category } from "@/types/categories";
 import { ORGANIZATION_ID } from "@/data/constants";
 import { ServiceCategoryManager } from "../../Categories/CategoryManager";
 import ServicesSubCatForm from "../../SubCategories/servicessub";
+import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
 
 type AlertState = {
   show: boolean;
@@ -37,13 +38,16 @@ const Services = () => {
   const [alert, setAlert] = useState<AlertState>({ show: false, message: "", type: "info" });
   const [addorupdate, setAddorupdate] = useState({ mode: "add", state: false });
 
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const currentCategory = searchParams.get("category") || "All";
-  const page = searchParams.get("page") || "1";
-  const pageSize = "10";
+  const [currentCategory, setCurrentCategory] = useQueryState(
+    "category",
+    parseAsString.withDefault("All")
+  );
+  const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
+  const [pageSize, setPageSize] = useQueryState(
+    "page_size",
+    parseAsInteger.withDefault(10)
+  );
   const [allCategories, setAllCategories] = useState<Category[] | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isPending, startTransition] = useTransition();
   const [isdeleting, startDeletion] = useTransition();
@@ -61,8 +65,8 @@ const Services = () => {
     parseInt(ORGANIZATION_ID || "0"),
     {
       category: currentCategory === "All" ? "" : currentCategory,
-      page: parseInt(page),
-      page_size: parseInt(pageSize),
+      page: page,
+      page_size: pageSize,
     }
   );
 
@@ -93,24 +97,14 @@ const Services = () => {
   // Handle page change
   const handlePageChange = (newPage: string | number) => {
     const pageNum = typeof newPage === "string" ? parseInt(newPage) : newPage;
-    router.push(
-      `?category=${currentCategory}&page=${pageNum}&page_size=${pageSize}`,
-      {
-        scroll: false,
-      }
-    );
+    if (isNaN(pageNum) || pageNum < 1) return;
+    setPage(pageNum);
   };
 
   // Handle category change
   const handleCategoryChange = (categoryName: string) => {
     const category = allCategories?.find(cat => cat.category === categoryName);
-    const categoryId = category?.id || 0;
-    router.push(
-      `?category=${categoryId}&page=1&page_size=${pageSize}`,
-      {
-        scroll: false,
-      }
-    );
+    setCurrentCategory(category?.category || "All");
   };
 
   // Open modal for add/edit
@@ -204,7 +198,7 @@ const Services = () => {
         <div className="col-md-6">
           <div className="d-flex align-items-center">
             <BsPersonFillGear size={32} className="text-primary me-2" />
-            <h4 className="mb-0">Services Management</h4>
+            <h4 className="mb-0">Services & Applications</h4>
           </div>
         </div>
         <div className="col-md-6 text-end">
@@ -217,13 +211,13 @@ const Services = () => {
           </button>
         </div>
       </div>
-
+      <hr />
       {/* Category Management */}
-      <div className="row mb-4">
-        <div className="col-12 md:col-md-7">
+      <div className="row mb-4 pt-2">
+        <div className="col-12 col-md-7">
           <ServiceCategoryManager />
         </div>
-        <div className="col-md-5">
+        <div className="col-12 col-md-5">
           <ServicesSubCatForm />
         </div>
       </div>
@@ -270,7 +264,7 @@ const Services = () => {
       {alert.show && <Alert type={alert.type}>{alert.message}</Alert>}
 
       {/* Search Results Header */}
-      {searchQuery && <h5 className="mb-3">Search Results</h5>}
+      {searchQuery && <h5 className="mb-3">Search Results for &ldquo;{searchQuery}&rdquo;</h5>}
 
       {/* Services Grid */}
       <div className="row">
@@ -303,12 +297,12 @@ const Services = () => {
       </div>
 
       {/* Pagination */}
-      {services && services.count > parseInt(pageSize) && (
+      {services && services.count > pageSize && (
         <div className="row mt-4">
           <div className="col-12">
             <Pagination
-              currentPage={parseInt(page)}
-              totalPages={Math.ceil(services.count / parseInt(pageSize))}
+              currentPage={page}
+              totalPages={Math.ceil(services.count / pageSize)}
               handlePageChange={handlePageChange}
             />
           </div>

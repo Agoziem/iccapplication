@@ -68,6 +68,8 @@ const DashboardBody: React.FC = memo(() => {
     error: videoserror,
   } = useVideos(organizationId);
 
+  
+
   return (
     <div className="dashboard">
       <div className="my-4 d-flex justify-content-between align-items-center flex-wrap">
@@ -110,7 +112,7 @@ const DashboardBody: React.FC = memo(() => {
                     iconcolor="success"
                     cardtitle="Customers"
                     icon="bi bi-people"
-                    cardbody={String(orderReport?.customers?.length || 0)}
+                    cardbody={String(orderReport?.customers?.length ?? 0)}
                     cardspan={`Total Customer${
                       orderReport && orderReport?.customers?.length > 1
                         ? "s"
@@ -149,8 +151,8 @@ const DashboardBody: React.FC = memo(() => {
                     icon="bi bi-cart-check"
                     cardbody={String(
                       userOrders &&
-                      userOrders.filter((item) => item.status === "Completed")
-                        .length
+                        userOrders.filter((item) => item.status === "Completed")
+                          .length
                     )}
                     cardspan="Completed Orders"
                     loading={loadingUserOrders}
@@ -214,6 +216,6 @@ const DashboardBody: React.FC = memo(() => {
   );
 });
 
-DashboardBody.displayName = 'DashboardBody';
+DashboardBody.displayName = "DashboardBody";
 
 export default DashboardBody;

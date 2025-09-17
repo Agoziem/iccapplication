@@ -7,35 +7,69 @@ import { imageSchema } from "./custom-validation";
 
 export const OrganizationSchema = z.object({
   id: z.number().int().positive().optional(),
-  logo: z.string().optional(),
+  logo: imageSchema,
   Organizationlogoname: z.string().optional(),
   Organizationlogo: z.string().optional(),
-  name: z.string().min(1, "Organization name is required").max(200, "Name must be less than 200 characters"),
+  name: z
+    .string()
+    .min(1, "Organization name is required")
+    .max(200, "Name must be less than 200 characters"),
   description: z.string().min(1, "Description is required"),
   vision: z.string().min(1, "Vision is required"),
   mission: z.string().min(1, "Mission is required"),
-  email: z.string().email("Invalid email format").max(254, "Email must be less than 254 characters").min(1),
-  phone: z.string().min(1, "Phone is required").max(20, "Phone must be less than 20 characters"),
+  email: z
+    .string()
+    .email("Invalid email format")
+    .max(254, "Email must be less than 254 characters")
+    .min(1),
+  phone: z
+    .string()
+    .min(1, "Phone is required")
+    .max(20, "Phone must be less than 20 characters"),
   address: z.string().min(1, "Address is required"),
   created_at: z.coerce.date().optional(),
   last_updated_date: z.coerce.date().optional(),
-  whatsapplink: z.string().max(200, "Link must be less than 200 characters").optional(),
-  facebooklink: z.string().max(200, "Link must be less than 200 characters").optional(),
-  instagramlink: z.string().max(200, "Link must be less than 200 characters").optional(),
-  twitterlink: z.string().max(200, "Link must be less than 200 characters").optional(),
-  tiktoklink: z.string().max(200, "Link must be less than 200 characters").optional(),
-  linkedinlink: z.string().max(200, "Link must be less than 200 characters").optional(),
-  youtubechannel: z.string().max(200, "Link must be less than 200 characters").optional(),
+  whatsapplink: z
+    .string()
+    .max(200, "Link must be less than 200 characters")
+    .optional(),
+  facebooklink: z
+    .string()
+    .max(200, "Link must be less than 200 characters")
+    .optional(),
+  instagramlink: z
+    .string()
+    .max(200, "Link must be less than 200 characters")
+    .optional(),
+  twitterlink: z
+    .string()
+    .max(200, "Link must be less than 200 characters")
+    .optional(),
+  tiktoklink: z
+    .string()
+    .max(200, "Link must be less than 200 characters")
+    .optional(),
+  linkedinlink: z
+    .string()
+    .max(200, "Link must be less than 200 characters")
+    .optional(),
+  youtubechannel: z
+    .string()
+    .max(200, "Link must be less than 200 characters")
+    .optional(),
   privacy_policy: z.string().optional(),
   terms_of_use: z.string().optional(),
 });
 
 export const OrganizationMiniSchema = z.object({
-   id: z.number().int().positive().optional(),
-   name: z.string().min(1, "Organization name is required").max(200, "Name must be less than 200 characters"),
-    logo: z.string().optional(),
-    Organizationlogoname: z.string().optional(),
-    Organizationlogo: z.string().optional(),
+  id: z.number().int().positive().optional(),
+  name: z
+    .string()
+    .min(1, "Organization name is required")
+    .max(200, "Name must be less than 200 characters"),
+  logo: imageSchema,
+  Organizationlogoname: z.string().optional(),
+  Organizationlogo: z.string().optional(),
 });
 
 /**
@@ -43,20 +77,51 @@ export const OrganizationMiniSchema = z.object({
  */
 export const CreateOrganizationSchema = z.object({
   logo: imageSchema,
-  name: z.string().min(1, "Organization name is required").max(200, "Name must be less than 200 characters"),
+  name: z
+    .string()
+    .min(1, "Organization name is required")
+    .max(200, "Name must be less than 200 characters"),
   description: z.string().min(1, "Description is required"),
   vision: z.string().min(1, "Vision is required"),
   mission: z.string().min(1, "Mission is required"),
-  email: z.string().email("Invalid email format").max(254, "Email must be less than 254 characters").min(1),
-  phone: z.string().min(1, "Phone is required").max(20, "Phone must be less than 20 characters"),
+  email: z
+    .string()
+    .email("Invalid email format")
+    .max(254, "Email must be less than 254 characters")
+    .min(1),
+  phone: z
+    .string()
+    .min(1, "Phone is required")
+    .max(20, "Phone must be less than 20 characters"),
   address: z.string().min(1, "Address is required"),
-  whatsapplink: z.string().max(200, "Link must be less than 200 characters").optional(),
-  facebooklink: z.string().max(200, "Link must be less than 200 characters").optional(),
-  instagramlink: z.string().max(200, "Link must be less than 200 characters").optional(),
-  twitterlink: z.string().max(200, "Link must be less than 200 characters").optional(),
-  tiktoklink: z.string().max(200, "Link must be less than 200 characters").optional(),
-  linkedinlink: z.string().max(200, "Link must be less than 200 characters").optional(),
-  youtubechannel: z.string().max(200, "Link must be less than 200 characters").optional(),
+  whatsapplink: z
+    .string()
+    .max(200, "Link must be less than 200 characters")
+    .optional(),
+  facebooklink: z
+    .string()
+    .max(200, "Link must be less than 200 characters")
+    .optional(),
+  instagramlink: z
+    .string()
+    .max(200, "Link must be less than 200 characters")
+    .optional(),
+  twitterlink: z
+    .string()
+    .max(200, "Link must be less than 200 characters")
+    .optional(),
+  tiktoklink: z
+    .string()
+    .max(200, "Link must be less than 200 characters")
+    .optional(),
+  linkedinlink: z
+    .string()
+    .max(200, "Link must be less than 200 characters")
+    .optional(),
+  youtubechannel: z
+    .string()
+    .max(200, "Link must be less than 200 characters")
+    .optional(),
   privacy_policy: z.string().optional(),
   terms_of_use: z.string().optional(),
 });
@@ -75,17 +140,46 @@ export const StaffSchema = z.object({
   img: z.string().optional(),
   img_url: z.string().optional(),
   img_name: z.string().optional(),
-  first_name: z.string().min(1, "First name is required").max(100, "First name must be less than 100 characters"),
-  last_name: z.string().min(1, "Last name is required").max(100, "Last name must be less than 100 characters"),
-  other_names: z.string().max(100, "Other names must be less than 100 characters").optional(),
-  role: z.string().max(100, "Role must be less than 100 characters").min(1).optional(),
-  email: z.string().email("Invalid email format").max(254, "Email must be less than 254 characters").optional(),
+  first_name: z
+    .string()
+    .min(1, "First name is required")
+    .max(100, "First name must be less than 100 characters"),
+  last_name: z
+    .string()
+    .min(1, "Last name is required")
+    .max(100, "Last name must be less than 100 characters"),
+  other_names: z
+    .string()
+    .max(100, "Other names must be less than 100 characters")
+    .optional(),
+  role: z
+    .string()
+    .max(100, "Role must be less than 100 characters")
+    .min(1)
+    .optional(),
+  email: z
+    .string()
+    .email("Invalid email format")
+    .max(254, "Email must be less than 254 characters")
+    .optional(),
   phone: z.string().max(20, "Phone must be less than 20 characters").optional(),
   address: z.string().optional(),
-  facebooklink: z.string().max(100, "Link must be less than 100 characters").optional(),
-  instagramlink: z.string().max(100, "Link must be less than 100 characters").optional(),
-  twitterlink: z.string().max(100, "Link must be less than 100 characters").optional(),
-  linkedinlink: z.string().max(100, "Link must be less than 100 characters").optional(),
+  facebooklink: z
+    .string()
+    .max(100, "Link must be less than 100 characters")
+    .optional(),
+  instagramlink: z
+    .string()
+    .max(100, "Link must be less than 100 characters")
+    .optional(),
+  twitterlink: z
+    .string()
+    .max(100, "Link must be less than 100 characters")
+    .optional(),
+  linkedinlink: z
+    .string()
+    .max(100, "Link must be less than 100 characters")
+    .optional(),
   created_at: z.coerce.date().optional(),
   last_updated_date: z.coerce.date().optional(),
   organization: z.number().int().positive().optional(),
@@ -96,17 +190,46 @@ export const StaffSchema = z.object({
  */
 export const CreateStaffSchema = z.object({
   img: imageSchema,
-  first_name: z.string().min(1, "First name is required").max(100, "First name must be less than 100 characters"),
-  last_name: z.string().min(1, "Last name is required").max(100, "Last name must be less than 100 characters"),
-  other_names: z.string().max(100, "Other names must be less than 100 characters").optional(),
-  role: z.string().max(100, "Role must be less than 100 characters").min(1).optional(),
-  email: z.string().email("Invalid email format").max(254, "Email must be less than 254 characters").optional(),
+  first_name: z
+    .string()
+    .min(1, "First name is required")
+    .max(100, "First name must be less than 100 characters"),
+  last_name: z
+    .string()
+    .min(1, "Last name is required")
+    .max(100, "Last name must be less than 100 characters"),
+  other_names: z
+    .string()
+    .max(100, "Other names must be less than 100 characters")
+    .optional(),
+  role: z
+    .string()
+    .max(100, "Role must be less than 100 characters")
+    .min(1)
+    .optional(),
+  email: z
+    .string()
+    .email("Invalid email format")
+    .max(254, "Email must be less than 254 characters")
+    .optional(),
   phone: z.string().max(20, "Phone must be less than 20 characters").optional(),
   address: z.string().optional(),
-  facebooklink: z.string().max(100, "Link must be less than 100 characters").optional(),
-  instagramlink: z.string().max(100, "Link must be less than 100 characters").optional(),
-  twitterlink: z.string().max(100, "Link must be less than 100 characters").optional(),
-  linkedinlink: z.string().max(100, "Link must be less than 100 characters").optional(),
+  facebooklink: z
+    .string()
+    .max(100, "Link must be less than 100 characters")
+    .optional(),
+  instagramlink: z
+    .string()
+    .max(100, "Link must be less than 100 characters")
+    .optional(),
+  twitterlink: z
+    .string()
+    .max(100, "Link must be less than 100 characters")
+    .optional(),
+  linkedinlink: z
+    .string()
+    .max(100, "Link must be less than 100 characters")
+    .optional(),
 });
 
 /**
@@ -129,8 +252,11 @@ export const PaginatedStaffSerializer = z.object({
 // -----------------------------------------------------
 export const DepartmentServiceSchema = z.object({
   id: z.number().int().positive().optional(),
-  name: z.string().min(1, "Service name is required").max(100, "Name must be less than 100 characters")
-})
+  name: z
+    .string()
+    .min(1, "Service name is required")
+    .max(100, "Name must be less than 100 characters"),
+});
 
 // ---------------------------------------------------------------------
 // Department Schema (Based on API Department model)
@@ -138,13 +264,16 @@ export const DepartmentServiceSchema = z.object({
 
 export const DepartmentSchema = z.object({
   id: z.number().int().positive().optional(),
-  img: z.string().optional(),
+  img: imageSchema,
   img_url: z.string().optional(),
   img_name: z.string().optional(),
   staff_in_charge: StaffSchema,
   organization: OrganizationMiniSchema,
   services: z.array(DepartmentServiceSchema),
-  name: z.string().min(1, "Department name is required").max(100, "Name must be less than 100 characters"),
+  name: z
+    .string()
+    .min(1, "Department name is required")
+    .max(100, "Name must be less than 100 characters"),
   description: z.string().min(1, "Department description is required"),
   created_at: z.coerce.date().optional(),
   last_updated_date: z.coerce.date().optional(),
@@ -157,9 +286,12 @@ export const CreateDepartmentSchema = z.object({
   img: imageSchema,
   staff_in_charge: z.number().int().positive().optional(),
   services: z.array(z.string()).optional(),
-  name: z.string().min(1, "Department name is required").max(100, "Name must be less than 100 characters"),
+  name: z
+    .string()
+    .min(1, "Department name is required")
+    .max(100, "Name must be less than 100 characters"),
   description: z.string().min(1, "Department description is required"),
-})
+});
 
 export const UpdateDepartmentSchema = CreateDepartmentSchema.partial();
 
@@ -179,10 +311,14 @@ export const PaginatedDepartmentSerializer = z.object({
 
 export const TestimonialSchema = z.object({
   id: z.number().int().positive().optional(),
-  img: z.string().optional(),
+  img: imageSchema,
   img_url: z.string().optional(),
   img_name: z.string().optional(),
-  name: z.string().max(100, "Name must be less than 100 characters").min(1).optional(),
+  name: z
+    .string()
+    .max(100, "Name must be less than 100 characters")
+    .min(1)
+    .optional(),
   content: z.string().min(1, "Content is required"),
   role: z.string().max(100, "Role must be less than 100 characters").optional(),
   rating: z.number().int().optional(),
@@ -195,8 +331,12 @@ export const TestimonialSchema = z.object({
  * Schema for creating testimonials (omits readonly fields)
  */
 export const CreateTestimonialSchema = z.object({
-  img: z.string().optional(),
-  name: z.string().max(100, "Name must be less than 100 characters").min(1).optional(),
+  img: imageSchema,
+  name: z
+    .string()
+    .max(100, "Name must be less than 100 characters")
+    .min(1)
+    .optional(),
   content: z.string().min(1, "Content is required"),
   role: z.string().max(100, "Role must be less than 100 characters").optional(),
   rating: z.number().int().optional(),
@@ -220,7 +360,11 @@ export const PaginatedTestimonialSerializer = z.object({
 
 export const SubscriptionSchema = z.object({
   id: z.number().int().positive().optional(),
-  email: z.string().email("Invalid email format").max(254, "Email must be less than 254 characters").min(1),
+  email: z
+    .string()
+    .email("Invalid email format")
+    .max(254, "Email must be less than 254 characters")
+    .min(1),
   date_added: z.coerce.date().optional(),
   organization: z.number().int().positive().optional(),
 });

@@ -44,7 +44,7 @@ const navlist: NavItem[] = [
   },
   {
     id: uuidv4(),
-    title: "Contact us",
+    title: "Contact",
     link: "/#contact",
   },
 ];

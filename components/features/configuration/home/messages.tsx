@@ -10,9 +10,12 @@ import Modal from "@/components/custom/Modal/modal";
 import Alert from "@/components/custom/Alert/Alert";
 import Pagination from "@/components/custom/Pagination/Pagination";
 import { useEmails, useDeleteEmail } from "@/data/hooks/email.hooks";
-import { Email } from "@/types/emails";
+import { Email, EmailResponse } from "@/types/emails";
 import { ORGANIZATION_ID } from "@/data/constants";
 import * as z from "zod";
+import { parseAsInteger, useQueryState } from "nuqs";
+import { sendReplyEmail } from "@/utils/mail";
+import toast from "react-hot-toast";
 
 // Reply schema
 const ReplySchema = z.object({
@@ -36,12 +39,16 @@ const Messages = () => {
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteMode, setDeleteMode] = useState(false);
-  const [alert, setAlert] = useState<AlertState>({ show: false, message: "", type: "info" });
-
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const page = searchParams.get("page") || "1";
-  const pageSize = "10";
+  const [alert, setAlert] = useState<AlertState>({
+    show: false,
+    message: "",
+    type: "info",
+  });
+  const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
+  const [pageSize, setPageSize] = useQueryState(
+    "page_size",
+    parseAsInteger.withDefault(10)
+  );
   const [isPending, startTransition] = useTransition();
   const [isDeleting, startDeletion] = useTransition();
 
@@ -52,8 +59,8 @@ const Messages = () => {
   const { data: messages, isLoading: loadingMessages } = useEmails(
     parseInt(ORGANIZATION_ID || "0", 10),
     {
-      page: parseInt(page, 10),
-      page_size: parseInt(pageSize, 10),
+      page: page,
+      page_size: pageSize,
     }
   );
 
@@ -83,7 +90,7 @@ const Messages = () => {
   // Handle page change
   const handlePageChange = (newPage: string | number) => {
     const pageNum = typeof newPage === "string" ? parseInt(newPage) : newPage;
-    router.push(`?page=${pageNum}&page_size=${pageSize}`, { scroll: false });
+    setPage(pageNum);
   };
 
   // Handle message deletion
@@ -91,10 +98,14 @@ const Messages = () => {
     startDeletion(async () => {
       try {
         await deleteEmail(messageId);
+        toast.success("Message deleted successfully!");
         handleAlert("Message deleted successfully!", "success");
         setShowDeleteModal(false);
         setMessage(null);
       } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to delete message"
+        );
         handleAlert(
           error instanceof Error ? error.message : "Failed to delete message",
           "danger"
@@ -132,15 +143,19 @@ const Messages = () => {
   const onSubmitReply = async (data: ReplyFormData) => {
     startTransition(async () => {
       try {
-        // Here you would implement the actual email sending logic
-        console.log("Reply data:", {
-          to: message?.email,
-          subject: data.subject,
-          message: data.message,
-        });
+        const datatosubmit: EmailResponse = {
+          recipient_email: message?.email || "",
+          response_subject: data.subject,
+          response_message: data.message,
+        };
+        await sendReplyEmail(datatosubmit);
+        toast.success("Reply sent successfully!");
         handleAlert("Reply sent successfully!", "success");
         closeModal();
       } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to send reply"
+        );
         handleAlert(
           error instanceof Error ? error.message : "Failed to send reply",
           "danger"
@@ -151,7 +166,10 @@ const Messages = () => {
 
   if (loadingMessages) {
     return (
-      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "400px" }}>
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ minHeight: "400px" }}
+      >
         <PulseLoader color="#0d6efd" size={15} />
       </div>
     );
@@ -159,22 +177,13 @@ const Messages = () => {
 
   return (
     <div className="container-fluid">
-      {/* Header */}
-      <div className="row mb-4">
-        <div className="col-md-6">
-          <div className="d-flex align-items-center">
-            <FiMail size={32} className="text-primary me-2" />
-            <h4 className="mb-0">Messages</h4>
-          </div>
-        </div>
-      </div>
-
       {/* Messages Header */}
       <div className="row mb-3 align-items-center">
         <div className="col-md-6">
           <h5 className="mb-1">All Messages</h5>
           <p className="mb-0 text-primary">
-            {(messages?.count ?? 0)} Message{(messages?.count ?? 0) !== 1 ? "s" : ""} in Total
+            {messages?.count ?? 0} Message
+            {(messages?.count ?? 0) !== 1 ? "s" : ""} in Total
           </p>
         </div>
       </div>
@@ -194,7 +203,9 @@ const Messages = () => {
           <div className="col-12 text-center py-5">
             <FiMail size={64} className="text-muted mb-3" />
             <h5 className="text-muted">No messages found</h5>
-            <p className="text-muted">You haven&rsquo;t received any messages yet</p>
+            <p className="text-muted">
+              You haven&rsquo;t received any messages yet
+            </p>
           </div>
         ) : (
           <div className="col-12">
@@ -215,17 +226,26 @@ const Messages = () => {
                             backgroundColor: "var(--bs-primary)",
                           }}
                         >
-                          {messageItem.name?.charAt(0).toUpperCase() || <FiUser size={20} />}
+                          {messageItem.name?.charAt(0).toUpperCase() || (
+                            <FiUser size={20} />
+                          )}
                         </div>
                         <div>
                           <h6 className="mb-1 fw-bold">{messageItem.name}</h6>
-                          <p className="mb-0 text-muted small">{messageItem.email}</p>
+                          <p className="mb-0 text-muted small">
+                            {messageItem.email}
+                          </p>
                         </div>
                       </div>
                       <div className="text-end">
-                        <MdAlternateEmail className="text-primary mb-2" size={24} />
+                        <MdAlternateEmail
+                          className="text-primary mb-2"
+                          size={24}
+                        />
                         <p className="text-muted mb-0 small">
-                          {new Date(messageItem.created_at || "").toLocaleDateString()}
+                          {new Date(
+                            messageItem.created_at || ""
+                          ).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
@@ -233,19 +253,24 @@ const Messages = () => {
                     {/* Message Content */}
                     <div className="mb-3">
                       {messageItem.subject && (
-                        <h6 className="fw-bold mb-2">Subject: {messageItem.subject}</h6>
+                        <h6 className="fw-bold mb-2">
+                          Subject: {messageItem.subject}
+                        </h6>
                       )}
-                      <p className="text-muted mb-0">{messageItem.message}</p>
+                      <p className="text-muted mb-0 line-clamp-3">
+                        {messageItem.message}
+                      </p>
                     </div>
 
                     {/* Action Buttons */}
                     <div className="d-flex flex-wrap justify-content-between align-items-center">
                       <div className="text-primary small">
-                        Received on {new Date(messageItem.created_at || "").toDateString()}
+                        Received on{" "}
+                        {new Date(messageItem.created_at || "").toDateString()}
                       </div>
                       <div className="d-flex gap-2 mt-2 mt-md-0">
                         <button
-                          className="btn btn-sm btn-outline-primary"
+                          className="badge bg-primary text-white px-3 py-2 border-0"
                           onClick={() => handleReply(messageItem)}
                           title="Reply to Message"
                         >
@@ -253,7 +278,7 @@ const Messages = () => {
                           Reply
                         </button>
                         <button
-                          className="btn btn-sm btn-outline-danger"
+                          className="badge bg-danger text-white px-3 py-2 border-0"
                           onClick={() => handleDeleteConfirm(messageItem)}
                           title="Delete Message"
                         >
@@ -271,12 +296,12 @@ const Messages = () => {
       </div>
 
       {/* Pagination */}
-      {messages && messages.count > parseInt(pageSize) && (
+      {messages && messages.count > pageSize && (
         <div className="row mt-4">
           <div className="col-12">
             <Pagination
-              currentPage={parseInt(page)}
-              totalPages={Math.ceil(messages.count / parseInt(pageSize))}
+              currentPage={page}
+              totalPages={Math.ceil(messages.count / pageSize)}
               handlePageChange={handlePageChange}
             />
           </div>
@@ -284,15 +309,21 @@ const Messages = () => {
       )}
 
       {/* Reply Modal */}
-      <Modal showmodal={showModal} toggleModal={closeModal} overlayclose={false}>
+      <Modal
+        showmodal={showModal}
+        toggleModal={closeModal}
+        overlayclose={false}
+      >
         <div className="p-3">
           <h5 className="text-center mb-3">Reply to Message</h5>
           <div className="text-center mb-3">
-            <p className="mb-1 text-muted small">Replying to: {message?.name}</p>
+            <p className="mb-1 text-muted small">
+              Replying to: {message?.name}
+            </p>
             <p className="mb-0 text-primary">{message?.email}</p>
           </div>
           <hr />
-          
+
           <form onSubmit={handleFormSubmit(onSubmitReply)}>
             {/* Subject */}
             <div className="mb-3">
@@ -306,7 +337,9 @@ const Messages = () => {
                   <input
                     {...field}
                     type="text"
-                    className={`form-control ${errors.subject ? "is-invalid" : ""}`}
+                    className={`form-control ${
+                      errors.subject ? "is-invalid" : ""
+                    }`}
                     id="subject"
                     placeholder="Enter reply subject"
                   />
@@ -328,7 +361,9 @@ const Messages = () => {
                 render={({ field }) => (
                   <textarea
                     {...field}
-                    className={`form-control ${errors.message ? "is-invalid" : ""}`}
+                    className={`form-control ${
+                      errors.message ? "is-invalid" : ""
+                    }`}
                     id="message"
                     rows={5}
                     placeholder="Type your reply here..."
@@ -374,11 +409,10 @@ const Messages = () => {
         <div className="p-3">
           <p className="text-center">Delete Message</p>
           <hr />
-          <h5 className="text-center mb-4">
-            Message from {message?.name}
-          </h5>
+          <h5 className="text-center mb-4">Message from {message?.name}</h5>
           <p className="text-center text-muted mb-4">
-            Are you sure you want to delete this message? This action cannot be undone.
+            Are you sure you want to delete this message? This action cannot be
+            undone.
           </p>
           <div className="d-flex justify-content-center gap-2">
             <button
@@ -395,10 +429,7 @@ const Messages = () => {
                 "Delete"
               )}
             </button>
-            <button
-              className="btn btn-secondary"
-              onClick={closeModal}
-            >
+            <button className="btn btn-secondary" onClick={closeModal}>
               Cancel
             </button>
           </div>

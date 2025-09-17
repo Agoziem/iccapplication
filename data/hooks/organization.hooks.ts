@@ -90,8 +90,8 @@ export const editTermsOfUse = async (organizationId: number, termsOfUse: string)
 };
 
 // Staff CRUD operations
-export const fetchStaff = async (organizationId: number): Promise<PaginatedStaff> => {
-  const response = await AxiosInstance.get(`${organizationApiendpoint}/staff/${organizationId}/`);
+export const fetchStaff = async (organizationId: number, params?: Record<string, any>): Promise<PaginatedStaff> => {
+  const response = await AxiosInstance.get(`${organizationApiendpoint}/staff/${organizationId}/`, { params });
   return response.data;
 };
 
@@ -123,23 +123,25 @@ export const deleteStaff = async (staffId: number): Promise<void> => {
 };
 
 // Department CRUD operations
-export const fetchDepartments = async (organizationId: number): Promise<PaginatedDepartment> => {
-  const response = await AxiosInstance.get(`${organizationApiendpoint}/department/${organizationId}/`);
+export const fetchDepartments = async (organizationId: number, params?: Record<string, any>): Promise<PaginatedDepartment> => {
+  const response = await AxiosInstance.get(`${organizationApiendpoint}/department/${organizationId}/`, { params });
   return response.data;
 };
 
 export const createDepartment = async (organizationId: number, departmentData: CreateDepartment): Promise<Department> => {
-  const response = await AxiosInstanceWithToken.post(
+  const formData = converttoformData(departmentData, ["services"]);
+  const response = await AxiosInstancemultipartWithToken.post(
     `${organizationApiendpoint}/department/add/${organizationId}/`,
-    departmentData
+    formData
   );
   return response.data;
 };
 
 export const updateDepartment = async (departmentId: number, updateData: UpdateDepartment): Promise<Department> => {
-  const response = await AxiosInstanceWithToken.put(
+  const formData = converttoformData(updateData, ["services"]);
+  const response = await AxiosInstancemultipartWithToken.put(
     `${organizationApiendpoint}/department/update/${departmentId}/`,
-    updateData
+    formData
   );
   return response.data;
 };
@@ -149,8 +151,8 @@ export const deleteDepartment = async (departmentId: number): Promise<void> => {
 };
 
 // Testimonial CRUD operations
-export const fetchTestimonials = async (organizationId: number): Promise<PaginatedTestimonial> => {
-  const response = await AxiosInstance.get(`${organizationApiendpoint}/testimonial/${organizationId}/`);
+export const fetchTestimonials = async (organizationId: number, params?: Record<string, any>): Promise<PaginatedTestimonial> => {
+  const response = await AxiosInstance.get(`${organizationApiendpoint}/testimonial/${organizationId}/`, { params });
   return response.data;
 };
 
@@ -182,8 +184,8 @@ export const deleteTestimonial = async (testimonialId: number): Promise<void> =>
 };
 
 // Subscription CRUD operations
-export const fetchSubscriptions = async (organizationId: number): Promise<PaginatedSubscription> => {
-  const response = await AxiosInstance.get(`${organizationApiendpoint}/subscription/${organizationId}/`);
+export const fetchSubscriptions = async (organizationId: number, params?: Record<string, any>): Promise<PaginatedSubscription> => {
+  const response = await AxiosInstance.get(`${organizationApiendpoint}/subscription/${organizationId}/`, { params });
   return response.data;
 };
 
@@ -322,7 +324,7 @@ export const useEditTermsOfUse = (): UseMutationResult<Organization, Error, { or
 export const useStaffs = (organizationId: number, params?: Record<string, any>): UseQueryResult<PaginatedStaff, Error> => {
   return useQuery({
     queryKey: [...ORGANIZATION_KEYS.staff(organizationId), params],
-    queryFn: () => fetchStaff(organizationId),
+    queryFn: () => fetchStaff(organizationId, params),
     enabled: !!organizationId,
     onError: (error: Error) => {
       console.error('Error fetching staff:', error);
@@ -395,7 +397,7 @@ export const useDeleteStaff = (): UseMutationResult<void, Error, { staffId: numb
 export const useDepartments = (organizationId: number, params?: Record<string, any>): UseQueryResult<PaginatedDepartment, Error> => {
   return useQuery({
     queryKey: [...ORGANIZATION_KEYS.departments(organizationId), params],
-    queryFn: () => fetchDepartments(organizationId),
+    queryFn: () => fetchDepartments(organizationId, params),
     enabled: !!organizationId,
     onError: (error: Error) => {
       console.error('Error fetching departments:', error);
@@ -454,7 +456,7 @@ export const useDeleteDepartment = (): UseMutationResult<void, Error, { departme
 export const useTestimonials = (organizationId: number, params?: Record<string, any>): UseQueryResult<PaginatedTestimonial, Error> => {
   return useQuery({
     queryKey: [...ORGANIZATION_KEYS.testimonials(organizationId), params],
-    queryFn: () => fetchTestimonials(organizationId),
+    queryFn: () => fetchTestimonials(organizationId, params),
     enabled: !!organizationId,
     onError: (error: Error) => {
       console.error('Error fetching testimonials:', error);
@@ -527,7 +529,7 @@ export const useDeleteTestimonial = (): UseMutationResult<void, Error, { testimo
 export const useSubscriptions = (organizationId: number, params?: Record<string, any>): UseQueryResult<PaginatedSubscription, Error> => {
   return useQuery({
     queryKey: [...ORGANIZATION_KEYS.subscriptions(organizationId), params],
-    queryFn: () => fetchSubscriptions(organizationId),
+    queryFn: () => fetchSubscriptions(organizationId, params),
     enabled: !!organizationId,
     onError: (error: Error) => {
       console.error('Error fetching subscriptions:', error);

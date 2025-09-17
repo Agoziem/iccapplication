@@ -253,6 +253,11 @@
   border-color: #d3d3d4;
 }
 
+.body .bg-lighter {
+  background-color: var(--bgLightColor);
+  border-color: var(--bgLightColor);
+}
+
 
 /* ------------------------------------------- */
 /* Card */
@@ -344,6 +349,17 @@
   border-color: #27011d;
 }
 
+.body .btn-outline-primary {
+  background-color: transparent;
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.body .btn-outline-primary:hover {
+  background-color: var(--primary);
+  color: var(--light);
+}
+
 .body .btn-secondary {
   background-color: var(--secondary);
   border-color: var(--secondary);
@@ -355,6 +371,16 @@
   border-color: var(--secondary-600);
 }
 
+.body .btn-outline-secondary {
+  background-color: transparent;
+  border-color: var(--secondary);
+  color: var(--secondary);
+}
+.body .btn-outline-secondary:hover {
+  background-color: var(--secondary);
+  color: var(--light);
+}
+
 .body .btn-accent-success {
   border-color: #d2f3de;
   color: #13793a;
@@ -363,6 +389,11 @@
   box-shadow: 0px 0 30px rgba(1, 41, 112, 0.1);
   border-radius: 5px;
   font-weight: 600;
+}
+
+.body .btn-accent-success:hover {
+  background: #13793a;
+  color: #fff;
 }
 
 .published-successful-indicator,
@@ -422,8 +453,9 @@
 
 .body .btn-accent-danger:hover {
   background: var(--danger);
-  color: var(--danger-300);
+  color: var(--white);
 }
+
 
 
 
@@ -547,4 +579,25 @@
   border: 1px solid var(--secondary);
 }
 
+
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1; /* Number of lines to show */
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2; /* Number of lines to show */
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3; /* Number of lines to show */
+}
 

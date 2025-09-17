@@ -61,13 +61,14 @@ const TestimonialForm: React.FC<TestimonialFormProps> = ({
             content: testimonial.content || "",
             role: testimonial.role || "",
             rating: testimonial.rating || 5,
-            img: testimonial.img || testimonial.img_url,
+            img: testimonial.img_url,
           }
         : {
             name: "",
             content: "",
             role: "",
             rating: 5,
+            img: "",
           },
   });
 
@@ -81,7 +82,7 @@ const TestimonialForm: React.FC<TestimonialFormProps> = ({
         content: testimonial.content || "",
         role: testimonial.role || "",
         rating: testimonial.rating || 5,
-        img: testimonial.img || testimonial.img_url,
+        img: testimonial.img_url,
       });
     }
   }, [editMode, testimonial, reset]);
@@ -105,11 +106,12 @@ const TestimonialForm: React.FC<TestimonialFormProps> = ({
             content: data.content!,
             role: data.role,
             rating: data.rating,
+            img: data.img,
           },
         });
         toast.success("Testimonial created successfully!");
       }
-
+      reset();
       onSuccess?.();
     } catch (error) {
       const errorMessage =
@@ -121,224 +123,157 @@ const TestimonialForm: React.FC<TestimonialFormProps> = ({
   };
 
   return (
-    <div className="container-fluid p-4">
+    <div>
       {/* Header */}
-      <div className="row mb-4">
-        <div className="col-12">
-          <div className="d-flex align-items-center justify-content-between">
-            <div className="d-flex align-items-center">
-              <FiMessageSquare size={24} className="text-primary me-2" />
-              <h4 className="mb-0 fw-bold">
-                {editMode
-                  ? `Edit "${watchedName || testimonial?.name}"`
-                  : "Add New Testimonial"}
-              </h4>
-            </div>
-            {onCancel && (
-              <button
-                type="button"
-                className="btn btn-outline-secondary"
-                onClick={onCancel}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </button>
-            )}
-          </div>
-        </div>
+      <div className="mb-4">
+        <h4 className="mb-0 fw-bold">
+          {editMode
+            ? `Edit "${watchedName || testimonial?.name}"`
+            : "Add New Testimonial"}
+        </h4>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="row g-4">
+      <form onSubmit={handleSubmit(onSubmit)}>
         {/* Left Column */}
-        <div className="col-lg-8">
-          {/* Personal Information */}
-          <div className="card border-0 shadow-sm mb-4">
-            <div className="card-body">
-              <h6 className="card-title d-flex align-items-center mb-3">
-                <FiUser size={18} className="text-primary me-2" />
-                Personal Information
-              </h6>
 
-              <div className="row g-3">
-                <div className="col-md-6">
-                  <label htmlFor="name" className="form-label fw-medium">
-                    Full Name *
-                  </label>
-                  <Controller
-                    name="name"
-                    control={control}
-                    render={({ field }) => (
-                      <input
-                        {...field}
-                        type="text"
-                        className={`form-control ${
-                          errors.name ? "is-invalid" : ""
-                        }`}
-                        placeholder="Enter full name"
-                      />
-                    )}
-                  />
-                  {errors.name && (
-                    <div className="invalid-feedback">
-                      {errors.name.message}
-                    </div>
-                  )}
-                </div>
-
-                <div className="col-md-6">
-                  <label htmlFor="role" className="form-label fw-medium">
-                    <FiBriefcase size={16} className="me-1" />
-                    Role/Position
-                  </label>
-                  <Controller
-                    name="role"
-                    control={control}
-                    render={({ field }) => (
-                      <input
-                        {...field}
-                        type="text"
-                        className={`form-control ${
-                          errors.role ? "is-invalid" : ""
-                        }`}
-                        placeholder="e.g., Student, Client, etc."
-                      />
-                    )}
-                  />
-                  {errors.role && (
-                    <div className="invalid-feedback">
-                      {errors.role.message}
-                    </div>
-                  )}
-                </div>
-
-                <div className="col-md-6">
-                  <label htmlFor="rating" className="form-label fw-medium">
-                    <FiStar size={16} className="me-1" />
-                    Rating *
-                  </label>
-                  <Controller
-                    name="rating"
-                    control={control}
-                    render={({ field }) => (
-                      <select
-                        {...field}
-                        className={`form-select ${
-                          errors.rating ? "is-invalid" : ""
-                        }`}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value) || 5)
-                        }
-                      >
-                        <option value={5}>⭐⭐⭐⭐⭐ (5 stars)</option>
-                        <option value={4}>⭐⭐⭐⭐ (4 stars)</option>
-                        <option value={3}>⭐⭐⭐ (3 stars)</option>
-                        <option value={2}>⭐⭐ (2 stars)</option>
-                        <option value={1}>⭐ (1 star)</option>
-                      </select>
-                    )}
-                  />
-                  {errors.rating && (
-                    <div className="invalid-feedback">
-                      {errors.rating.message}
-                    </div>
-                  )}
-                </div>
-
-                <div className="col-12">
-                  <label htmlFor="content" className="form-label fw-medium">
-                    Testimonial Content *
-                  </label>
-                  <Controller
-                    name="content"
-                    control={control}
-                    render={({ field }) => (
-                      <textarea
-                        {...field}
-                        className={`form-control ${
-                          errors.content ? "is-invalid" : ""
-                        }`}
-                        rows={5}
-                        placeholder="Write your testimonial here..."
-                      />
-                    )}
-                  />
-                  {errors.content && (
-                    <div className="invalid-feedback">
-                      {errors.content.message}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+        <div className="form-group mb-3">
+          <label htmlFor="name" className="form-label fw-medium">
+            Full Name *
+          </label>
+          <Controller
+            name="name"
+            control={control}
+            render={({ field }) => (
+              <input
+                {...field}
+                type="text"
+                className={`form-control ${errors.name ? "is-invalid" : ""}`}
+                placeholder="Enter full name"
+              />
+            )}
+          />
+          {errors.name && (
+            <div className="invalid-feedback">{errors.name.message}</div>
+          )}
         </div>
 
-        {/* Right Column */}
-        <div className="col-lg-4">
-          <div className="card border-0 shadow-sm">
-            <div className="card-body">
-              <h6 className="card-title d-flex align-items-center mb-3">
-                <FiUser size={18} className="text-primary me-2" />
-                Profile Image
-              </h6>
+        <div className="form-group mb-3">
+          <label htmlFor="role" className="form-label fw-medium">
+            <FiBriefcase size={16} className="me-1" />
+            Role/Position
+          </label>
+          <Controller
+            name="role"
+            control={control}
+            render={({ field }) => (
+              <input
+                {...field}
+                type="text"
+                className={`form-control ${errors.role ? "is-invalid" : ""}`}
+                placeholder="e.g., Student, Client, etc."
+              />
+            )}
+          />
+          {errors.role && (
+            <div className="invalid-feedback">{errors.role.message}</div>
+          )}
+        </div>
 
-              {/* Profile Image Upload */}
-              <div className="mb-4">
-                <label className="form-label fw-medium">Profile Photo</label>
-                <Controller
-                  name="img"
-                  control={control}
-                  render={({ field }) => (
-                    <ImageUploader
-                      name="img"
-                      value={field.value}
-                      onChange={field.onChange}
-                      error={
-                        typeof errors.img?.message === "string"
-                          ? errors.img.message
-                          : undefined
-                      }
-                    />
-                  )}
-                />
-                <small className="text-muted">
-                  Upload a profile photo for the testimonial (optional)
-                </small>
-              </div>
-            </div>
-          </div>
+        <div className="form-group mb-3">
+          <label htmlFor="rating" className="form-label fw-medium">
+            <FiStar size={16} className="me-1" />
+            Rating *
+          </label>
+          <Controller
+            name="rating"
+            control={control}
+            render={({ field }) => (
+              <select
+                {...field}
+                className={`form-select ${errors.rating ? "is-invalid" : ""}`}
+                onChange={(e) => field.onChange(parseInt(e.target.value) || 5)}
+              >
+                <option value={5}>⭐⭐⭐⭐⭐ (5 stars)</option>
+                <option value={4}>⭐⭐⭐⭐ (4 stars)</option>
+                <option value={3}>⭐⭐⭐ (3 stars)</option>
+                <option value={2}>⭐⭐ (2 stars)</option>
+                <option value={1}>⭐ (1 star)</option>
+              </select>
+            )}
+          />
+          {errors.rating && (
+            <div className="invalid-feedback">{errors.rating.message}</div>
+          )}
+        </div>
+
+        <div className="form-group mb-3">
+          <label htmlFor="content" className="form-label fw-medium">
+            Testimonial Content *
+          </label>
+          <Controller
+            name="content"
+            control={control}
+            render={({ field }) => (
+              <textarea
+                {...field}
+                className={`form-control ${errors.content ? "is-invalid" : ""}`}
+                rows={5}
+                placeholder="Write your testimonial here..."
+              />
+            )}
+          />
+          {errors.content && (
+            <div className="invalid-feedback">{errors.content.message}</div>
+          )}
+        </div>
+
+        {/* Profile Image Upload */}
+        <div className="form-group mb-3">
+          <label className="form-label fw-medium">Profile Photo</label>
+          <Controller
+            name="img"
+            control={control}
+            render={({ field }) => (
+              <ImageUploader
+                {...field}
+                error={
+                  typeof errors.img?.message === "string"
+                    ? errors.img.message
+                    : undefined
+                }
+              />
+            )}
+          />
         </div>
 
         {/* Submit Button */}
-        <div className="col-12">
-          <div className="d-flex justify-content-end gap-2">
-            {onCancel && (
-              <button
-                type="button"
-                className="btn btn-outline-secondary"
-                onClick={onCancel}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </button>
-            )}
+        <div className="d-flex justify-content-end gap-2">
+          {onCancel && (
             <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={isSubmitting || !isValid}
+              type="button"
+              className="btn btn-accent-danger border-0 text-danger mt-3 rounded"
+              onClick={onCancel}
+              disabled={isSubmitting}
             >
-              {isSubmitting ? (
-                <div className="d-flex align-items-center">
-                  <PulseLoader size={8} color="#ffffff" className="me-2" />
-                  {editMode ? "Updating..." : "Creating..."}
-                </div>
-              ) : editMode ? (
-                "Update Testimonial"
-              ) : (
-                "Create Testimonial"
-              )}
+              Cancel
             </button>
-          </div>
+          )}
+          <button
+            type="submit"
+            className="btn btn-accent-secondary border-0 text-secondary mt-3 rounded"
+            disabled={isSubmitting || !isValid}
+          >
+            {isSubmitting ? (
+              <div className="d-flex align-items-center">
+                <PulseLoader size={8} color="#ffffff" className="me-2" />
+                {editMode ? "Updating..." : "Creating..."}
+              </div>
+            ) : editMode ? (
+              "Update Testimonial"
+            ) : (
+              "Create Testimonial"
+            )}
+          </button>
         </div>
       </form>
     </div>

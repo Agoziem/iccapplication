@@ -95,13 +95,9 @@ export const fetchArticles = async (
 
 export const fetchArticlesByOrganization = async (
   organizationId: number,
-  params: Record<string, any> = {}
+  params?: Record<string, any>
 ): Promise<PaginatedArticleResponse> => {
-  const queryString = new URLSearchParams(params).toString();
-  const url = `${articleAPIendpoint}/orgblogs/${organizationId}/${
-    queryString ? `?${queryString}` : ""
-  }`;
-  const response = await AxiosInstance.get(url);
+  const response = await AxiosInstance.get(`${articleAPIendpoint}/orgblogs/${organizationId}/`, { params });
   return response.data;
 };
 
@@ -126,7 +122,7 @@ export const fetchArticleById = async (
 export const createArticle = async (
   articleData: CreateArticle
 ): Promise<ArticleResponse> => {
-  const formData = converttoformData(articleData);
+  const formData = converttoformData(articleData,["tags"]);
   const response = await AxiosInstancemultipartWithToken.post(
     `${articleAPIendpoint}/addblog/${articleData.organization}/${articleData.author}/`,
     formData
@@ -137,7 +133,7 @@ export const createArticle = async (
 export const updateArticle = async (
   articleData: UpdateArticle & { id: number }
 ): Promise<ArticleResponse> => {
-  const formData = converttoformData(articleData);
+  const formData = converttoformData(articleData,["tags"]);
   const response = await AxiosInstancemultipartWithToken.put(
     `${articleAPIendpoint}/updateblog/${articleData.id}/`,
     formData
@@ -298,7 +294,7 @@ export const useArticles = (
   params?: Record<string, any>
 ): UseQueryResult<PaginatedArticleResponse, Error> => {
   return useQuery({
-    queryKey: url ? ARTICLE_KEYS.articles() : ARTICLE_KEYS.articles(),
+    queryKey: [...ARTICLE_KEYS.articles(), url, params],
     queryFn: () => fetchArticles(url, params),
     onError: (error: Error) => {
       console.error("Error fetching articles:", error);
@@ -412,7 +408,7 @@ export const useComments = (
   params?: Record<string, any>
 ): UseQueryResult<CommentResponse, Error> => {
   return useQuery({
-    queryKey: ARTICLE_KEYS.comments(blogId),
+    queryKey: ARTICLE_KEYS.comments(blogId, params),
     queryFn: () => fetchComments(blogId, params),
     enabled: !!blogId,
     onError: (error: Error) => {

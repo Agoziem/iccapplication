@@ -12,7 +12,7 @@ export type TokenType = {
     last_name: string;
     email: string;
     id: string;
-    isVerified: boolean;
+    emailIsVerified: boolean;
     verificationToken?: string;
     expireTime?: string;
   };

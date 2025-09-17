@@ -363,18 +363,6 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
             )}
           </button>
         </div>
-
-        {/* Form Debug Info (Development) */}
-        {process.env.NODE_ENV === "development" && (
-          <div className="mt-4 p-3 bg-light rounded">
-            <small className="text-muted">
-              <strong>Form State:</strong> Valid:{" "}
-              {form.formState.isValid.toString()}, Dirty:{" "}
-              {form.formState.isDirty.toString()}, Errors:{" "}
-              {Object.keys(form.formState.errors).length}
-            </small>
-          </div>
-        )}
       </form>
     </div>
   );

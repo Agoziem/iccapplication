@@ -14,7 +14,7 @@ export const AuthUserSchema = z.object({
   first_name: z.string().max(150).optional(),
   last_name: z.string().max(150).optional(),
   email: z.string().email().max(254).optional(),
-  isVerified: z.boolean().optional(),
+  emailIsVerified: z.boolean().optional(),
   verificationToken: z.string().max(100).optional(),
   expireTime: z.coerce.date().optional(),
 });

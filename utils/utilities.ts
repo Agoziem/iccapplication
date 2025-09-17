@@ -63,3 +63,17 @@ export const shortenMessage = (message: string, limit: number): string => {
   }
   return message;
 };
+
+export const formatPrice = (price: string) => {
+    try {
+      return parseFloat(price).toLocaleString("en-NG", {
+        style: "currency",
+        currency: "NGN",
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      });
+    } catch {
+      return `₦${price}`;
+    }
+  };
+

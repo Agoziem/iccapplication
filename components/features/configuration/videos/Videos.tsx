@@ -22,6 +22,7 @@ import { Category } from "@/types/categories";
 import { ORGANIZATION_ID } from "@/data/constants";
 import { VideoCategoryManager } from "../../Categories/CategoryManager";
 import VideoSubCatForm from "../../SubCategories/videossub";
+import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
 
 type AlertState = {
   show: boolean;
@@ -41,11 +42,15 @@ const Videos = () => {
   });
   const [addorupdate, setAddorupdate] = useState({ mode: "add", state: false });
 
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const currentCategory = searchParams.get("category") || "All";
-  const page = searchParams.get("page") || "1";
-  const pageSize = "10";
+  const [currentCategory, setCurrentCategory] = useQueryState(
+    "category",
+    parseAsString.withDefault("All")
+  );
+  const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
+  const [pageSize, setPageSize] = useQueryState(
+    "page_size",
+    parseAsInteger.withDefault(10)
+  );
   const [allCategories, setAllCategories] = useState<Category[] | null>(null);
   const [selectedCategory, setSelectedCategory] =
     useState<VideoCategory | null>(null);
@@ -68,8 +73,8 @@ const Videos = () => {
     error: videosError,
   } = useVideos(parseInt(ORGANIZATION_ID || "0"), {
     category: currentCategory === "All" ? "" : currentCategory,
-    page: parseInt(page),
-    page_size: parseInt(pageSize),
+    page: page,
+    page_size: pageSize,
   });
 
   // Setup categories with "All" option
@@ -101,12 +106,8 @@ const Videos = () => {
   // Handle page change
   const handlePageChange = (newPage: string | number) => {
     const pageNum = typeof newPage === "string" ? parseInt(newPage) : newPage;
-    router.push(
-      `?category=${currentCategory}&page=${pageNum}&page_size=${pageSize}`,
-      {
-        scroll: false,
-      }
-    );
+    if (isNaN(pageNum) || pageNum < 1) return;
+    setPage(pageNum);
   };
 
   // Handle category change
@@ -114,10 +115,7 @@ const Videos = () => {
     const category = allCategories?.find(
       (cat) => cat.category === categoryName
     );
-    const categoryId = category?.id || 0;
-    router.push(`?category=${categoryId}&page=1&page_size=${pageSize}`, {
-      scroll: false,
-    });
+    setCurrentCategory(category?.category || "All");
   };
 
   // Open modal for add/edit
@@ -324,12 +322,12 @@ const Videos = () => {
       </div>
 
       {/* Pagination */}
-      {videos && videos.count > parseInt(pageSize) && (
+      {videos && videos.count > pageSize && (
         <div className="row mt-4">
           <div className="col-12">
             <Pagination
-              currentPage={parseInt(page)}
-              totalPages={Math.ceil(videos.count / parseInt(pageSize))}
+              currentPage={page}
+              totalPages={Math.ceil(videos.count / pageSize)}
               handlePageChange={handlePageChange}
             />
           </div>

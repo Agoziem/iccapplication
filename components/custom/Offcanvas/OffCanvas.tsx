@@ -1,29 +1,26 @@
 "use client";
 import { useCart } from "@/providers/context/Cartcontext";
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import Link from "next/link";
 import Alert from "../Alert/Alert";
 import { PulseLoader } from "react-spinners";
 import { useMyProfile } from "@/data/hooks/user.hooks";
+import Offcanvas from "react-bootstrap/Offcanvas";
 
-const OffCanvas: React.FC = () => {
-  const { cart, removeFromCart, resetCart, checkout, isPending, error } =
+const OffCanvasComponent: React.FC = () => {
+  const { cart, removeFromCart, resetCart, checkout, isPending, error, showOffCanvas, setShowOffCanvas } =
     useCart();
   const { data: session } = useMyProfile();
-  const offCanvasbuttonRef = useRef<HTMLButtonElement>(null);
 
   // Function to close the off-canvas using native Bootstrap event
   const closeOffCanvas = () => {
-    const offCanvasButton = offCanvasbuttonRef.current;
-    if (offCanvasButton) {
-      offCanvasButton.click();
-    }
+    setShowOffCanvas(false);
   };
 
   const handleCheckout = async () => {
     try {
       await checkout(); // Perform the checkout logic
-      closeOffCanvas(); // Close the off-canvas after successful checkout
+      closeOffCanvas(); // Close the off-canvas after checkout  
     } catch (error) {
       console.error("Checkout error:", error);
     }
@@ -35,11 +32,12 @@ const OffCanvas: React.FC = () => {
   };
 
   const getItemDisplayName = (item: any): string => {
-    return item.name || item.title || 'Item';
+    return item.name || item.title || "Item";
   };
 
   const getItemPrice = (item: any): number => {
-    const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+    const price =
+      typeof item.price === "string" ? parseFloat(item.price) : item.price;
     return isNaN(price) ? 0 : price;
   };
 
@@ -48,11 +46,10 @@ const OffCanvas: React.FC = () => {
   };
 
   return (
-    <div
-      className="offcanvas offcanvas-end"
-      tabIndex={-1}
-      id="offcanvasTop"
-      aria-labelledby="offcanvasTopLabel"
+    <Offcanvas
+      placement="end"
+      show={showOffCanvas}
+      onHide={closeOffCanvas}
       style={{ backgroundColor: "var(--bgLightColor)" }}
     >
       {/* Off-Canvas Header */}
@@ -61,11 +58,10 @@ const OffCanvas: React.FC = () => {
           Shopping Cart
         </h5>
         <button
-          ref={offCanvasbuttonRef}
           type="button"
           className="btn-close"
-          data-bs-dismiss="offcanvas"
           aria-label="Close"
+          onClick={closeOffCanvas}
         />
       </div>
 
@@ -89,12 +85,13 @@ const OffCanvas: React.FC = () => {
                   </div>
                   <div className="d-flex justify-content-between mt-2">
                     <div className="fw-bold small text-secondary">
-                      {item.category && item.category.category !== "application" ? (
+                      {item.category &&
+                      item.category.category !== "application" ? (
                         <i className="bi bi-person-fill-gear me-2 h5" />
                       ) : (
                         <i className="bi bi-google-play me-2" />
                       )}
-                      {item.category?.category || 'Unknown'}{" "}
+                      {item.category?.category || "Unknown"}{" "}
                       <span className="ms-2 badge bg-primary-light text-primary">
                         {item.cartType}
                       </span>
@@ -102,7 +99,9 @@ const OffCanvas: React.FC = () => {
                     <div
                       className="badge bg-secondary-light text-secondary ms-2"
                       style={{ cursor: "pointer" }}
-                      onClick={() => item.cartType && removeFromCart(item.id!, item.cartType)}
+                      onClick={() =>
+                        item.cartType && removeFromCart(item.id!, item.cartType)
+                      }
                     >
                       Remove
                     </div>
@@ -112,10 +111,7 @@ const OffCanvas: React.FC = () => {
             </ul>
             <div className="d-flex flex-column justify-content-between pb-4 ps-3">
               <h4 className="mb-3">
-                Total:{" "}
-                <span className="fw-bold">
-                  &#8358;{getTotalPrice()}
-                </span>
+                Total: <span className="fw-bold">&#8358;{getTotalPrice()}</span>
               </h4>
 
               {/* Alert */}
@@ -161,8 +157,8 @@ const OffCanvas: React.FC = () => {
           <p>Your cart is empty</p>
         )}
       </div>
-    </div>
+    </Offcanvas>
   );
 };
 
-export default OffCanvas;
+export default OffCanvasComponent;

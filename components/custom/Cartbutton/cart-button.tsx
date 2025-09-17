@@ -3,14 +3,12 @@ import React from "react";
 import "./cartbutton.css"
 
 const Cartbutton = () => {
-  const { cart } = useCart();
+  const { cart,setShowOffCanvas } = useCart();
   return (
     <div
       className="position-relative"
-      data-bs-toggle="offcanvas"
-      data-bs-target="#offcanvasTop"
-      aria-controls="offcanvasTop"
       style={{ cursor: "pointer" }}
+      onClick={() => setShowOffCanvas(true)}
     >
       <i className="text-primary bi bi-cart3" style={{ fontSize: "26px" }}></i>
       {cart.length > 0 && (

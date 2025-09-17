@@ -221,7 +221,7 @@ const UserOrders: React.FC = React.memo(() => {
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h5 className="mb-0">All Orders</h5>
           {items && items.length > 0 && (
-            <span className="badge bg-primary bg-opacity-10 text-primary">
+            <span className="badge bg-primary bg-opacity-10 text-white py-2 px-3">
               {items.length} order{items.length !== 1 ? 's' : ''}
             </span>
           )}

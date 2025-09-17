@@ -6,8 +6,12 @@ import { PulseLoader } from "react-spinners";
 import Tiptap from "@/components/custom/Richtexteditor/Tiptap";
 import { UpdateOrganizationSchema } from "@/schemas/organizations";
 import { UpdateOrganization, Organization } from "@/types/organizations";
-import { useOrganization, useUpdateOrganization } from "@/data/hooks/organization.hooks";
+import {
+  useOrganization,
+  useUpdateOrganization,
+} from "@/data/hooks/organization.hooks";
 import { ORGANIZATION_ID } from "@/data/constants";
+import toast from "react-hot-toast";
 
 type TermsOfUseFormData = {
   terms_of_use: string;
@@ -54,10 +58,15 @@ const TermsOfUse = () => {
             terms_of_use: data.terms_of_use,
           },
         });
-        
-        // Show success feedback (you might want to add a toast notification here)
+
+        toast.success("Terms of Use updated successfully");
         console.log("Terms of Use updated successfully");
       } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to update Terms of Use"
+        );
         console.error("Error updating Terms of Use:", error);
       }
     });
@@ -69,14 +78,21 @@ const TermsOfUse = () => {
         <h5 className="mb-0">Terms of Use</h5>
         {isSubmitting && (
           <div className="d-flex align-items-center text-muted">
-            <PulseLoader size={8} color={"#0d6efd"} loading={true} className="me-2" />
+            <PulseLoader
+              size={8}
+              color={"#0d6efd"}
+              loading={true}
+              className="me-2"
+            />
             <small>Saving...</small>
           </div>
         )}
       </div>
       <hr />
-      <p className="text-muted mb-4">Add or edit Terms of Use for your organization</p>
-      
+      <p className="text-muted mb-4">
+        Add or edit Terms of Use for your organization
+      </p>
+
       <form onSubmit={handleFormSubmit(onSubmit)}>
         <div className="mb-4">
           <Controller

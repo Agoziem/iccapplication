@@ -1,10 +1,15 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import ArticleImageUploader from "@/components/custom/Imageuploader/ArticleImageUploader";
 import Alert from "@/components/custom/Alert/Alert";
 import Tiptap from "@/components/custom/Richtexteditor/Tiptap";
 import {
@@ -21,6 +26,10 @@ import {
 import { useMyProfile } from "@/data/hooks/user.hooks";
 import useLocalStorage from "@/hooks/useLocalStorage";
 import { ORGANIZATION_ID } from "@/data/constants";
+import toast from "react-hot-toast";
+import { TiTimes } from "react-icons/ti";
+import ArticleTagInput from "./Articletags";
+import ImageUploader from "@/components/custom/Imageuploader/ImageUploader";
 
 interface ArticleFormProps {
   article: ArticleResponse | null;
@@ -37,90 +46,6 @@ interface AlertState {
 }
 
 // Create a simplified form schema that matches the actual API requirements
-
-// Separate TagInput component to avoid hooks in render
-const TagInput: React.FC<{
-  field: any;
-  errors: any;
-  handleInputChange: () => void;
-}> = ({ field, errors, handleInputChange }) => {
-  const [currentTag, setCurrentTag] = useState("");
-  const tags: string[] = field.value || [];
-
-  const addTag = () => {
-    if (currentTag.trim() && !tags.includes(currentTag.trim())) {
-      const newTags = [...tags, currentTag.trim()];
-      field.onChange(newTags);
-      setCurrentTag("");
-      handleInputChange();
-    }
-  };
-
-  const removeTag = (tagToRemove: string) => {
-    const newTags = tags.filter((tag: string) => tag !== tagToRemove);
-    field.onChange(newTags);
-    handleInputChange();
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      addTag();
-    }
-  };
-
-  return (
-    <div>
-      <div className="input-group mb-2">
-        <input
-          type="text"
-          id="article-tags"
-          className={`form-control ${
-            errors.tags ? "is-invalid" : ""
-          }`}
-          placeholder="Type a tag and press Enter or click Add"
-          value={currentTag}
-          onChange={(e) => setCurrentTag(e.target.value)}
-          onKeyPress={handleKeyPress}
-        />
-        <button
-          type="button"
-          className="btn btn-outline-primary"
-          onClick={addTag}
-        >
-          Add
-        </button>
-      </div>
-
-      {tags.length > 0 && (
-        <div className="tags-container mb-2">
-          {tags.map((tag: string, index: number) => (
-            <span
-              key={index}
-              className="badge bg-primary me-2 mb-1"
-              style={{ fontSize: "0.8em", padding: "0.4em 0.6em" }}
-            >
-              {tag}
-              <button
-                type="button"
-                className="btn-close btn-close-white ms-2"
-                style={{ fontSize: "0.6em" }}
-                onClick={() => removeTag(tag)}
-                aria-label={`Remove ${tag} tag`}
-              />
-            </span>
-          ))}
-        </div>
-      )}
-
-      {errors.tags && (
-        <div className="invalid-feedback d-block">
-          {errors.tags.message}
-        </div>
-      )}
-    </div>
-  );
-};
 
 const ArticleForm: React.FC<ArticleFormProps> = ({
   article,
@@ -168,20 +93,44 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
   const defaultValues = useMemo<ArticleFormType>(() => {
     // Always provide required fields with fallback defaults
     if (isEditMode && article) {
+      const categoryId =
+        typeof article.category === "object"
+          ? article.category?.id ?? 1
+          : article.category ?? 1;
+      const authorId =
+        typeof article.author === "object"
+          ? article.author?.id ?? user?.id ?? 1
+          : article.author ?? user?.id ?? 1;
+      const orgId =
+        typeof article.organization === "string"
+          ? parseInt(article.organization) || 1
+          : article.organization ?? 1;
+      const tags = Array.isArray(article.tags)
+        ? article.tags.map((tag) =>
+            typeof tag === "string" ? tag : tag?.tag || ""
+          )
+        : [];
+
       return {
         id: article.id ?? 0,
         title: article.title ?? "",
         subtitle: article.subtitle ?? "",
         body: article.body ?? "",
-        category: typeof article.category === "object" ? article.category.id ?? 0 : article.category ?? 0,
-        tags: article.tags?.map((tag) => typeof tag === "string" ? tag : tag.tag) ?? [],
+        category: categoryId,
+        tags: tags,
         img: article.img_url ?? undefined,
         readTime: article.readTime ?? 5,
-        author: typeof article.author === "object" ? article.author.id ?? user?.id ?? 0 : article.author ?? user?.id ?? 0,
-        organization: typeof article.organization === "string" ? parseInt(article.organization) || 1 : article.organization ?? 1,
+        author: authorId,
+        organization: orgId,
       };
     }
+
     // For create mode, always provide required fields
+    const orgId =
+      typeof ORGANIZATION_ID === "string"
+        ? parseInt(ORGANIZATION_ID) || 1
+        : ORGANIZATION_ID ?? 1;
+
     return {
       title: "",
       subtitle: "",
@@ -191,9 +140,9 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
       img: undefined,
       readTime: 5,
       author: user?.id ?? 1,
-      organization: typeof ORGANIZATION_ID === "string" ? parseInt(ORGANIZATION_ID) || 1 : ORGANIZATION_ID ?? 1,
+      organization: orgId,
     };
-  }, [isEditMode, article, user?.id]);
+  }, [isEditMode, article?.id, user?.id]);
 
   // Form setup with discriminated union validation
   const {
@@ -201,7 +150,6 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
     handleSubmit,
     formState: { errors, isDirty },
     setValue,
-    watch,
     getValues,
     reset,
   } = useForm<ArticleFormType>({
@@ -210,7 +158,8 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
     mode: "onChange",
   });
 
-  const watchedValues = watch();
+  // Use a stable ref for tracking form values without causing re-renders
+  const currentFormValuesRef = useRef<ArticleFormType | undefined>(undefined);
 
   // Show alert function
   const showAlert = useCallback(
@@ -227,23 +176,49 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
   const closeEditMode = useCallback(() => {
     setEditMode(false);
     setArticle(null);
-    reset(defaultValues);
+    const resetValues: ArticleFormType = {
+      title: "",
+      subtitle: "",
+      body: "",
+      category: 1,
+      tags: [],
+      img: undefined,
+      readTime: 5,
+      author: user?.id ?? 1,
+      organization:
+        typeof ORGANIZATION_ID === "string"
+          ? parseInt(ORGANIZATION_ID) || 1
+          : ORGANIZATION_ID ?? 1,
+    };
+    reset(resetValues);
     clearDraftArticle();
     setHasStartedEditing(false);
-  }, [setEditMode, setArticle, clearDraftArticle, reset, defaultValues]);
+  }, [setEditMode, setArticle, clearDraftArticle, reset, user?.id]);
+
+  // Use a ref to store the previous values to prevent infinite loops
+  const prevArticleRef = useRef<ArticleResponse | null>(null);
+  const prevEditModeRef = useRef<boolean>(false);
 
   // Effect to reset form when switching between create/edit modes
   useEffect(() => {
-    if (article && editMode) {
-      reset(defaultValues);
+    const articleChanged = prevArticleRef.current?.id !== article?.id;
+    const editModeChanged = prevEditModeRef.current !== editMode;
+
+    if (articleChanged || editModeChanged) {
+      if (article && editMode) {
+        reset(defaultValues);
+      }
+      prevArticleRef.current = article;
+      prevEditModeRef.current = editMode;
     }
-  }, [article, editMode, reset, defaultValues]);
+  }, [article?.id, editMode, reset]);
 
   // Load draft from localStorage on component mount
   useEffect(() => {
-    if (!editMode && draftArticle) {
+    if (!editMode && draftArticle && !hasStartedEditing) {
       try {
-        reset({ ...defaultValues, ...draftArticle });
+        const mergedValues = { ...defaultValues, ...draftArticle };
+        reset(mergedValues);
         setProgressRestoredMessage("Your draft has been restored");
         setHasStartedEditing(true);
         setTimeout(() => setProgressRestoredMessage(""), 4000);
@@ -252,7 +227,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
         clearDraftArticle();
       }
     }
-  }, [editMode, draftArticle, defaultValues, reset, clearDraftArticle]);
+  }, [editMode, draftArticle, hasStartedEditing, reset, clearDraftArticle]);
 
   // Auto-save draft functionality
   useEffect(() => {
@@ -260,7 +235,9 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
       setSaving(true);
       const timeoutId = setTimeout(() => {
         try {
-          setDraftArticle(getValues());
+          const currentValues = getValues();
+          currentFormValuesRef.current = currentValues;
+          setDraftArticle(currentValues);
           setSaving(false);
         } catch (error) {
           console.error("Error saving draft:", error);
@@ -273,14 +250,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
         setSaving(false);
       };
     }
-  }, [
-    watchedValues,
-    editMode,
-    hasStartedEditing,
-    isDirty,
-    setDraftArticle,
-    getValues,
-  ]);
+  }, [editMode, hasStartedEditing, isDirty, setDraftArticle, getValues]);
 
   // Form submission handlers
   const handleFormError = useCallback(
@@ -319,10 +289,11 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
             tags: data.tags ?? [],
             img: data.img ?? "",
             readTime: data.readTime ?? 5,
-            author: typeof data.author === "number" ? data.author : user.id ?? 1,
+            author:
+              typeof data.author === "number" ? data.author : user.id ?? 1,
           };
           await updateArticleMutation(updateData);
-          showAlert("Article updated successfully!", "success");
+          toast.success("Article updated successfully!");
         } else {
           // Create new article
           const createData: CreateArticle = {
@@ -334,10 +305,13 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
             img: data.img ?? "",
             readTime: data.readTime ?? 5,
             author: user.id ?? 1,
-            organization: typeof ORGANIZATION_ID === "string" ? parseInt(ORGANIZATION_ID) || 1 : ORGANIZATION_ID ?? 1,
+            organization:
+              typeof ORGANIZATION_ID === "string"
+                ? parseInt(ORGANIZATION_ID) || 1
+                : ORGANIZATION_ID ?? 1,
           };
           await createArticleMutation(createData);
-          showAlert("Article created successfully!", "success");
+          toast.success("Article created successfully!");
         }
         setTimeout(() => {
           closeEditMode();
@@ -348,7 +322,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
           error?.response?.data?.message ||
           error?.message ||
           "Failed to submit article. Please try again.";
-        showAlert(errorMessage, "danger");
+        toast.error(errorMessage);
       } finally {
         setIsSubmitting(false);
       }
@@ -366,12 +340,61 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
     ]
   );
 
-  // Handle input changes to track editing state
+  // Handle input changes to track editing state - memoized to prevent re-renders
   const handleInputChange = useCallback(() => {
     if (!hasStartedEditing) {
       setHasStartedEditing(true);
     }
   }, [hasStartedEditing]);
+
+  // Memoized form field handlers to prevent unnecessary re-renders
+  const handleTitleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
+      field.onChange(e);
+      handleInputChange();
+    },
+    [handleInputChange]
+  );
+
+  const handleSubtitleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
+      field.onChange(e);
+      handleInputChange();
+    },
+    [handleInputChange]
+  );
+
+  const handleCategoryChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>, field: any) => {
+      field.onChange(Number(e.target.value));
+      handleInputChange();
+    },
+    [handleInputChange]
+  );
+
+  const handleReadTimeChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
+      field.onChange(Number(e.target.value));
+      handleInputChange();
+    },
+    [handleInputChange]
+  );
+
+  const handleImageChange = useCallback(
+    (file: any, onChange: any) => {
+      onChange(file);
+      handleInputChange();
+    },
+    [handleInputChange]
+  );
+
+  const handleBodyChange = useCallback(
+    (content: string, field: any) => {
+      field.onChange(content);
+      handleInputChange();
+    },
+    [handleInputChange]
+  );
 
   return (
     <div className="card p-4 px-md-5 py-5">
@@ -420,10 +443,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
                   id="article-title"
                   className={`form-control ${errors.title ? "is-invalid" : ""}`}
                   placeholder="Enter article title"
-                  onChange={(e) => {
-                    field.onChange(e);
-                    handleInputChange();
-                  }}
+                  onChange={(e) => handleTitleChange(e, field)}
                   disabled={isSubmitting}
                   aria-describedby={errors.title ? "title-error" : undefined}
                 />
@@ -454,10 +474,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
                     errors.subtitle ? "is-invalid" : ""
                   }`}
                   placeholder="Enter article subtitle (optional)"
-                  onChange={(e) => {
-                    field.onChange(e);
-                    handleInputChange();
-                  }}
+                  onChange={(e) => handleSubtitleChange(e, field)}
                   disabled={isSubmitting}
                   aria-describedby={
                     errors.subtitle ? "subtitle-error" : undefined
@@ -488,10 +505,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
                   className={`form-select ${
                     errors.category ? "is-invalid" : ""
                   }`}
-                  onChange={(e) => {
-                    field.onChange(Number(e.target.value));
-                    handleInputChange();
-                  }}
+                  onChange={(e) => handleCategoryChange(e, field)}
                   disabled={isSubmitting}
                   aria-describedby={
                     errors.category ? "category-error" : undefined
@@ -533,10 +547,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
                     errors.readTime ? "is-invalid" : ""
                   }`}
                   placeholder="5"
-                  onChange={(e) => {
-                    field.onChange(Number(e.target.value));
-                    handleInputChange();
-                  }}
+                  onChange={(e) => handleReadTimeChange(e, field)}
                   disabled={isSubmitting}
                   aria-describedby={
                     errors.readTime ? "read-time-error" : undefined
@@ -564,10 +575,10 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
               name="tags"
               control={control}
               render={({ field }) => (
-                <TagInput 
-                  field={field} 
-                  errors={errors} 
-                  handleInputChange={handleInputChange} 
+                <ArticleTagInput
+                  field={field}
+                  errors={errors}
+                  handleInputChange={handleInputChange}
                 />
               )}
             />
@@ -585,18 +596,20 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
             <Controller
               name="img"
               control={control}
-              render={({ field: { value, onChange, onBlur } }) => {
+              render={({ field }) => {
                 return (
-                  <ArticleImageUploader
+                  <ImageUploader
                     name="img"
-                    value={value}
-                    onChange={(file) => {
-                      onChange(file);
-                      handleInputChange();
-                    }}
-                    onBlur={onBlur}
-                    error={errors.img?.message as string}
-                    disabled={isSubmitting}
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={
+                      typeof errors.img?.message === "string"
+                        ? errors.img.message
+                        : undefined
+                    }
+                    height={150}
+                    width={150}
+                    rounded={true}
                   />
                 );
               }}
@@ -629,10 +642,9 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
                 >
                   <Tiptap
                     item={field.value || ""}
-                    setItem={(content: string) => {
-                      field.onChange(content);
-                      handleInputChange();
-                    }}
+                    setItem={(content: string) =>
+                      handleBodyChange(content, field)
+                    }
                     placeholder="Start writing your article content here..."
                     editable={!isSubmitting}
                     className="min-height-300"
@@ -654,20 +666,20 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
         </div>
 
         {/* Form Actions */}
-        <div className="d-flex justify-content-between align-items-center mt-4">
-          <div>
+        <div className="d-flex justify-content-end align-items-center mt-4">
+          {/* <div>
             {!editMode && hasStartedEditing && (
               <small className="text-muted">
                 <i className="bi bi-info-circle me-1" />
                 Your progress is automatically saved as you type
               </small>
             )}
-          </div>
+          </div> */}
 
           <div className="d-flex gap-2">
             <button
               type="button"
-              className="btn btn-outline-secondary"
+              className="btn btn-accent-secondary"
               onClick={closeEditMode}
               disabled={isSubmitting}
             >

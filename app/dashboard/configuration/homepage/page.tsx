@@ -8,10 +8,14 @@ import OrganizationCard from "@/components/features/configuration/home/organizat
 import Staffs from "@/components/features/configuration/home/staffs";
 import Subscriptions from "@/components/features/configuration/home/subscriptions";
 import Testimonials from "@/components/features/configuration/home/testimonials";
+import { parseAsInteger, useQueryState } from "nuqs";
 import React, { useState } from "react";
 
 const HomePageConfigPage = () => {
-  const [currentSection, setCurrentSection] = useState(1);
+  const [currentSection, setCurrentSection] = useQueryState(
+    "section",
+    parseAsInteger.withDefault(1)
+  );
 
   return (
     <div style={{ minHeight: "100vh" }}>

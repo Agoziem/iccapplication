@@ -38,8 +38,8 @@ export const SERVICE_KEYS = {
 
 
 // Service Management
-export const fetchServices = async (organizationId: number): Promise<PaginatedServiceResponse> => {
-  const response = await AxiosInstance.get(`${servicesAPIendpoint}/services/${organizationId}/`);
+export const fetchServices = async (organizationId: number, params?: Record<string, any>): Promise<PaginatedServiceResponse> => {
+  const response = await AxiosInstance.get(`${servicesAPIendpoint}/services/${organizationId}/`, { params });
   return response.data;
 };
 
@@ -70,13 +70,13 @@ export const deleteService = async (serviceId: number): Promise<DeleteResponse> 
   return response.data;
 };
 
-export const fetchTrendingServices = async (organizationId: number): Promise<PaginatedServiceResponse> => {
-  const response = await AxiosInstance.get(`${servicesAPIendpoint}/trendingservices/${organizationId}/`);
+export const fetchTrendingServices = async (organizationId: number, params?: Record<string, any>): Promise<PaginatedServiceResponse> => {
+  const response = await AxiosInstance.get(`${servicesAPIendpoint}/trendingservices/${organizationId}/`, { params });
   return response.data;
 };
 
-export const fetchUserBoughtServices = async (organizationId: number, userId: number): Promise<PaginatedServiceResponse> => {
-  const response = await AxiosInstance.get(`${servicesAPIendpoint}/userboughtservices/${organizationId}/${userId}/`);
+export const fetchUserBoughtServices = async (organizationId: number, userId: number, params?: Record<string, any>): Promise<PaginatedServiceResponse> => {
+  const response = await AxiosInstance.get(`${servicesAPIendpoint}/userboughtservices/${organizationId}/${userId}/`, { params });
   return response.data;
 };
 
@@ -101,18 +101,18 @@ export const removeServiceFromProgress = async (serviceId: number, userId: numbe
   return response.data;
 };
 
-export const fetchServiceUsers = async (serviceId: number): Promise<PaginatedServiceUsers> => {
-  const response = await AxiosInstance.get(`${servicesAPIendpoint}/servicesusers/${serviceId}/`);
+export const fetchServiceUsers = async (serviceId: number, params?: Record<string, any>): Promise<PaginatedServiceUsers> => {
+  const response = await AxiosInstance.get(`${servicesAPIendpoint}/servicesusers/${serviceId}/`, { params });
   return response.data;
 };
 
-export const fetchServiceUsersCompleted = async (serviceId: number): Promise<PaginatedServiceUsers> => {
-  const response = await AxiosInstance.get(`${servicesAPIendpoint}/servicesusers/${serviceId}/completed/`);
+export const fetchServiceUsersCompleted = async (serviceId: number, params?: Record<string, any>): Promise<PaginatedServiceUsers> => {
+  const response = await AxiosInstance.get(`${servicesAPIendpoint}/servicesusers/${serviceId}/completed/`, { params });
   return response.data;
 };
 
-export const fetchServiceUsersInProgress = async (serviceId: number): Promise<PaginatedServiceUsers> => {
-  const response = await AxiosInstance.get(`${servicesAPIendpoint}/servicesusers/${serviceId}/in-progress/`);
+export const fetchServiceUsersInProgress = async (serviceId: number, params?: Record<string, any>): Promise<PaginatedServiceUsers> => {
+  const response = await AxiosInstance.get(`${servicesAPIendpoint}/servicesusers/${serviceId}/in-progress/`, { params });
   return response.data;
 };
 
@@ -169,7 +169,7 @@ export const deleteServiceSubCategory = async (subCategoryId: number): Promise<D
 export const useServices = (organizationId: number, params?: Record<string, any>): UseQueryResult<PaginatedServiceResponse, Error> => {
   return useQuery({
     queryKey: [...SERVICE_KEYS.list(organizationId), params],
-    queryFn: () => fetchServices(organizationId),
+    queryFn: () => fetchServices(organizationId, params),
     onError: (error: Error) => {
       console.error('Error fetching services:', error);
       throw error;
@@ -204,7 +204,7 @@ export const useServiceByToken = (serviceToken: string): UseQueryResult<Service,
 export const useTrendingServices = (organizationId: number, params?: Record<string, any>): UseQueryResult<PaginatedServiceResponse, Error> => {
   return useQuery({
     queryKey: [...SERVICE_KEYS.trending(organizationId), params],
-    queryFn: () => fetchTrendingServices(organizationId),
+    queryFn: () => fetchTrendingServices(organizationId, params),
     onError: (error: Error) => {
       console.error('Error fetching trending services:', error);
       throw error;
@@ -215,7 +215,7 @@ export const useTrendingServices = (organizationId: number, params?: Record<stri
 export const useUserBoughtServices = (organizationId: number, userId: number, params?: Record<string, any>): UseQueryResult<PaginatedServiceResponse, Error> => {
   return useQuery({
     queryKey: [...SERVICE_KEYS.userBought(organizationId, userId), params],
-    queryFn: () => fetchUserBoughtServices(organizationId, userId),
+    queryFn: () => fetchUserBoughtServices(organizationId, userId, params),
     enabled: !!organizationId && !!userId,
     onError: (error: Error) => {
       console.error('Error fetching user bought services:', error);
@@ -344,7 +344,7 @@ export const useRemoveServiceFromProgress = (): UseMutationResult<SuccessRespons
 export const useServiceUsers = (serviceId: number, params?: Record<string, any>): UseQueryResult<PaginatedServiceUsers, Error> => {
   return useQuery({
     queryKey: [...SERVICE_KEYS.users(serviceId), params],
-    queryFn: () => fetchServiceUsers(serviceId),
+    queryFn: () => fetchServiceUsers(serviceId, params),
     enabled: !!serviceId,
     onError: (error: Error) => {
       console.error('Error fetching service users:', error);
@@ -356,7 +356,7 @@ export const useServiceUsers = (serviceId: number, params?: Record<string, any>)
 export const useServiceUsersCompleted = (serviceId: number, params?: Record<string, any>): UseQueryResult<PaginatedServiceUsers, Error> => {
   return useQuery({
     queryKey: [...SERVICE_KEYS.usersCompleted(serviceId), params],
-    queryFn: () => fetchServiceUsersCompleted(serviceId),
+    queryFn: () => fetchServiceUsersCompleted(serviceId, params),
     enabled: !!serviceId,
     onError: (error: Error) => {
       console.error('Error fetching service users completed:', error);
@@ -368,7 +368,7 @@ export const useServiceUsersCompleted = (serviceId: number, params?: Record<stri
 export const useServiceUsersInProgress = (serviceId: number, params?: Record<string, any>): UseQueryResult<PaginatedServiceUsers, Error> => {
   return useQuery({
     queryKey: [...SERVICE_KEYS.usersInProgress(serviceId), params],
-    queryFn: () => fetchServiceUsersInProgress(serviceId),
+    queryFn: () => fetchServiceUsersInProgress(serviceId, params),
     enabled: !!serviceId,
     onError: (error: Error) => {
       console.error('Error fetching service users in progress:', error);

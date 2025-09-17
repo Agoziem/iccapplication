@@ -9,6 +9,7 @@ import SearchInput from "@/components/custom/Inputs/SearchInput";
 import { useMyProfile } from "@/data/hooks/user.hooks";
 import { ORGANIZATION_ID } from "@/data/constants";
 import { Product } from "@/types/items";
+import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
 
 /**
  * Enhanced UserProducts component with comprehensive error handling and safety checks
@@ -18,10 +19,16 @@ import { Product } from "@/types/items";
 const UserProducts: React.FC = React.memo(() => {
   const { data: user } = useMyProfile();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const currentCategory = searchParams?.get("category") || "All";
-  const page = searchParams?.get("page") || "1";
-  const pageSize = "10";
+  const [currentCategory, setCurrentCategory] = useQueryState(
+    "category",
+    parseAsString.withDefault("All")
+  );
+  const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
+  const [pageSize, setPageSize] = useQueryState(
+    "page_size",
+    parseAsInteger.withDefault(10)
+  );
+
   
   // Safe state management
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -49,44 +56,27 @@ const UserProducts: React.FC = React.memo(() => {
   }, [isError, queryError]);
 
   // Safe page change handler
-  const handlePageChange = useCallback((newPage: string | number) => {
-    const pageValue = typeof newPage === 'number' ? newPage.toString() : newPage;
-    
-    if (!pageValue || typeof pageValue !== 'string') {
-      console.error('Invalid page number:', newPage);
-      return;
-    }
-
-    const pageNum = parseInt(pageValue, 10);
-    if (isNaN(pageNum) || pageNum < 1) {
-      console.error('Invalid page number:', newPage);
-      return;
-    }
-
-    try {
-      const url = `?category=${encodeURIComponent(currentCategory)}&page=${pageNum}&page_size=${pageSize}`;
-      router.push(url, { scroll: false });
-    } catch (error) {
-      console.error('Navigation error:', error);
-      setError('Navigation failed. Please try again.');
-    }
-  }, [currentCategory, pageSize, router]);
-
-  // Safe category change handler
-  const handleCategoryChange = useCallback((category: string) => {
-    if (!category || typeof category !== 'string') {
-      console.error('Invalid category:', category);
-      return;
-    }
-
-    try {
-      const url = `?category=${encodeURIComponent(category)}&page=1&page_size=${pageSize}`;
-      router.push(url, { scroll: false });
-    } catch (error) {
-      console.error('Navigation error:', error);
-      setError('Navigation failed. Please try again.');
-    }
-  }, [pageSize, router]);
+    const handlePageChange = useCallback(
+      (newPage: string | number) => {
+        const pageNumber =
+          typeof newPage === "string" ? parseInt(newPage, 10) : newPage;
+        if (isNaN(pageNumber) || pageNumber < 1) {
+          console.error("Invalid page number:", newPage);
+          return;
+        }
+        setPage(pageNumber);
+      },
+      [currentCategory, pageSize, router]
+    );
+  
+    // Safe category change handler
+    const handleCategoryChange = useCallback(
+      (category: string) => {
+        setCurrentCategory(category);
+        setPage(1); // Reset to first page on category change
+      },
+      [page, pageSize, router]
+    );
 
   // Safe filtered products with validation
   const filteredProducts = useMemo(() => {
@@ -230,7 +220,7 @@ const UserProducts: React.FC = React.memo(() => {
       )}
 
       {/* Products Grid */}
-      <div className="row g-3">
+      <div className="row g-3 mt-2">
         {filteredProducts.length > 0 ? (
           filteredProducts.map((product) => {
             const productName = product.name || 'Unnamed Product';
@@ -262,16 +252,16 @@ const UserProducts: React.FC = React.memo(() => {
                     </div>
 
                     {/* Product Info */}
-                    <div className="flex-grow-1 min-w-0">
+                    <div className="flex-grow-1" style={{ minWidth: 0 }}>
                       <h6 className="text-capitalize mb-1 text-truncate" title={productName}>
                         {productName}
                       </h6>
-                      <p className="small text-muted mb-2" title={product.description}>
+                      <p className="small text-muted mb-2 line-clamp-3" title={product.description}>
                         {productDescription}
                       </p>
                       
                       {/* Footer Section */}
-                      <div className="d-flex justify-content-between align-items-center mt-auto">
+                      <div className="d-flex flex-column gap-2 justify-content-between align-items-start mt-auto">
                         <p className="small text-muted mb-0">
                           {productCategory} Product
                         </p>
@@ -281,14 +271,14 @@ const UserProducts: React.FC = React.memo(() => {
                             href={productUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="btn btn-primary btn-sm"
+                            className="badge bg-primary text-white py-2 px-2"
                             aria-label={`View ${productName} product`}
                           >
                             <i className="bi bi-box-arrow-up-right me-1"></i>
                             View Product
                           </Link>
                         ) : (
-                          <span className="badge bg-secondary bg-opacity-10 text-secondary">
+                          <span className="badge bg-secondary-light bg-opacity-10 text-secondary py-2 px-2 ">
                             No URL Available
                           </span>
                         )}
@@ -327,11 +317,11 @@ const UserProducts: React.FC = React.memo(() => {
       </div>
 
       {/* Pagination */}
-      {!loadingProducts && products && getProductCount > parseInt(pageSize) && (
+      {!loadingProducts && products && getProductCount > pageSize && (
         <div className="mt-4 d-flex justify-content-center">
           <Pagination
             currentPage={String(page)}
-            totalPages={Math.ceil(getProductCount / parseInt(pageSize))}
+            totalPages={Math.ceil(getProductCount / pageSize)}
             handlePageChange={handlePageChange}
           />
         </div>

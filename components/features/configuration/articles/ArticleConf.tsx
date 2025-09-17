@@ -6,12 +6,19 @@ import ArticleCategoryForm from "./ArticleCategoryForm";
 import { useSearchParams } from "next/navigation";
 import { useArticleCategories, useArticles } from "@/data/hooks/articles.hooks";
 import { ArticleResponse } from "@/types/articles";
+import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
 
 const ArticleConf: React.FC = () => {
   const searchParams = useSearchParams();
-  const currentCategory = searchParams.get("category") || "All";
-  const page = searchParams.get("page") || "1";
-  const pageSize = "10";
+  const [currentCategory, setCurrentCategory] = useQueryState(
+    "category",
+    parseAsString.withDefault("All")
+  );
+  const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
+  const [pageSize, setPageSize] = useQueryState(
+    "page_size",
+    parseAsInteger.withDefault(10)
+  );
   const [editMode, setEditMode] = useState(false);
   const [article, setArticle] = useState<ArticleResponse | null>(null);
 
@@ -61,7 +68,7 @@ const ArticleConf: React.FC = () => {
           editMode={editMode}
           setEditMode={setEditMode}
           loading={loadingArticles}
-          currentPage={parseInt(page)}
+          currentPage={page}
           pageSize={pageSize}
         />
       </div>

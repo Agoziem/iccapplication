@@ -99,13 +99,13 @@ const MainHeader = () => {
         <div className="d-flex">
           <Link href={"/dashboard"}>
             <button
-              className="btn btn-primary text-white font-bold me-2"
+              className="btn btn-primary text-white font-bold me-2 text-nowrap"
               style={{
                 padding: "7px 22px",
                 borderRadius: "25px",
               }}
             >
-              {user ? "Dashboard" : "Get Started now"}
+              {user ? "Dashboard" : "Get Started"}
             </button>
           </Link>
           {user && (

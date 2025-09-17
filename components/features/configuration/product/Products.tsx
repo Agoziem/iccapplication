@@ -23,6 +23,7 @@ import { Product, ProductCategory } from "@/types/items";
 import { ProductCategoryManager } from "../../Categories/CategoryManager";
 import ProductsSubCatForm from "../../SubCategories/productssub";
 import { ORGANIZATION_ID } from "@/data/constants";
+import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
 
 type AlertState = {
   show: boolean;
@@ -38,13 +39,16 @@ const Products = () => {
   const [alert, setAlert] = useState<AlertState>({ show: false, message: "", type: "info" });
   const [addorupdate, setAddorupdate] = useState({ mode: "add", state: false });
 
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const currentCategory = searchParams.get("category") || "All";
-  const page = searchParams.get("page") || "1";
-  const pageSize = "10";
+  const [currentCategory, setCurrentCategory] = useQueryState(
+    "category",
+    parseAsString.withDefault("All")
+  );
+  const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
+  const [pageSize, setPageSize] = useQueryState(
+    "page_size",
+    parseAsInteger.withDefault(10)
+  );
   const [allCategories, setAllCategories] = useState<ProductCategory[] | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<ProductCategory | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isPending, startTransition] = useTransition();
   const [isdeleting, startDeletion] = useTransition();
@@ -52,10 +56,6 @@ const Products = () => {
   // Hooks
   const { mutateAsync: deleteProduct } = useDeleteProduct();
   const { data: productCategories, isLoading: loadingCategories, error: categoryError } = useProductCategories();
-  const { data: subcategories, isLoading: loadingsubcategories } = useProductSubCategories(
-    product?.category?.id || selectedCategory?.id || 0
-  );
-
   // Fetch Products
   const {
     data: products,
@@ -68,24 +68,15 @@ const Products = () => {
   // -----------------------------------------
   const handlePageChange = (newPage: string | number) => {
     const pageNum = typeof newPage === "string" ? parseInt(newPage) : newPage;
-    router.push(
-      `?category=${currentCategory}&page=${pageNum}&page_size=${pageSize}`,
-      {
-        scroll: false,
-      }
-    );
+    if (isNaN(pageNum) || pageNum < 1) return;
+    setPage(pageNum);
   };
 
   // -------------------------------
   // Handle category change
   // -------------------------------
   const handleCategoryChange = (category: ProductCategory | null) => {
-    router.push(
-      `?category=${category?.id || 0}&page=${page}&page_size=${pageSize}`,
-      {
-        scroll: false,
-      }
-    );
+    setCurrentCategory(category?.category || "All");
   };
 
   // Memoized filtered Products based on search query
@@ -265,10 +256,10 @@ const Products = () => {
 
         {!loadingProducts &&
           products &&
-          Math.ceil(products.count / parseInt(pageSize)) > 1 && (
+          Math.ceil(products.count / pageSize) > 1 && (
             <Pagination
               currentPage={page}
-              totalPages={Math.ceil(products.count / parseInt(pageSize))}
+              totalPages={Math.ceil(products.count / pageSize)}
               handlePageChange={handlePageChange}
             />
           )}

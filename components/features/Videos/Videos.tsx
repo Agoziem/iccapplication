@@ -10,9 +10,15 @@ import { FaVideo } from "react-icons/fa6";
 import Pagination from "@/components/custom/Pagination/Pagination";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
 import AnimationContainer from "@/components/animation/animation-container";
-import { useTrendingVideos, useVideoCategories, useVideos } from "@/data/hooks/video.hooks";
+import {
+  useTrendingVideos,
+  useVideoCategories,
+  useVideos,
+} from "@/data/hooks/video.hooks";
 import { ORGANIZATION_ID } from "@/data/constants";
 import { Category } from "@/types/categories";
+import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
+
 type ExtendedCategory = Category & {
   description: string;
 };
@@ -24,10 +30,15 @@ type ExtendedCategory = Category & {
  */
 const Videos: React.FC = React.memo(() => {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const currentCategory = searchParams.get("category") || "All";
-  const page = searchParams.get("page") || "1";
-  const pageSize = "10";
+  const [currentCategory, setCurrentCategory] = useQueryState(
+    "category",
+    parseAsString.withDefault("All")
+  );
+  const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
+  const [pageSize, setPageSize] = useQueryState(
+    "page_size",
+    parseAsInteger.withDefault(10)
+  );
   const [allCategories, setAllCategories] = useState<ExtendedCategory[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>(""); // State for search input
 
@@ -68,29 +79,36 @@ const Videos: React.FC = React.memo(() => {
   });
 
   // Safe pagination handler
-  const handlePageChange = useCallback((newPage: string | number) => {
-    const pageNum = typeof newPage === 'string' ? parseInt(newPage, 10) : newPage;
-    if (isNaN(pageNum) || pageNum < 1) return;
-    
-    router.push(
-      `?category=${currentCategory}&page=${pageNum}&page_size=${pageSize}`,
-      { scroll: false }
-    );
-  }, [router, currentCategory, pageSize]);
+  const handlePageChange = useCallback(
+    (newPage: string | number) => {
+      if (typeof newPage === "string") {
+        const pageNum = parseInt(newPage, 10);
+        if (isNaN(pageNum) || pageNum < 1) return;
+        setPage(pageNum);
+      } else {
+        if (newPage < 1) return;
+        setPage(newPage);
+      }
+    },
+    [router, currentCategory, pageSize]
+  );
 
-  const handleCategoryChange = useCallback((category: string) => {
-    router.push(`?category=${category}&page=${page}&page_size=${pageSize}`, {
-      scroll: false,
-    });
-  }, [router, page, pageSize]);
+  const handleCategoryChange = useCallback(
+    (category: string) => {
+      setCurrentCategory(category);
+      setPage(1);
+    },
+    [router, page, pageSize]
+  );
 
   // Filter videos based on search input with memoization
   const filteredVideos = useMemo(() => {
     const videoResults = videos?.results || [];
     if (!searchQuery.trim()) return videoResults;
-    
-    return videoResults.filter((video) =>
-      video?.title?.toLowerCase().includes(searchQuery.toLowerCase()) || false
+
+    return videoResults.filter(
+      (video) =>
+        video?.title?.toLowerCase().includes(searchQuery.toLowerCase()) || false
     );
   }, [videos?.results, searchQuery]);
 
@@ -103,12 +121,12 @@ const Videos: React.FC = React.memo(() => {
   // Safe page calculation
   const totalPages = useMemo(() => {
     if (!videos?.count) return 0;
-    return Math.ceil(videos.count / parseInt(pageSize, 10));
+    return Math.ceil(videos.count / pageSize);
   }, [videos?.count, pageSize]);
 
   // Safe trending videos validation
   const validTrendingVideos = useMemo(() => {
-    return trendingvideos?.results?.filter(video => video && video.id) || [];
+    return trendingvideos?.results?.filter((video) => video && video.id) || [];
   }, [trendingvideos?.results]);
 
   return (
@@ -153,23 +171,32 @@ const Videos: React.FC = React.memo(() => {
         </div>
       </div>
 
-      {searchQuery.trim() && <h5>Search Results</h5>}
+      {searchQuery.trim() && (
+        <h5>Search Results for &ldquo;{searchQuery}&rdquo;</h5>
+      )}
       <div className="row">
         {loadingVideos && !error ? (
           <div className="d-flex justify-content-center">
-            <div className="spinner-border text-primary" role="status" aria-label="Loading videos">
+            <div
+              className="spinner-border text-primary"
+              role="status"
+              aria-label="Loading videos"
+            >
               <span className="visually-hidden">Loading...</span>
             </div>
           </div>
         ) : filteredVideos.length > 0 ? (
           filteredVideos.map((video, index) => (
-            <AnimationContainer 
-              delay={index * 0.1} 
-              key={video?.id || `video-${index}`} 
-              className="col-12 col-md-4 mb-3"
-            >
+            // <AnimationContainer
+            //   delay={index * 0.1}
+            //   key={video?.id || `video-${index}`}
+            //   className="col-12 col-md-4 mb-3"
+            // >
+            //   <VideoCard video={video} />
+            // </AnimationContainer>
+            <div key={video?.id} className="col-12 col-md-4 mb-3">
               <VideoCard video={video} />
-            </AnimationContainer>
+            </div>
           ))
         ) : (
           <div className="mt-3 mb-3 text-center">
@@ -210,6 +237,6 @@ const Videos: React.FC = React.memo(() => {
   );
 });
 
-Videos.displayName = 'Videos';
+Videos.displayName = "Videos";
 
 export default Videos;

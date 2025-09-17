@@ -10,14 +10,14 @@ interface SearchInputProps {
   style?: React.CSSProperties;
 }
 
-const SearchInput: React.FC<SearchInputProps> = ({ 
-  searchQuery, 
-  setSearchQuery, 
+const SearchInput: React.FC<SearchInputProps> = ({
+  searchQuery,
+  setSearchQuery,
   itemlabel = "",
   className = "",
   placeholder,
   disabled = false,
-  style = {}
+  style = {},
 }) => {
   const defaultPlaceholder = placeholder || `Search for ${itemlabel}`;
 
@@ -30,7 +30,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
         width: "100%",
         maxWidth: "400px",
         minWidth: "290px",
-        ...style
+        ...style,
       }}
     >
       <i className="bi bi-search text-primary ms-3" />
@@ -39,7 +39,9 @@ const SearchInput: React.FC<SearchInputProps> = ({
         className="form-control border-0"
         placeholder={defaultPlaceholder}
         value={searchQuery}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+          setSearchQuery(e.target.value);
+        }}
         disabled={disabled}
         style={{
           color: "white",

@@ -18,20 +18,6 @@ import {
 } from "@/schemas/organizations";
 import { UpdateDepartment, CreateDepartment } from "@/types/organizations";
 
-type CreateDepartmentFormData = {
-  name: string;
-  description: string;
-  staff_in_charge: number;
-  img?: File;
-};
-
-type UpdateDepartmentFormData = {
-  name: string;
-  description: string;
-  staff_in_charge: number;
-  img?: File;
-};
-
 interface DepartmentFormProps {
   department?: Department | null;
   editMode: boolean;
@@ -47,7 +33,6 @@ const DepartmentForm = ({
 }: DepartmentFormProps) => {
   const [service, setService] = useState("");
   const [services, setServices] = useState<string[]>([]);
-  const [formData, setFormData] = useState<any>({});
   const [isPending, startTransition] = useTransition();
 
   // Hooks
@@ -63,7 +48,7 @@ const DepartmentForm = ({
     reset,
     setValue,
     watch,
-  } = useForm<CreateDepartmentFormData | UpdateDepartmentFormData>({
+  } = useForm<CreateDepartment | UpdateDepartment>({
     resolver: zodResolver(
       editMode ? UpdateDepartmentSchema : CreateDepartmentSchema
     ),
@@ -71,38 +56,38 @@ const DepartmentForm = ({
       name: "",
       description: "",
       staff_in_charge: 0,
+      img: "",
+      services: [],
     },
   });
 
   // Initialize form data
   useEffect(() => {
     if (editMode && department) {
-      setValue("name", department.name || "");
-      setValue("description", department.description || "");
-      setValue("staff_in_charge", department.staff_in_charge?.id || 0);
-      setServices(department.services?.map(s => s.name) || []);
-      setFormData({
-        img_url: department.img_url || "",
-        img_name: department.img_name || "",
-        img: department.img || "",
+      reset({
+        name: department.name || "",
+        description: department.description || "",
+        staff_in_charge: department.staff_in_charge?.id || 0,
+        img: department.img_url || "",
       });
+      setValue("services", department.services?.map((s) => s.name) || []);
+      setServices(department.services?.map((s) => s.name) || []);
     } else {
       reset();
       setServices([]);
-      setFormData({});
     }
   }, [editMode, department, setValue, reset]);
 
   // Handle form submission
-  const onSubmit = async (data: CreateDepartmentFormData | UpdateDepartmentFormData) => {
+  const onSubmit = async (data: CreateDepartment | UpdateDepartment) => {
     startTransition(async () => {
       try {
         const departmentData = {
-          name: data.name,
-          description: data.description,
-          staff_in_charge: data.staff_in_charge,
-          services: services,
-          img: formData.img || "",
+          name: data.name || "",
+          description: data.description || "",
+          staff_in_charge: data.staff_in_charge || 0,
+          services: services || [],
+          img: data.img || "",
         };
 
         if (editMode && department) {
@@ -117,7 +102,7 @@ const DepartmentForm = ({
             departmentData,
           });
         }
-        
+
         onSuccess();
       } catch (error) {
         console.error("Error saving department:", error);
@@ -135,7 +120,7 @@ const DepartmentForm = ({
 
   // Remove service
   const removeService = (serviceToRemove: string) => {
-    setServices(services.filter(s => s !== serviceToRemove));
+    setServices(services.filter((s) => s !== serviceToRemove));
   };
 
   return (
@@ -152,17 +137,16 @@ const DepartmentForm = ({
           <Controller
             name="img"
             control={control}
-            render={({ field: { onChange, onBlur, name } }) => (
+            render={({ field }) => (
               <ImageUploader
-                name={name}
-                value={formData.img}
-                onChange={(file) => {
-                  onChange(file);
-                  setFormData({ ...formData, img: file });
-                }}
-                onBlur={onBlur}
-                error={errors.img?.message}
-                placeholder="Upload department image"
+                name="img"
+                value={field.value}
+                onChange={field.onChange}
+                error={
+                  typeof errors.img?.message === "string"
+                    ? errors.img.message
+                    : undefined
+                }
               />
             )}
           />
@@ -202,7 +186,9 @@ const DepartmentForm = ({
             render={({ field }) => (
               <textarea
                 {...field}
-                className={`form-control ${errors.description ? "is-invalid" : ""}`}
+                className={`form-control ${
+                  errors.description ? "is-invalid" : ""
+                }`}
                 id="description"
                 rows={4}
                 placeholder="Enter department description"
@@ -225,7 +211,10 @@ const DepartmentForm = ({
             render={({ field }) => (
               <select
                 {...field}
-                className={`form-select ${errors.staff_in_charge ? "is-invalid" : ""}`}
+                onChange={(e) => field.onChange(parseInt(e.target.value, 10))}
+                className={`form-select ${
+                  errors.staff_in_charge ? "is-invalid" : ""
+                }`}
                 id="staff_in_charge"
               >
                 <option value={0}>Select Staff in Charge</option>
@@ -238,7 +227,9 @@ const DepartmentForm = ({
             )}
           />
           {errors.staff_in_charge && (
-            <div className="invalid-feedback">{errors.staff_in_charge.message}</div>
+            <div className="invalid-feedback">
+              {errors.staff_in_charge.message}
+            </div>
           )}
         </div>
 
@@ -252,7 +243,9 @@ const DepartmentForm = ({
               value={service}
               onChange={(e) => setService(e.target.value)}
               placeholder="Add a service"
-              onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addService())}
+              onKeyPress={(e) =>
+                e.key === "Enter" && (e.preventDefault(), addService())
+              }
             />
             <button
               type="button"
@@ -266,14 +259,16 @@ const DepartmentForm = ({
 
           {/* Services List */}
           <div className="mb-3">
-            <p className="fw-bold text-primary mb-2">Services ({services.length})</p>
+            <p className="fw-bold text-primary mb-2">
+              Services ({services.length})
+            </p>
             <div>
               {services.length > 0 ? (
                 <div className="d-flex flex-wrap gap-2">
                   {services.map((serviceItem, index) => (
                     <div
                       key={index}
-                      className="badge bg-light text-dark border p-2 px-3 d-flex align-items-center"
+                      className="badge bg-primary-light text-primary border p-2 px-3 d-flex align-items-center"
                     >
                       {serviceItem}
                       <TiTimes
@@ -312,8 +307,10 @@ const DepartmentForm = ({
                 <div>{editMode ? "Updating..." : "Adding..."}</div>
                 <PulseLoader size={8} color={"#ffffff"} loading={true} />
               </div>
+            ) : editMode ? (
+              "Update Department"
             ) : (
-              editMode ? "Update Department" : "Add Department"
+              "Add Department"
             )}
           </button>
         </div>

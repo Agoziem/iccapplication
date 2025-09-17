@@ -19,7 +19,7 @@ import { saveToken } from "@/utils/auth";
 const SigninPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") || DEFAULT_LOGIN_REDIRECT;
+  const redirect = searchParams.get("redirect") || DEFAULT_LOGIN_REDIRECT;
   const [loggingIn, startLoggingIn] = useTransition();
   const [alert, setAlert] = useState<{
     show: boolean;
@@ -39,7 +39,7 @@ const SigninPage = () => {
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
-    control
+    control,
   } = useForm<UserLogin>({
     resolver: zodResolver(UserLoginSchema),
     defaultValues: {
@@ -52,14 +52,19 @@ const SigninPage = () => {
     startLoggingIn(async () => {
       try {
         // Check whether the user email is verified
-        const response = await verifyUser(data.email);
+        const response = await verifyUser(data);
 
-        if (response?.user.isVerified === true) {
+        if (response?.user.emailIsVerified === true) {
           try {
             if (response && response.access_token) {
               // Save token and redirect
               saveToken(response);
-              router.push(next);
+              router.push(redirect);
+              setAlert({
+                show: true,
+                message: "Login successful! Redirecting...",
+                type: "success",
+              });
             } else {
               throw new Error("Invalid credentials");
             }
@@ -178,11 +183,9 @@ const SigninPage = () => {
                     render={({ field }) => (
                       <PasswordInput
                         {...field}
-                        className={`form-control ${
-                          errors.password ? "is-invalid" : ""
-                        }`}
                         placeholder="Enter your password"
                         required
+                        className={`${errors.password ? "is-invalid" : ""}`}
                       />
                     )}
                   />

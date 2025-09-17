@@ -91,7 +91,7 @@ export const verifyToken = async (tokenData: VerifyToken): Promise<User> => {
   return response.data;
 };
 
-export const verifyUser = async (userData: any): Promise<TokenType> => {
+export const verifyUser = async (userData: UserLogin): Promise<TokenType> => {
   const response = await AxiosInstance.post(`${authAPIendpoint}/verifyuser/`, userData);
   return response.data;
 };
@@ -266,7 +266,7 @@ export const useVerifyToken = (): UseMutationResult<User, Error, VerifyToken> =>
   });
 };
 
-export const useVerifyUser = (): UseMutationResult<TokenType, Error, any> => {
+export const useVerifyUser = (): UseMutationResult<TokenType, Error, UserLogin> => {
   return useMutation({
     mutationFn: verifyUser,
     onError: (error: Error) => {

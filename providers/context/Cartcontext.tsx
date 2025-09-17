@@ -27,6 +27,8 @@ interface CartContextValue {
   cart: CartItem[];
   total: number;
   reference: string;
+  showOffCanvas: boolean;
+  setShowOffCanvas: React.Dispatch<React.SetStateAction<boolean>>;
   addToCart: (item: CartItem, type: "service" | "product" | "video") => void;
   removeFromCart: (itemId: number, type: "service" | "product" | "video") => void;
   resetCart: () => void;
@@ -46,6 +48,7 @@ const CartContext = createContext<CartContextValue | null>(null);
 
 const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const router = useRouter();
+  const [showOffCanvas, setShowOffCanvas] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [storedCart, setStoredCart] = useLocalStorage("cart", cart);
   const [total, setTotal] = useState<number>(0);
@@ -144,7 +147,7 @@ const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   // Checkout
   // ----------------------------------------------------
   const queryClient = useQueryClient();
-  const checkout = (): void => {
+  const checkout = async (): Promise<void> => {
     if (cart.length === 0) {
       setError("Cart is empty");
       return;
@@ -215,6 +218,8 @@ const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         cart,
         total,
         reference,
+        showOffCanvas,
+        setShowOffCanvas,
         addToCart,
         removeFromCart,
         resetCart,

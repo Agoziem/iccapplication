@@ -81,6 +81,7 @@ const VideoCard: React.FC<VideoCardProps> = React.memo(({ video }) => {
       role="button"
       aria-label={`Video: ${video?.title || 'Unknown video'}`}
       onKeyDown={handleKeyDown}
+      style={{ height: "205px" }}
     >
       <div className="d-flex align-items-center">
         <div className="me-3">
@@ -100,10 +101,10 @@ const VideoCard: React.FC<VideoCardProps> = React.memo(({ video }) => {
         </div>
 
         <div
-          className="flex-fill d-flex flex-column justify-content-between"
+          className="flex-fill d-flex flex-column justify-content-between gap-1"
           style={{ height: "100%" }}
         >
-          <h6 className="flex-grow-1">{video?.title || 'Untitled Video'}</h6>
+          <h6 className="flex-grow-1 line-clamp-1">{video?.title || 'Untitled Video'}</h6>
           <p className="text-primary mb-1">
             {safeDescription.length > 80 ? (
               <span>
@@ -129,7 +130,7 @@ const VideoCard: React.FC<VideoCardProps> = React.memo(({ video }) => {
               safeDescription
             )}
           </p>
-          <div className="d-flex justify-content-between mt-3 flex-wrap">
+          <div className="d-flex justify-content-between flex-wrap gap-1">
             <span className="fw-bold text-primary me-2">
               &#8358;{formattedPrice}
             </span>

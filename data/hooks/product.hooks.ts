@@ -32,8 +32,8 @@ export const PRODUCT_KEYS = {
 
 
 // Product Management
-export const fetchProducts = async (organizationId: number): Promise<PaginatedProductResponse> => {
-  const response = await AxiosInstance.get(`${productsAPIendpoint}/products/${organizationId}/`);
+export const fetchProducts = async (organizationId: number, params?: Record<string, any>): Promise<PaginatedProductResponse> => {
+  const response = await AxiosInstance.get(`${productsAPIendpoint}/products/${organizationId}/`, { params });
   return response.data;
 };
 
@@ -58,13 +58,13 @@ export const deleteProduct = async (productId: number): Promise<DeleteResponse> 
   return response.data;
 };
 
-export const fetchTrendingProducts = async (organizationId: number): Promise<PaginatedProductResponse> => {
-  const response = await AxiosInstance.get(`${productsAPIendpoint}/trendingproducts/${organizationId}/`);
+export const fetchTrendingProducts = async (organizationId: number, params?: Record<string, any>): Promise<PaginatedProductResponse> => {
+  const response = await AxiosInstance.get(`${productsAPIendpoint}/trendingproducts/${organizationId}/`, { params });
   return response.data;
 };
 
-export const fetchUserBoughtProducts = async (organizationId: number, userId: number): Promise<PaginatedProductResponse> => {
-  const response = await AxiosInstance.get(`${productsAPIendpoint}/userboughtproducts/${organizationId}/${userId}/`);
+export const fetchUserBoughtProducts = async (organizationId: number, userId: number, params?: Record<string, any>): Promise<PaginatedProductResponse> => {
+  const response = await AxiosInstance.get(`${productsAPIendpoint}/userboughtproducts/${organizationId}/${userId}/`, { params });
   return response.data;
 };
 
@@ -95,8 +95,8 @@ export const createProductSubCategory = async (subCategoryData: CreateProductSub
   return response.data;
 };
 
-export const fetchProductSubCategories = async (categoryId: number): Promise<ProductSubCategory[]> => {
-  const response = await AxiosInstance.get(`${productsAPIendpoint}/subcategories/${categoryId}/`);
+export const fetchProductSubCategories = async (categoryId: number, params?: Record<string, any>): Promise<ProductSubCategory[]> => {
+  const response = await AxiosInstance.get(`${productsAPIendpoint}/subcategories/${categoryId}/`, { params });
   return response.data;
 };
 
@@ -121,7 +121,7 @@ export const deleteProductSubCategory = async (subcategoryId: number): Promise<D
 export const useProducts = (organizationId: number, params?: Record<string, any>): UseQueryResult<PaginatedProductResponse, Error> => {
   return useQuery({
     queryKey: [...PRODUCT_KEYS.list(organizationId), params],
-    queryFn: () => fetchProducts(organizationId),
+    queryFn: () => fetchProducts(organizationId, params),
     onError: (error: Error) => {
       console.error('Error fetching products:', error);
       throw error;
@@ -144,7 +144,7 @@ export const useProduct = (productId: number): UseQueryResult<Product, Error> =>
 export const useTrendingProducts = (organizationId: number, params?: Record<string, any>): UseQueryResult<PaginatedProductResponse, Error> => {
   return useQuery({
     queryKey: [...PRODUCT_KEYS.trending(organizationId), params],
-    queryFn: () => fetchTrendingProducts(organizationId),
+    queryFn: () => fetchTrendingProducts(organizationId, params),
     onError: (error: Error) => {
       console.error('Error fetching trending products:', error);
       throw error;
@@ -155,7 +155,7 @@ export const useTrendingProducts = (organizationId: number, params?: Record<stri
 export const useUserBoughtProducts = (organizationId: number, userId: number, params?: Record<string, any>): UseQueryResult<PaginatedProductResponse, Error> => {
   return useQuery({
     queryKey: [...PRODUCT_KEYS.userBought(organizationId, userId), params],
-    queryFn: () => fetchUserBoughtProducts(organizationId, userId),
+    queryFn: () => fetchUserBoughtProducts(organizationId, userId, params),
     enabled: !!organizationId && !!userId,
     onError: (error: Error) => {
       console.error('Error fetching user bought products:', error);
@@ -275,7 +275,7 @@ export const useDeleteProductCategory = (): UseMutationResult<DeleteResponse, Er
 export const useProductSubCategories = (categoryId: number, params?: Record<string, any>): UseQueryResult<ProductSubCategory[], Error> => {
   return useQuery({
     queryKey: [...PRODUCT_KEYS.subCategories(categoryId), params],
-    queryFn: () => fetchProductSubCategories(categoryId),
+    queryFn: () => fetchProductSubCategories(categoryId, params),
     enabled: !!categoryId,
     onError: (error: Error) => {
       console.error('Error fetching product subcategories:', error);

@@ -46,8 +46,8 @@ const QuestionAndAnswers: React.FC<QuestionAndAnswersProps> = ({
       return;
     }
 
-    if (!subjectId || !questionId || !answerId) {
-      console.error('Invalid IDs provided for answer selection');
+    if (subjectId == null || questionId == null || answerId == null) {
+      console.error('Invalid IDs provided for answer selection', { subjectId, questionId, answerId });
       return;
     }
 

@@ -8,8 +8,15 @@ import { PulseLoader } from "react-spinners";
 import Modal from "@/components/custom/Modal/modal";
 import Alert from "@/components/custom/Alert/Alert";
 import Pagination from "@/components/custom/Pagination/Pagination";
-import { UpdateSubscriptionSchema, CreateSubscriptionSchema } from "@/schemas/organizations";
-import { Subscription, UpdateSubscription, CreateSubscription } from "@/types/organizations";
+import {
+  UpdateSubscriptionSchema,
+  CreateSubscriptionSchema,
+} from "@/schemas/organizations";
+import {
+  Subscription,
+  UpdateSubscription,
+  CreateSubscription,
+} from "@/types/organizations";
 import {
   useCreateSubscription,
   useDeleteSubscription,
@@ -17,6 +24,7 @@ import {
   useUpdateSubscription,
 } from "@/data/hooks/organization.hooks";
 import { ORGANIZATION_ID } from "@/data/constants";
+import { parseAsInteger, useQueryState } from "nuqs";
 
 type AlertState = {
   show: boolean;
@@ -36,13 +44,18 @@ const Subscriptions = () => {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [alert, setAlert] = useState<AlertState>({ show: false, message: "", type: "info" });
+  const [alert, setAlert] = useState<AlertState>({
+    show: false,
+    message: "",
+    type: "info",
+  });
   const [addorupdate, setAddOrUpdate] = useState({ mode: "add", state: false });
 
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const page = searchParams.get("page") || "1";
-  const pageSize = "20";
+  const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
+  const [pageSize, setPageSize] = useQueryState(
+    "page_size",
+    parseAsInteger.withDefault(20)
+  );
   const [isPending, startTransition] = useTransition();
   const [isDeleting, startDeletion] = useTransition();
 
@@ -52,13 +65,11 @@ const Subscriptions = () => {
   const { mutateAsync: deleteSubscription } = useDeleteSubscription();
 
   // Fetch Subscriptions
-  const { data: subscriptions, isLoading: loadingSubscriptions } = useSubscriptions(
-    parseInt(ORGANIZATION_ID || "0", 10),
-    {
-      page: parseInt(page, 10),
-      page_size: parseInt(pageSize, 10),
-    }
-  );
+  const { data: subscriptions, isLoading: loadingSubscriptions } =
+    useSubscriptions(parseInt(ORGANIZATION_ID || "0", 10), {
+      page: page,
+      page_size: pageSize,
+    });
 
   // Form setup
   const {
@@ -69,7 +80,9 @@ const Subscriptions = () => {
     setValue,
   } = useForm<CreateSubscriptionFormData | UpdateSubscriptionFormData>({
     resolver: zodResolver(
-      addorupdate.mode === "add" ? CreateSubscriptionSchema : UpdateSubscriptionSchema
+      addorupdate.mode === "add"
+        ? CreateSubscriptionSchema
+        : UpdateSubscriptionSchema
     ),
     defaultValues: {
       email: "",
@@ -87,7 +100,7 @@ const Subscriptions = () => {
   // Handle page change
   const handlePageChange = (newPage: string | number) => {
     const pageNum = typeof newPage === "string" ? parseInt(newPage) : newPage;
-    router.push(`?page=${pageNum}&page_size=${pageSize}`, { scroll: false });
+    setPage(pageNum);
   };
 
   // Open modal for add/edit
@@ -114,7 +127,9 @@ const Subscriptions = () => {
   };
 
   // Handle form submission
-  const onSubmit = async (data: CreateSubscriptionFormData | UpdateSubscriptionFormData) => {
+  const onSubmit = async (
+    data: CreateSubscriptionFormData | UpdateSubscriptionFormData
+  ) => {
     startTransition(async () => {
       try {
         if (addorupdate.mode === "add") {
@@ -138,7 +153,9 @@ const Subscriptions = () => {
         closeModal();
       } catch (error) {
         handleAlert(
-          error instanceof Error ? error.message : "Failed to save subscription",
+          error instanceof Error
+            ? error.message
+            : "Failed to save subscription",
           "danger"
         );
       }
@@ -158,7 +175,9 @@ const Subscriptions = () => {
         setSubscription(null);
       } catch (error) {
         handleAlert(
-          error instanceof Error ? error.message : "Failed to delete subscription",
+          error instanceof Error
+            ? error.message
+            : "Failed to delete subscription",
           "danger"
         );
       }
@@ -178,7 +197,10 @@ const Subscriptions = () => {
 
   if (loadingSubscriptions) {
     return (
-      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "400px" }}>
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ minHeight: "400px" }}
+      >
         <PulseLoader color="#0d6efd" size={15} />
       </div>
     );
@@ -186,13 +208,14 @@ const Subscriptions = () => {
 
   return (
     <div className="container-fluid">
-      {/* Header */}
-      <div className="row mb-4">
+      {/* Subscription Header */}
+      <div className="row mb-3 align-items-center">
         <div className="col-md-6">
-          <div className="d-flex align-items-center">
-            <FiMail size={32} className="text-primary me-2" />
-            <h4 className="mb-0">Email Subscriptions</h4>
-          </div>
+          <h5 className="mb-1">All Subscriptions</h5>
+          <p className="mb-0 text-primary">
+            {subscriptions?.count ?? 0} Subscription
+            {(subscriptions?.count ?? 0) !== 1 ? "s" : ""} in Total
+          </p>
         </div>
         <div className="col-md-6 text-end">
           <button
@@ -203,16 +226,6 @@ const Subscriptions = () => {
             <FiPlus size={16} className="me-1" />
             Add Email
           </button>
-        </div>
-      </div>
-
-      {/* Subscription Header */}
-      <div className="row mb-3 align-items-center">
-        <div className="col-md-6">
-          <h5 className="mb-1">All Subscriptions</h5>
-          <p className="mb-0 text-primary">
-            {(subscriptions?.count ?? 0)} Subscription{(subscriptions?.count ?? 0) !== 1 ? "s" : ""} in Total
-          </p>
         </div>
       </div>
 
@@ -231,7 +244,9 @@ const Subscriptions = () => {
           <div className="col-12 text-center py-5">
             <FiMail size={64} className="text-muted mb-3" />
             <h5 className="text-muted">No subscriptions found</h5>
-            <p className="text-muted">Start by adding your first subscription email</p>
+            <p className="text-muted">
+              Start by adding your first subscription email
+            </p>
           </div>
         ) : (
           <div className="col-12">
@@ -256,9 +271,16 @@ const Subscriptions = () => {
                         </div>
 
                         <div className="flex-grow-1">
-                          <h6 className="mb-1 fw-bold">{subscriptionItem.email}</h6>
+                          <h6 className="mb-1 fw-bold text-truncate" style={{ maxWidth: "calc(100% - 40px)" }}>
+                            {subscriptionItem.email}
+                          </h6>
                           <p className="text-muted mb-0 small">
-                            Added on {subscriptionItem.date_added ? new Date(subscriptionItem.date_added).toLocaleDateString() : "Unknown date"}
+                            Added on{" "}
+                            {subscriptionItem.date_added
+                              ? new Date(
+                                  subscriptionItem.date_added
+                                ).toLocaleDateString()
+                              : "Unknown date"}
                           </p>
                         </div>
                       </div>
@@ -266,20 +288,20 @@ const Subscriptions = () => {
                       {/* Action Buttons */}
                       <div className="d-flex gap-2">
                         <button
-                          className="btn btn-sm btn-outline-primary"
+                          className="badge bg-primary text-white px-3 py-2 border-0"
                           onClick={() => handleEdit(subscriptionItem)}
                           title="Edit Subscription"
                         >
                           <FiEdit size={14} className="me-1" />
-                          Edit
+                          
                         </button>
                         <button
-                          className="btn btn-sm btn-outline-danger"
+                          className="badge bg-danger text-white px-3 py-2 border-0"
                           onClick={() => handleDeleteConfirm(subscriptionItem)}
                           title="Delete Subscription"
                         >
                           <FiTrash2 size={14} className="me-1" />
-                          Delete
+                          
                         </button>
                       </div>
                     </div>
@@ -292,12 +314,12 @@ const Subscriptions = () => {
       </div>
 
       {/* Pagination */}
-      {subscriptions && subscriptions.count > parseInt(pageSize) && (
+      {subscriptions && subscriptions.count > pageSize && (
         <div className="row mt-4">
           <div className="col-12">
             <Pagination
-              currentPage={parseInt(page)}
-              totalPages={Math.ceil(subscriptions.count / parseInt(pageSize))}
+              currentPage={page}
+              totalPages={Math.ceil(subscriptions.count / pageSize)}
               handlePageChange={handlePageChange}
             />
           </div>
@@ -305,13 +327,19 @@ const Subscriptions = () => {
       )}
 
       {/* Add/Edit Subscription Modal */}
-      <Modal showmodal={showModal} toggleModal={closeModal} overlayclose={false}>
+      <Modal
+        showmodal={showModal}
+        toggleModal={closeModal}
+        overlayclose={false}
+      >
         <div className="p-3">
           <h5 className="text-center mb-3">
-            {addorupdate.mode === "add" ? "Add New Subscription" : "Update Subscription"}
+            {addorupdate.mode === "add"
+              ? "Add New Subscription"
+              : "Update Subscription"}
           </h5>
           <hr />
-          
+
           <form onSubmit={handleFormSubmit(onSubmit)}>
             <div className="mb-3">
               <label htmlFor="email" className="form-label fw-bold">
@@ -324,7 +352,9 @@ const Subscriptions = () => {
                   <input
                     {...field}
                     type="email"
-                    className={`form-control ${errors.email ? "is-invalid" : ""}`}
+                    className={`form-control ${
+                      errors.email ? "is-invalid" : ""
+                    }`}
                     id="email"
                     placeholder="Enter email address"
                   />
@@ -351,11 +381,15 @@ const Subscriptions = () => {
               >
                 {isSubmitting ? (
                   <div className="d-inline-flex align-items-center justify-content-center gap-2">
-                    <div>{addorupdate.mode === "add" ? "Adding..." : "Updating..."}</div>
+                    <div>
+                      {addorupdate.mode === "add" ? "Adding..." : "Updating..."}
+                    </div>
                     <PulseLoader size={8} color={"#ffffff"} loading={true} />
                   </div>
+                ) : addorupdate.mode === "add" ? (
+                  "Add Email"
                 ) : (
-                  addorupdate.mode === "add" ? "Add Email" : "Update Email"
+                  "Update Email"
                 )}
               </button>
             </div>
@@ -368,11 +402,10 @@ const Subscriptions = () => {
         <div className="p-3">
           <p className="text-center">Delete Subscription</p>
           <hr />
-          <h5 className="text-center mb-4">
-            {subscription?.email}
-          </h5>
+          <h5 className="text-center mb-4">{subscription?.email}</h5>
           <p className="text-center text-muted mb-4">
-            Are you sure you want to delete this subscription? This action cannot be undone.
+            Are you sure you want to delete this subscription? This action
+            cannot be undone.
           </p>
           <div className="d-flex justify-content-center gap-2">
             <button
@@ -389,10 +422,7 @@ const Subscriptions = () => {
                 "Delete"
               )}
             </button>
-            <button
-              className="btn btn-secondary"
-              onClick={closeModal}
-            >
+            <button className="btn btn-secondary" onClick={closeModal}>
               Cancel
             </button>
           </div>

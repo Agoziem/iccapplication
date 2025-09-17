@@ -38,10 +38,12 @@ export const EMAIL_KEYS = {
 };
 
 export const fetchEmails = async (
-  organizationId: number
+  organizationId: number,
+  params?: Record<string, any>
 ): Promise<PaginatedEmailResponse> => {
   const response = await AxiosInstanceWithToken.get(
-    `${emailAPIendpoint}/emails/${organizationId}/`
+    `${emailAPIendpoint}/emails/${organizationId}/`,
+    { params }
   );
   return response.data;
 };
@@ -80,10 +82,12 @@ export const deleteEmail = async (emailId: number): Promise<void> => {
 };
 
 export const fetchEmailResponses = async (
-  messageId: number
+  messageId: number,
+  params?: Record<string, any>
 ): Promise<PaginatedEmailResponses> => {
   const response = await AxiosInstanceWithToken.get(
-    `${emailAPIendpoint}/emails/${messageId}/responses/`
+    `${emailAPIendpoint}/emails/${messageId}/responses/`,
+    { params }
   );
   return response.data;
 };
@@ -98,9 +102,10 @@ export const createResponse = async (
   return response.data;
 };
 
-export const getSentEmails = async (): Promise<Emails> => {
+export const getSentEmails = async (params?: Record<string, any>): Promise<Emails> => {
   const response = await AxiosInstanceWithToken.get(
-    `${emailAPIendpoint}/emails/getsentemails/`
+    `${emailAPIendpoint}/emails/getsentemails/`,
+    { params }
   );
   return response.data;
 };
@@ -141,7 +146,7 @@ export const useEmails = (
 ): UseQueryResult<PaginatedEmailResponse, Error> => {
   return useQuery({
     queryKey: [...EMAIL_KEYS.emails(organizationId), params],
-    queryFn: () => fetchEmails(organizationId),
+    queryFn: () => fetchEmails(organizationId, params),
     enabled: !!organizationId,
     onError: (error: Error) => {
       console.error("Error fetching emails:", error);
@@ -226,7 +231,7 @@ export const useEmailResponses = (
 ): UseQueryResult<PaginatedEmailResponses, Error> => {
   return useQuery({
     queryKey: [...EMAIL_KEYS.responses(messageId), params],
-    queryFn: () => fetchEmailResponses(messageId),
+    queryFn: () => fetchEmailResponses(messageId, params),
     enabled: !!messageId,
     onError: (error: Error) => {
       console.error("Error fetching email responses:", error);
@@ -260,7 +265,7 @@ export const useSentEmails = (
 ): UseQueryResult<Emails, Error> => {
   return useQuery({
     queryKey: [...EMAIL_KEYS.sent(), params],
-    queryFn: getSentEmails,
+    queryFn: () => getSentEmails(params),
     onError: (error: Error) => {
       console.error("Error fetching sent emails:", error);
       throw error;
@@ -359,7 +364,7 @@ export const useEmailPreviews = (
   return useQuery({
     queryKey: [...EMAIL_KEYS.emails(organizationId), "previews", params],
     queryFn: async () => {
-      const emails = await fetchEmails(organizationId);
+      const emails = await fetchEmails(organizationId, params);
       // Transform to preview format with only essential fields
       return (
         emails.results?.map((email) => ({

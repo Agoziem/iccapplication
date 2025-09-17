@@ -20,17 +20,17 @@ const OrderTableItems: React.FC<OrderTableItemsProps> = React.memo(({
   
   // Safe status badge handler
   const handleStatus = useCallback((status: PaymentStatus | undefined) => {
-    if (!status || typeof status !== 'string') return 'secondary';
-    
+    if (!status || typeof status !== 'string') return 'bg-secondary-light text-success';
+
     switch (status.toLowerCase()) {
       case 'completed':
-        return 'success';
+        return 'bg-success-light text-success';
       case 'pending':
-        return 'warning';
+        return 'bg-secondary-light text-secondary';
       case 'failed':
-        return 'danger';
+        return 'bg-danger-light text-danger';
       default:
-        return 'secondary';
+        return 'bg-secondary-light text-secondary';
     }
   }, []);
 
@@ -120,7 +120,7 @@ const OrderTableItems: React.FC<OrderTableItemsProps> = React.memo(({
                   </td>
                   <td>
                     <span
-                      className={`badge bg-${statusClass} bg-opacity-10 text-${statusClass} px-2 py-1`}
+                      className={`badge ${statusClass} bg-opacity-10 px-2 py-1`}
                     >
                       {status}
                     </span>

@@ -208,12 +208,12 @@ const CustomGoogleLogin: React.FC<CustomGoogleLoginProps> = ({
           type="button"
           onClick={handleClick}
           disabled={disabled || isLoading}
-          className="btn btn-outline-primary d-flex align-items-center justify-content-center w-100 py-2"
+          className="d-flex align-items-center me-0 me-md-3 p-2 px-3 mb-4 mb-md-0"
           style={{
             border: "1.2px solid #98889573",
             borderRadius: "5px",
-            transition: "all 0.3s ease",
-            opacity: disabled || isLoading ? 0.6 : 1,
+            cursor: "pointer",
+            width: "100%",
           }}
         >
           {!isLoading ? (

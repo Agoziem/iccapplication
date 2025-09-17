@@ -1,9 +1,14 @@
 "use client";
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { AnimatePresence } from "framer-motion";
 import { useAdminContext } from "@/providers/context/Admincontextdata";
 import { useCart } from "@/providers/context/Cartcontext";
-import { useServiceCategories, useServices, useTrendingServices } from "@/data/hooks/service.hooks";
+import {
+  useServiceCategories,
+  useServices,
+  useTrendingServices,
+} from "@/data/hooks/service.hooks";
 import ServiceCard from "@/components/features/Services/ServiceCard";
 import CartButton from "@/components/custom/Offcanvas/CartButton";
 import CategoryTabs from "@/components/features/Categories/Categoriestab";
@@ -12,6 +17,12 @@ import SearchInput from "@/components/custom/Inputs/SearchInput";
 import { BsPersonFillGear } from "react-icons/bs";
 import AnimationContainer from "@/components/animation/animation-container";
 import { ORGANIZATION_ID } from "@/data/constants";
+import {
+  useQueryState,
+  parseAsString,
+  parseAsNumberLiteral,
+  parseAsInteger,
+} from "nuqs";
 
 interface ExtendedCategory {
   id: number;
@@ -26,10 +37,15 @@ interface ExtendedCategory {
  */
 const Services: React.FC = React.memo(() => {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const currentCategory = searchParams.get("category") || "All";
-  const page = searchParams.get("page") || "1";
-  const pageSize = "10";
+  const [currentCategory, setCurrentCategory] = useQueryState(
+    "category",
+    parseAsString.withDefault("All")
+  );
+  const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
+  const [pageSize, setPageSize] = useQueryState(
+    "page_size",
+    parseAsInteger.withDefault(10)
+  );
   const [allCategories, setAllCategories] = useState<ExtendedCategory[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>(""); // State for search input
 
@@ -43,10 +59,10 @@ const Services: React.FC = React.memo(() => {
     if (categories && categories.length > 0) {
       setAllCategories([
         { id: 0, category: "All", description: "All Categories" },
-        ...categories.map(cat => ({
+        ...categories.map((cat) => ({
           id: cat.id || 0,
           category: cat.category || "",
-          description: cat.description || ""
+          description: cat.description || "",
         })),
       ]);
     }
@@ -57,10 +73,10 @@ const Services: React.FC = React.memo(() => {
     data: services,
     isLoading: loadingServices,
     error,
-  } = useServices(parseInt(ORGANIZATION_ID) || 0, { 
+  } = useServices(parseInt(ORGANIZATION_ID) || 0, {
     category: currentCategory === "All" ? "" : currentCategory,
     page,
-    page_size: pageSize 
+    page_size: pageSize,
   });
 
   // Fetch trending services
@@ -68,36 +84,42 @@ const Services: React.FC = React.memo(() => {
     data: trendingservices,
     isLoading: loadingTrendingServices,
     error: trendingError,
-  } = useTrendingServices(parseInt(ORGANIZATION_ID) || 0, { 
+  } = useTrendingServices(parseInt(ORGANIZATION_ID) || 0, {
     category: currentCategory === "All" ? "" : currentCategory,
     page,
-    page_size: pageSize 
+    page_size: 6,
   });
 
   // Handle category change
-  const handleCategoryChange = useCallback((category: string) => {
-    router.push(`?category=${category}&page=1&page_size=${pageSize}`, {
-      scroll: false,
-    });
-  }, [router, pageSize]);
+  const handleCategoryChange = useCallback(
+    (category: string) => {
+      setCurrentCategory(category);
+      setPage(1);
+    },
+    [router, pageSize]
+  );
 
   // Safe pagination handler
-  const handlePageChange = useCallback((newPage: string | number) => {
-    const pageNum = typeof newPage === 'string' ? parseInt(newPage, 10) : newPage;
-    if (isNaN(pageNum) || pageNum < 1) return;
-    
-    router.push(
-      `?category=${currentCategory}&page=${pageNum}&page_size=${pageSize}`
-    );
-  }, [router, currentCategory, pageSize]);
+  const handlePageChange = useCallback(
+    (newPage: string | number) => {
+      if (typeof newPage === "string") {
+        setPage(parseInt(newPage, 10));
+      } else {
+        setPage(newPage);
+      }
+    },
+    [router, currentCategory, pageSize]
+  );
 
   // Memoized filtered services based on search query
   const filteredServices = useMemo(() => {
     const serviceResults = services?.results || [];
     if (!searchQuery.trim()) return serviceResults;
 
-    return serviceResults.filter((service) =>
-      service?.name?.toLowerCase().includes(searchQuery.toLowerCase()) || false
+    return serviceResults.filter(
+      (service) =>
+        service?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        false
     );
   }, [services?.results, searchQuery]);
 
@@ -110,12 +132,15 @@ const Services: React.FC = React.memo(() => {
   // Safe page calculation
   const totalPages = useMemo(() => {
     if (!services?.count) return 0;
-    return Math.ceil(services.count / parseInt(pageSize, 10));
+    return Math.ceil(services.count / pageSize);
   }, [services?.count, pageSize]);
 
   // Safe trending services validation
   const validTrendingServices = useMemo(() => {
-    return trendingservices?.results?.filter(service => service && service.id) || [];
+    return (
+      trendingservices?.results?.filter((service) => service && service.id) ||
+      []
+    );
   }, [trendingservices?.results]);
 
   return (
@@ -167,20 +192,33 @@ const Services: React.FC = React.memo(() => {
       <div className="row">
         {loadingServices && !error ? (
           <div className="d-flex justify-content-center">
-            <div className="spinner-border text-primary" role="status" aria-label="Loading services">
+            <div
+              className="spinner-border text-primary"
+              role="status"
+              aria-label="Loading services"
+            >
               <span className="visually-hidden">Loading...</span>
             </div>
           </div>
         ) : filteredServices?.length > 0 ? (
-          filteredServices?.map((service, index) => (
-            <AnimationContainer 
-              delay={index * 0.1} 
-              key={service?.id || `service-${index}`} 
-              className="col-12 col-md-4"
-            >
-              <ServiceCard service={service} />
-            </AnimationContainer>
-          ))
+          // <AnimatePresence mode="wait">
+          //   {filteredServices?.map((service, index) => (
+          //     <AnimationContainer
+          //       delay={index * 0.1}
+          //       key={`${currentCategory}-${service?.id || index}-${page}`}
+          //       className="col-12 col-md-4"
+          //     >
+          //       <ServiceCard service={service} />
+          //     </AnimationContainer>
+          //   ))}
+          // </AnimatePresence>
+          <div className="row">
+            {filteredServices?.map((service, index) => (
+              <div key={service.id} className="col-12 col-md-4">
+                <ServiceCard service={service} />
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="mt-3 mb-3 text-center">
             <BsPersonFillGear
@@ -221,6 +259,6 @@ const Services: React.FC = React.memo(() => {
   );
 });
 
-Services.displayName = 'Services';
+Services.displayName = "Services";
 
 export default Services;

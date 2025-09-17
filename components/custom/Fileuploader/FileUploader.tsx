@@ -9,7 +9,7 @@ import { getFileIcon } from "@/utils/selectFileIcon";
 interface FileUploaderProps {
   name?: string;
   value?: File | string | null;
-  onChange?: (file: File | null) => void;
+  onChange?: (file: File | string) => void;
   onBlur?: () => void;
   error?: string;
   disabled?: boolean;
@@ -99,7 +99,7 @@ const FileUploader = forwardRef<HTMLInputElement, FileUploaderProps>(
     
     setFileName(null);
     setFileType(null);
-    onChange?.(null);
+    onChange?.("");
     
     // Clear the input
     if (ref && 'current' in ref && ref.current) {

@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { useArticleCategories, useArticles } from "@/data/hooks/articles.hooks";
 import { ArticlesError, CategoriesError } from "./ArticleErrorBoundary";
 import { Category } from "@/types/articles";
+import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
 
 interface CategoryWithAll extends Category {
   id: number;
@@ -22,10 +23,15 @@ interface CategoryWithAll extends Category {
 
 const ArticlesList: React.FC = () => {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const currentCategory = searchParams.get("category") || "All";
-  const page = searchParams.get("page") || "1";
-  const pageSize = "10";
+  const [currentCategory, setCurrentCategory] = useQueryState(
+    "category",
+    parseAsString.withDefault("All")
+  );
+  const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
+  const [pageSize, setPageSize] = useQueryState(
+    "page_size",
+    parseAsInteger.withDefault(10)
+  );
   const [allCategories, setAllCategories] = useState<CategoryWithAll[]>([]);
   // Fetch categories with error handling
   const {
@@ -41,17 +47,19 @@ const ArticlesList: React.FC = () => {
   useEffect(() => {
     if (categories && Array.isArray(categories) && categories.length > 0) {
       const allCategoriesWithDefault: CategoryWithAll[] = [
-        { id: 0, category: "All", description: "All articles" }, 
-        ...categories.map(cat => ({
+        { id: 0, category: "All", description: "All articles" },
+        ...categories.map((cat) => ({
           id: cat.id || 0,
           category: cat.category,
-          description: cat.description
-        }))
+          description: cat.description,
+        })),
       ];
       setAllCategories(allCategoriesWithDefault);
     } else if (!loadingCategories && !categoryError) {
       // Set only "All" if no categories are available
-      setAllCategories([{ id: 0, category: "All", description: "All articles" }]);
+      setAllCategories([
+        { id: 0, category: "All", description: "All articles" },
+      ]);
     }
   }, [categories, loadingCategories, categoryError]);
 
@@ -72,45 +80,39 @@ const ArticlesList: React.FC = () => {
   // -----------------------------------------
   // Handle page change with validation
   // -----------------------------------------
-  const handlePageChange = useCallback((newPage: string | number) => {
-    const pageNumber = typeof newPage === 'string' ? newPage : newPage.toString();
-    
-    if (!pageNumber || isNaN(parseInt(pageNumber)) || parseInt(pageNumber) < 1) {
-      console.error("Invalid page number:", pageNumber);
-      return;
-    }
-    
-    router.push(
-      `?category=${encodeURIComponent(currentCategory)}&page=${pageNumber}&page_size=${pageSize}`,
-      {
-        scroll: false,
+  const handlePageChange = useCallback(
+    (newPage: string | number) => {
+      if (typeof newPage === "string") {
+        const pageNum = parseInt(newPage, 10);
+        setPage(isNaN(pageNum) || pageNum < 1 ? 1 : pageNum);
+      } else {
+        setPage(newPage < 1 ? 1 : newPage);
       }
-    );
-  }, [currentCategory, pageSize, router]);
+    },
+    [currentCategory, pageSize, router]
+  );
 
   // -------------------------------
   // Handle category change with validation
   // -------------------------------
-  const handleCategoryChange = useCallback((category: string) => {
-    if (!category || typeof category !== 'string') {
-      console.error("Invalid category:", category);
-      return;
-    }
-    
-    router.push(`?category=${encodeURIComponent(category)}&page=1&page_size=${pageSize}`, {
-      scroll: false,
-    });
-  }, [pageSize, router]);
+  const handleCategoryChange = useCallback(
+    (category: string) => {
+      setCurrentCategory(category);
+    },
+    [pageSize, router]
+  );
 
   // Calculate total pages with memoization
   const totalPages = useCallback(() => {
     if (!articles?.count) return 0;
-    return Math.ceil(articles.count / parseInt(pageSize));
+    return Math.ceil(articles.count / pageSize);
   }, [articles?.count, pageSize]);
 
   // Memoize pagination visibility
   const shouldShowPagination = useCallback(() => {
-    return !loadingArticles && !articleError && articles?.count && totalPages() > 1;
+    return (
+      !loadingArticles && !articleError && articles?.count && totalPages() > 1
+    );
   }, [loadingArticles, articleError, articles?.count, totalPages]);
 
   return (
@@ -121,14 +123,17 @@ const ArticlesList: React.FC = () => {
           {/* Categories */}
           <h5 className="mb-3 fw-bold">categories</h5>
           {categoryError ? (
-            <CategoriesError 
-              error={categoryErrorDetails} 
+            <CategoriesError
+              error={categoryErrorDetails}
               onRetry={() => window.location.reload()}
             />
           ) : loadingCategories ? (
             <div className="d-flex gap-2 align-items-center">
               {/* spinner */}
-              <div className="spinner-border spinner-border-sm text-primary" role="status">
+              <div
+                className="spinner-border spinner-border-sm text-primary"
+                role="status"
+              >
                 <span className="visually-hidden">Loading...</span>
               </div>
               fetching Article Categories
@@ -151,8 +156,8 @@ const ArticlesList: React.FC = () => {
           <hr />
           <ul className="list-group list-group-flush mx-auto mb-5">
             {articleError ? (
-              <ArticlesError 
-                error={articleErrorDetails} 
+              <ArticlesError
+                error={articleErrorDetails}
                 onRetry={() => window.location.reload()}
               />
             ) : loadingArticles ? (
@@ -168,9 +173,12 @@ const ArticlesList: React.FC = () => {
                 if (!item || !item.id) {
                   return null;
                 }
-                
+
                 return (
-                  <Link href={`/articles/${item.slug || item.id}`} key={item.id}>
+                  <Link
+                    href={`/articles/${item.slug || item.id}`}
+                    key={item.id}
+                  >
                     <li
                       className="list-group-item d-flex align-items-center py-3"
                       style={{
@@ -199,10 +207,12 @@ const ArticlesList: React.FC = () => {
 
                       <div className="ms-2">
                         <h5 className="mb-1 text-wrap text-break">
-                          {item.title || 'Untitled Article'}
+                          {item.title || "Untitled Article"}
                         </h5>
                         <p className="my-0 mb-1 text-wrap text-break">
-                          {item.subtitle ? `${item.subtitle}...` : 'No description available'}
+                          {item.subtitle
+                            ? `${item.subtitle}...`
+                            : "No description available"}
                         </p>
                         <div
                           className="d-flex align-items-center"
@@ -213,9 +223,12 @@ const ArticlesList: React.FC = () => {
                             {item.views || 0}
                           </span>
                           <span className="me-3 small">
-                            <BiSolidLike className="h5" /> {item.likes?.length || 0}
+                            <BiSolidLike className="h5" />{" "}
+                            {item.likes?.length || 0}
                           </span>
-                          <span className="me-3 small">{item.author?.username || 'Anonymous'}</span>
+                          <span className="me-3 small">
+                            {item.author?.username || "Anonymous"}
+                          </span>
                         </div>
                       </div>
                     </li>
