@@ -19,8 +19,7 @@ const BlogSection = () => {
 
   return (
     <>
-      <hr className="text-primary pt-3 mx-5" />
-      <section className="blog-section py-5 px-4 px-md-5">
+      <section className="blog-section py-3 px-4 px-md-5">
         <div className=" blog-text text-center d-flex flex-column align-items-center mb-4">
           <h2>Articles and news</h2>
           <p className="align-self-center">
