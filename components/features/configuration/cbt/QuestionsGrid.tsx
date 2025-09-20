@@ -39,14 +39,14 @@ const QuestionsGrid = ({
   };
 
   const deleteQuestion = async (questionID: number) => {
-    if (!currentSubject && !testId) {
+    if (!currentSubject || !testId || !currentSubject.id) {
       toast.error("Subject or Test information is missing");
       return;
     }
     try {
       await deleteQuestionMutation({
         questionId: questionID,
-        subjectId: currentSubject?.id!,
+        subjectId: currentSubject.id,
         testId: testId ? parseInt(testId) : 0,
       });
       setAlert({

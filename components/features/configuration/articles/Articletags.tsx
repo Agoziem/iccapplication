@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react'
 import { TiTimes } from 'react-icons/ti';
+import { displayName } from 'react-quill';
 
 // Separate TagInput component to avoid hooks in render
 const ArticleTagInput: React.FC<{
@@ -85,5 +86,7 @@ const ArticleTagInput: React.FC<{
     </div>
   );
 });
+
+ArticleTagInput.displayName = "ArticleTagInput";
 
 export default ArticleTagInput;

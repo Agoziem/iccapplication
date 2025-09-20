@@ -76,11 +76,15 @@ const NavNotice: React.FC = memo(() => {
   const handleRemoveUserAsRecipient = async (
     notification: NotificationResponse
   ) => {
+    if (!user || !user.id) {
+      toast.error("User not found. Please log in.");
+      return;
+    }
     const toastId = toast.loading("Removing you as a recipient...");
     try {
       await removeUserAsRecipient({
         notification_id: notification.id,
-        user_id: user?.id!,
+        user_id: user.id,
       });
       toast.success("notification removed successfully", {
         id: toastId,
