@@ -105,6 +105,7 @@ const Services = () => {
   const handleCategoryChange = (categoryName: string) => {
     const category = allCategories?.find(cat => cat.category === categoryName);
     setCurrentCategory(category?.category || "All");
+    setPage(1);
   };
 
   // Open modal for add/edit

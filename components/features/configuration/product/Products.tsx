@@ -77,6 +77,7 @@ const Products = () => {
   // -------------------------------
   const handleCategoryChange = (category: ProductCategory | null) => {
     setCurrentCategory(category?.category || "All");
+    setPage(1);
   };
 
   // Memoized filtered Products based on search query

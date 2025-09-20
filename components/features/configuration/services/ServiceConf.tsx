@@ -97,6 +97,7 @@ const ServiceConfig: React.FC = () => {
   // Handle category change
   const handleCategoryChange = (categoryName: string) => {
     setCurrentCategory(categoryName);
+    setPage(1);
   };
 
   // Loading state

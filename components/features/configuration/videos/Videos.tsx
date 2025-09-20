@@ -116,6 +116,7 @@ const Videos = () => {
       (cat) => cat.category === categoryName
     );
     setCurrentCategory(category?.category || "All");
+    setPage(1);
   };
 
   // Open modal for add/edit
