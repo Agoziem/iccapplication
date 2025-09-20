@@ -98,6 +98,7 @@ const ArticlesList: React.FC = () => {
   const handleCategoryChange = useCallback(
     (category: string) => {
       setCurrentCategory(category);
+      setPage(1);
     },
     [pageSize, router]
   );
