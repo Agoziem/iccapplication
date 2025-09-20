@@ -71,9 +71,8 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
   type ArticleFormType = z.infer<typeof ArticleFormSchema>;
 
   // LocalStorage for draft saving
-  const [draftArticle, setDraftArticle] = useLocalStorage<
-    ArticleFormType | undefined
-  >("articledraft", undefined);
+  const { storedValue: draftArticle, setValue: setDraftArticle } =
+    useLocalStorage<ArticleFormType | undefined>("articledraft", undefined);
 
   // Clear draft function
   const clearDraftArticle = useCallback(() => {

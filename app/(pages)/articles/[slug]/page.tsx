@@ -1,5 +1,5 @@
 import Article from "@/components/features/Articles/article";
-import { API_URL } from "@/data/constants";
+import { API_URL, SITE_URL } from "@/data/constants";
 import { ArticleResponse } from "@/types/articles";
 
 export async function generateMetadata({
@@ -45,17 +45,16 @@ export async function generateMetadata({
   if (!article) {
     return {
       title: "Article Not Found",
-      metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'),
+      metadataBase: new URL(SITE_URL || 'http://localhost:3000'),
       openGraph: {
         title: "Article Not Found",
         description: "The requested article could not be found.",
-        images: ["/default-og-image.jpg"], // Fallback image
       },
     };
   }
   return {
     title: article.title,
-    metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'),
+    metadataBase: new URL(SITE_URL || 'http://localhost:3000'),
     openGraph: {
       title: article.title,
       description: article.subtitle,

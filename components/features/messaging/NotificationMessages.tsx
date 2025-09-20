@@ -5,7 +5,7 @@ import Modal from "../../custom/Modal/modal";
 import Alert from "../../custom/Alert/Alert";
 import { shortenMessage } from "@/utils/utilities";
 import moment from "moment";
-import { Notification as NotificationType } from "@/types/notifications";
+import { NotificationResponse } from "@/types/notifications";
 import { useDeleteNotification, useNotifications } from "@/data/hooks/notifications.hooks";
 
 /**
@@ -16,7 +16,7 @@ import { useDeleteNotification, useNotifications } from "@/data/hooks/notificati
 const NotificationMessages: React.FC = React.memo(() => {
   const [errormessage, setErrorMessage] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
-  const [notification, setNotification] = useState<NotificationType | null>(null);
+  const [notification, setNotification] = useState<NotificationResponse | null>(null);
   const [notificationId, setNotificationId] = useState<string | null>(null);
   const [editmode, setEditMode] = useState<boolean>(false);
   const [showdeleteModal, setShowDeleteModal] = useState<boolean>(false);
@@ -109,7 +109,7 @@ const NotificationMessages: React.FC = React.memo(() => {
   }, [notificationId, deleteNotification]);
 
   // Safe edit handler
-  const handleEditNotification = useCallback((notification: NotificationType) => {
+  const handleEditNotification = useCallback((notification: NotificationResponse) => {
     if (!notification || !notification.id) {
       setErrorMessage("Invalid notification data");
       return;

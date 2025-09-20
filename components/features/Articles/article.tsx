@@ -47,7 +47,7 @@ const Article: React.FC<ArticleProps> = ({
   const { mutateAsync: addView } = useAddViews();
   
   // Ref to track which articles have had their views incremented
-  const viewsIncrementedRef = useRef<Set<number>>(new Set());
+  const viewsIncrementedRef = useRef<Set<string>>(new Set());
 
   // Ensure slug is a string
   const articleSlug = Array.isArray(slug) ? slug[0] : slug;
@@ -94,22 +94,41 @@ const Article: React.FC<ArticleProps> = ({
   }, []);
 
   const incrementViews = useCallback(async () => {
-    if (!article?.id) return;
+    if (!article?.slug) return;
     
-    // Check if we've already incremented views for this article
-    if (viewsIncrementedRef.current.has(article.id)) {
+    // Don't increment views if user is the author
+    if (user && article.author?.id === user.id) {
+      return;
+    }
+    
+    // Check if we've already incremented views for this article in this session
+    if (viewsIncrementedRef.current.has(article.slug)) {
+      return;
+    }
+    
+    // Check localStorage to prevent incrementing views multiple times across sessions
+    // (optional - you can remove this if you want to allow view increments on each session)
+    const viewedArticlesKey = 'viewed_articles';
+    const viewedArticles = JSON.parse(localStorage.getItem(viewedArticlesKey) || '[]');
+    if (viewedArticles.includes(article.slug)) {
+      viewsIncrementedRef.current.add(article.slug);
       return;
     }
     
     try {
-      await addView(article.id);
+      await addView({ blogslug: article.slug });
       // Mark this article as having views incremented
-      viewsIncrementedRef.current.add(article.id);
+      viewsIncrementedRef.current.add(article.slug);
+      
+      // Store in localStorage to prevent future increments (optional)
+      const updatedViewedArticles = [...viewedArticles, article.slug];
+      localStorage.setItem(viewedArticlesKey, JSON.stringify(updatedViewedArticles));
+      
     } catch (error) {
       console.error("Failed to increment views:", error);
       // Don't mark as incremented if the request failed
     }
-  }, [article?.id, addView]);
+  }, [article?.slug, article?.author?.id, user?.id, addView]);
 
   // ------------------------------------------------------------
   // Increment views on article load (only once per article)
@@ -119,6 +138,14 @@ const Article: React.FC<ArticleProps> = ({
       incrementViews();
     }
   }, [article?.id, incrementViews]);
+
+  // Cleanup effect to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      // Clear the ref when component unmounts
+      viewsIncrementedRef.current.clear();
+    };
+  }, []);
 
   // Loading state
   if (articleLoading) {

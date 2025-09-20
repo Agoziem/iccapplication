@@ -1,28 +1,22 @@
-import { z } from "zod";
 import {
-  NotificationSchema,
-  CreateNotificationSchema,
-  UpdateNotificationSchema,
-  NotificationsSchema,
-  notificationSchema,
-  wsNotificationMessageSchema,
-  wsNotificationSchema
-} from "../schemas/notifications";
+  NotificationCreateSchema,
+  NotificationUpdateSchema,
+  NotificationReadUpdateSchema,
+  RemoveNotificationSchema,
+  NotificationUserResponseSchema,
+  NotificationOnlyResponseSchema,
+  NotificationResponseSchema,
+  NotificationRecipientSchema,
+  UserNotificationListSchema,
+} from "@/schemas/notifications";
 
-// Extract TypeScript types from Zod schemas
-export type Notification = z.infer<typeof NotificationSchema>;
-export type CreateNotification = z.infer<typeof CreateNotificationSchema>;
-export type UpdateNotification = z.infer<typeof UpdateNotificationSchema>;
-export type Notifications = z.infer<typeof NotificationsSchema>;
+export type NotificationCreate = typeof NotificationCreateSchema._type;
+export type NotificationUpdate = typeof NotificationUpdateSchema._type;
+export type NotificationReadUpdate = typeof NotificationReadUpdateSchema._type;
+export type RemoveNotification = typeof RemoveNotificationSchema._type;
 
-// Alias type (for backward compatibility)
-export type NotificationAlias = z.infer<typeof notificationSchema>;
-
-// Additional utility types
-export type NotificationPreview = Pick<Notification, 'id' | 'title' | 'viewed' | 'created_at'>;
-export type UnreadNotification = Notification & { viewed: false };
-export type ReadNotification = Notification & { viewed: true };
-
-// WebSocket types
-export type WSNotificationMessage = z.infer<typeof wsNotificationMessageSchema>;
-export type WSNotification = z.infer<typeof wsNotificationSchema>;
+export type NotificationUserResponse = typeof NotificationUserResponseSchema._type;
+export type NotificationOnlyResponse = typeof NotificationOnlyResponseSchema._type;
+export type NotificationResponse = typeof NotificationResponseSchema._type;
+export type NotificationRecipient = typeof NotificationRecipientSchema._type;
+export type UserNotificationList = typeof UserNotificationListSchema._type;

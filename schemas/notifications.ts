@@ -1,64 +1,97 @@
 import { z } from "zod";
+import { imageSchema } from "./custom-validation";
+import { UserminiSchema } from "./users";
 
-/**
- * Main Notification Schema (Notification from API)
- * Based on API model with fields: id, title, message, viewed, created_at, updated_at
- */
-export const NotificationSchema = z.object({
-  id: z.number().optional(),
-  title: z.string().min(1).max(255),
-  message: z.string().min(1),
-  viewed: z.boolean().optional(),
-  created_at: z.coerce.date().optional(),
-  updated_at: z.coerce.date().optional(),
+/** Base fields (shared by inputs) */
+export const NotificationBaseSchema = z.object({
+  sender: z.number().nullable().optional(),
+  title: z.string().max(255),
+  message: z.string(),
+  link: z.string().url().nullable().optional().or(z.literal("")),
+  image: imageSchema,
 });
 
-/**
- * Create Notification Schema
- * For creating new notifications via API
- */
-export const CreateNotificationSchema = z.object({
-  title: z.string().min(1).max(255),
-  message: z.string().min(1),
-  viewed: z.boolean().optional().default(false),
+/** Create Notification */
+export const NotificationCreateSchema = NotificationBaseSchema.extend({
+  user_ids: z.array(z.number()).optional().default([]),
 });
 
-/**
- * Update Notification Schema  
- * For updating existing notifications via API
- */
-export const UpdateNotificationSchema = z.object({
-  title: z.string().min(1).max(255).optional(),
-  message: z.string().min(1).optional(),
-  viewed: z.boolean().optional(),
-});
-
-/**
- * Array of Notifications Schema
- */
-export const NotificationsSchema = z.array(NotificationSchema);
-
-// ------------------------------------
-// Alias exports (for backward compatibility)
-// ------------------------------------
-
-export const notificationSchema = CreateNotificationSchema;
-
-
-// -----------------------------------------
-// Websocket Notification Schema
-// -----------------------------------------
-
-export const wsNotificationSchema = z.object({
+/** Update Notification */
+export const NotificationUpdateSchema = z.object({
   id: z.number(),
+  sender: z.number().nullable().optional(),
+  title: z.string().max(255).optional(),
+  message: z.string().optional(),
+  link: z.string().url().nullable().optional().or(z.literal("")),
+  image: imageSchema,
+  user_ids: z.array(z.number()).optional().default([]),
+});
+
+/** Mark as read/unread */
+export const NotificationReadUpdateSchema = z.object({
+  notification_id: z.number(),
+  user_id: z.number(),
+  is_read: z.boolean(),
+});
+
+/** Remove Notification */
+export const RemoveNotificationSchema = z.object({
+  notification_id: z.number(),
+  user_id: z.number(),
+});
+
+// --------------------------------------------
+/** User response inside recipients */
+// --------------------------------------------
+export const NotificationUserResponseSchema = z.object({
+  id: z.number(),
+  first_name: z.string(),
+  last_name: z.string(),
+  image_url: z.string().nullable().optional(),
+  has_read: z.boolean(),
+});
+
+/** Notification-only details */
+export const NotificationOnlyResponseSchema = z.object({
+  id: z.number(),
+  sender: UserminiSchema,
   title: z.string(),
   message: z.string(),
-  viewed: z.boolean(),
-  updated_at: z.string().datetime(), // ISO 8601 timestamp
-  created_at: z.string().datetime(),
+  link: z.string().nullable().optional(),
+  image: imageSchema,
+  image_url: z.string().nullable().optional(),
+  created_at: z.string(), // ISO datetime
+  updated_at: z.string(), // ISO datetime
 });
 
-export const wsNotificationMessageSchema = z.object({
-  action: z.enum(["add", "update", "delete", "mark_viewed"]),
-  notification: wsNotificationSchema.optional(), // sometimes you only send { error: ... } or action without full payload
+/** Full Notification response */
+export const NotificationResponseSchema = z.object({
+  id: z.number(),
+  sender: UserminiSchema,
+  title: z.string(),
+  message: z.string(),
+  link: z.string().nullable().optional(),
+  image: imageSchema,
+  image_url: z.string().nullable().optional(),
+  created_at: z.string(), // ISO datetime
+  updated_at: z.string(), // ISO datetime
+  recipients: z.array(NotificationUserResponseSchema),
+});
+
+/** Recipient mapping */
+export const NotificationRecipientSchema = z.object({
+  id: z.number(),
+  notification_id: z.number(),
+  user_id: z.number(),
+  user_name: z.string(),
+  notification_title: z.string(),
+  is_read: z.boolean(),
+});
+
+/** Specialized: User’s notification list */
+export const UserNotificationListSchema = z.object({
+  id: z.number(),
+  notification: NotificationOnlyResponseSchema,
+  is_read: z.boolean(),
+  sender_name: z.string().nullable(),
 });

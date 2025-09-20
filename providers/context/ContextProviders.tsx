@@ -8,6 +8,7 @@ import { ChatroomContextProvider } from "@/providers/context/ChatroomContext";
 import { ChatroomSocketProvider } from "@/providers/context/ChatroomSocket";
 import { WhatsappAPIProvider } from "@/providers/context/WhatsappContext";
 import { SidebartoggleRefProvider } from "@/components/blocks/sidebar/sideBarTogglerContext";
+import { HasCheckedProvider } from "./NotificationChecked";
 
 type ReactNode = React.ReactNode;
 
@@ -22,7 +23,11 @@ const ContextProviders: React.FC<ContextProvidersProps> = ({ children }) => (
         <CartProvider>
           <ChatroomContextProvider>
             <ChatroomSocketProvider>
-              <WhatsappAPIProvider>{children}</WhatsappAPIProvider>
+              <WhatsappAPIProvider>
+                <HasCheckedProvider>
+                  {children}
+                </HasCheckedProvider>
+              </WhatsappAPIProvider>
             </ChatroomSocketProvider>
           </ChatroomContextProvider>
         </CartProvider>

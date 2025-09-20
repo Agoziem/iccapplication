@@ -12,6 +12,7 @@ import { useEffect } from "react";
 import { sendOnboardingMessage } from "@/utils/mail";
 import { useOrganization } from "@/data/hooks/organization.hooks";
 import { ORGANIZATION_ID } from "@/data/constants";
+import useFcmToken from "@/hooks/useFcmToken";
 
 const metadata: Metadata = {
   title: "ICC dashboard",
@@ -24,6 +25,7 @@ const Dashboardlayout = ({ children }: { children: React.ReactNode }) => {
   const { data: organizationData } = useOrganization(
     parseInt(ORGANIZATION_ID || "1")
   );
+  const { token, notificationPermissionStatus } = useFcmToken();
 
   // Send onboarding email if user is logging in for the first time
   useEffect(() => {
@@ -43,6 +45,7 @@ const Dashboardlayout = ({ children }: { children: React.ReactNode }) => {
 
     checkOnboarding();
   }, [user]);
+
 
   return (
     <div>

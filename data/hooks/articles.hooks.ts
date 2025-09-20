@@ -97,7 +97,10 @@ export const fetchArticlesByOrganization = async (
   organizationId: number,
   params?: Record<string, any>
 ): Promise<PaginatedArticleResponse> => {
-  const response = await AxiosInstance.get(`${articleAPIendpoint}/orgblogs/${organizationId}/`, { params });
+  const response = await AxiosInstance.get(
+    `${articleAPIendpoint}/orgblogs/${organizationId}/`,
+    { params }
+  );
   return response.data;
 };
 
@@ -122,7 +125,7 @@ export const fetchArticleById = async (
 export const createArticle = async (
   articleData: CreateArticle
 ): Promise<ArticleResponse> => {
-  const formData = converttoformData(articleData,["tags"]);
+  const formData = converttoformData(articleData, ["tags"]);
   const response = await AxiosInstancemultipartWithToken.post(
     `${articleAPIendpoint}/addblog/${articleData.organization}/${articleData.author}/`,
     formData
@@ -133,7 +136,7 @@ export const createArticle = async (
 export const updateArticle = async (
   articleData: UpdateArticle & { id: number }
 ): Promise<ArticleResponse> => {
-  const formData = converttoformData(articleData,["tags"]);
+  const formData = converttoformData(articleData, ["tags"]);
   const response = await AxiosInstancemultipartWithToken.put(
     `${articleAPIendpoint}/updateblog/${articleData.id}/`,
     formData
@@ -189,7 +192,7 @@ export const deleteComment = async (commentId: number): Promise<void> => {
 export const addLike = async (
   blogSlug: string,
   userId: number
-): Promise<{message: string}> => {
+): Promise<{ message: string }> => {
   const response = await AxiosInstanceWithToken.get(
     `${articleAPIendpoint}/addlike/${blogSlug}/${userId}/`
   );
@@ -199,16 +202,18 @@ export const addLike = async (
 export const deleteLike = async (
   blogSlug: string,
   userId: number
-): Promise<{message: string}> => {
+): Promise<{ message: string }> => {
   const response = await AxiosInstanceWithToken.delete(
     `${articleAPIendpoint}/deletelike/${blogSlug}/${userId}/`
   );
   return response.data;
 };
 
-export const addViews = async (blogId: number): Promise<ArticleResponse> => {
+export const addViews = async (
+  blogslug: string
+): Promise<{ message: string }> => {
   const response = await AxiosInstance.get(
-    `${articleAPIendpoint}/addviews/${blogId}/`
+    `${articleAPIendpoint}/addviews/${blogslug}/`
   );
   return response.data;
 };
@@ -476,7 +481,7 @@ export const useDeleteComment = (): UseMutationResult<void, Error, number> => {
 
 // Like and View Mutations
 export const useAddLike = (): UseMutationResult<
-  {message: string},
+  { message: string },
   Error,
   { blogSlug: string; userId: number }
 > => {
@@ -496,7 +501,7 @@ export const useAddLike = (): UseMutationResult<
 };
 
 export const useDeleteLike = (): UseMutationResult<
-  {message: string},
+  { message: string },
   Error,
   { blogSlug: string; userId: number }
 > => {
@@ -516,18 +521,16 @@ export const useDeleteLike = (): UseMutationResult<
 };
 
 export const useAddViews = (): UseMutationResult<
-  ArticleResponse,
+  { message: string },
   Error,
-  number
+  { blogslug: string }
 > => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: addViews,
-    onSuccess: (data) => {
-      if (data.id) {
-        queryClient.invalidateQueries(ARTICLE_KEYS.article(data.id));
-      }
+    mutationFn: ({ blogslug }) => addViews(blogslug),
+    onSuccess: (_, { blogslug }) => {
+      queryClient.invalidateQueries(ARTICLE_KEYS.articleBySlug(blogslug));
       queryClient.invalidateQueries(ARTICLE_KEYS.articles());
     },
     onError: (error: Error) => {

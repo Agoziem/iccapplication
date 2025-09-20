@@ -1,21 +1,50 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { FIREBASE_CONFIG, FIREBASE_VAPID_KEY } from "@/data/constants";
+import { AxiosInstanceWithToken } from "@/data/instance";
+import { getApp, getApps, initializeApp } from "firebase/app";
+import { getMessaging, getToken, isSupported } from "firebase/messaging";
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+export const authAPIendpoint = "/authapi";
+
+// Replace the following with your app's Firebase project configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDV0L3J1GIpQWJwwQaKMuXH0EFfdirDODI",
-  authDomain: "icc-application-43d74.firebaseapp.com",
-  projectId: "icc-application-43d74",
-  storageBucket: "icc-application-43d74.firebasestorage.app",
-  messagingSenderId: "1061934745237",
-  appId: "1:1061934745237:web:4618d2e7f602d036cbfd9c",
-  measurementId: "G-29DG61L68D"
+  apiKey: FIREBASE_CONFIG.apiKey || "AIzaSyDV0L3J1GIpQWJwwQaKMuXH0EFfdirDODI",
+  authDomain: FIREBASE_CONFIG.authDomain || "icc-application-43d74.firebaseapp.com",
+  projectId: FIREBASE_CONFIG.projectId || "icc-application-43d74",
+  storageBucket: FIREBASE_CONFIG.storageBucket || "icc-application-43d74.firebasestorage.app",
+  messagingSenderId: FIREBASE_CONFIG.messagingSenderId || "1061934745237",
+  appId: FIREBASE_CONFIG.appId || "1:1061934745237:web:4618d2e7f602d036cbfd9c",
+  measurementId: FIREBASE_CONFIG.measurementId || "G-29DG61L68D"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+
+const messaging = async () => {
+  const supported = await isSupported();
+  return supported ? getMessaging(app) : null;
+};
+
+export const fetchToken = async () => {
+  try {
+    const fcmMessaging = await messaging();
+    if (fcmMessaging) {
+      const token = await getToken(fcmMessaging, {
+        vapidKey: FIREBASE_VAPID_KEY,
+      });
+      if (token) {
+        const response = await AxiosInstanceWithToken.put(`${authAPIendpoint}/updatefcm/`, {fcmToken: token});
+        return response.data;
+      } else {
+        console.warn(
+          "No registration token available. Request permission to generate one."
+        );
+      }
+      return token;
+    }
+    return null;
+  } catch (err) {
+    console.error("An error occurred while fetching the token:", err);
+    return null;
+  }
+};
+
+export { app, messaging };

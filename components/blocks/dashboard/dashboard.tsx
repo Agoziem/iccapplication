@@ -68,8 +68,6 @@ const DashboardBody: React.FC = memo(() => {
     error: videoserror,
   } = useVideos(organizationId);
 
-  
-
   return (
     <div className="dashboard">
       <div className="my-4 d-flex justify-content-between align-items-center flex-wrap">
@@ -82,7 +80,7 @@ const DashboardBody: React.FC = memo(() => {
         <div className="col-12 col-md-9">
           <div className="row">
             {/* Display the Cards */}
-            {currentUser?.is_staff ? (
+            {currentUser?.is_staff && (
               <>
                 {/* Only Admins */}
                 <div className="col-12 col-md-4">
@@ -122,7 +120,9 @@ const DashboardBody: React.FC = memo(() => {
                   />
                 </div>
               </>
-            ) : (
+            )}
+
+            {!currentUser?.is_staff && (
               <>
                 <div className="col-12 col-md-4">
                   <HorizontalCard
@@ -150,9 +150,8 @@ const DashboardBody: React.FC = memo(() => {
                     cardtitle="Completed Orders"
                     icon="bi bi-cart-check"
                     cardbody={String(
-                      userOrders &&
-                        userOrders.filter((item) => item.status === "Completed")
-                          .length
+                      userOrders?.filter((item) => item.status === "Completed")
+                        .length || 0
                     )}
                     cardspan="Completed"
                     loading={loadingUserOrders}

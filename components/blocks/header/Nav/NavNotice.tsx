@@ -1,197 +1,132 @@
 "use client";
 import React, { useEffect, useState, useCallback, useMemo, memo } from "react";
-import { useQueryClient } from "react-query";
 import toast from "react-hot-toast";
-import useWebSocket from "@/hooks/useWebSocket";
 import Modal from "@/components/custom/Modal/modal";
 import { shortenMessage, timeSince } from "@/utils/utilities";
-import { useNotifications } from "@/data/hooks/notifications.hooks";
-import { NotificationSchema, wsNotificationMessageSchema } from "@/schemas/notifications";
-import { Notification as NotificationType } from "@/types/notifications";
-
-interface ModalContent {
-  title: string;
-  message: string;
-  time: string;
-}
-
-interface WSNotificationMessage {
-  action: "add" | "update" | "delete" | "mark_viewed";
-  notification: NotificationType;
-}
+import {
+  useMarkNotificationAsRead,
+  useNotifications,
+  useRemoveUserFromNotification,
+} from "@/data/hooks/notifications.hooks";
+import {
+  NotificationOnlyResponse,
+  NotificationResponse,
+} from "@/types/notifications";
+import { useMyProfile } from "@/data/hooks/user.hooks";
+import { useHasChecked } from "@/providers/context/NotificationChecked";
+import moment from "moment";
 
 const NavNotice: React.FC = memo(() => {
   const [showmodal, setShowModal] = useState<boolean>(false);
-  const [modalContent, setModalContent] = useState<ModalContent>({
-    title: "",
-    message: "",
-    time: "",
-  });
-
-  // WebSocket connection for real-time notifications
-  const { ws, isConnected } = useWebSocket(
-    `${process.env.NEXT_PUBLIC_DJANGO_WEBSOCKET_URL}/ws/notifications/`
+  const { data: user } = useMyProfile();
+  const [modalContent, setModalContent] = useState<NotificationResponse | null>(
+    null
   );
-
   // Fetch notifications from the server
   const { data: notifications, isLoading, error } = useNotifications();
-  const queryClient = useQueryClient();
+  const { mutateAsync: markAsRead } = useMarkNotificationAsRead();
+  const { mutateAsync: removeUserAsRecipient } =
+    useRemoveUserFromNotification();
+  const { hasChecked, setHasChecked } = useHasChecked();
 
   // Function to sort notifications by updated_at
-  const sortNotifications = useCallback((notifications: NotificationType[]) =>
-    notifications.sort((a, b) => {
+  const sortedNotifications = useMemo<NotificationResponse[]>(() => {
+    if (!notifications) return [];
+    return notifications.sort((a, b) => {
       const dateA = a.updated_at ? new Date(a.updated_at).getTime() : 0;
       const dateB = b.updated_at ? new Date(b.updated_at).getTime() : 0;
       return dateB - dateA;
-    }), []
-  );
+    });
+  }, [notifications]);
 
-  // Handle WebSocket messages
-  const handleWebSocketMessage = useCallback((event: MessageEvent) => {
-    try {
-      const responseNotification = JSON.parse(event.data);
-      const validatednotification = wsNotificationMessageSchema.safeParse(responseNotification);
-
-      // Validate the WebSocket data
-      if (!validatednotification.success) {
-        console.error('Invalid notification format:', validatednotification.error.issues);
-        return;
-      }
-
-      const newNotification = validatednotification.data;
-      
-      // Ensure notification data exists
-      if (!newNotification.notification) {
-        console.error('No notification data in WebSocket message');
-        return;
-      }
-
-      const cacheKey = ["notifications"];
-
-      // Handle different notification actions
-      switch (newNotification.action) {
-        case "add":
-          queryClient.setQueryData(cacheKey, (existingNotifications: any[] = []) => {
-            const notificationExists = existingNotifications.some(
-              (notification) => notification.id === newNotification.notification!.id
-            );
-
-            if (notificationExists) {
-              return sortNotifications([
-                newNotification.notification!,
-                ...existingNotifications.filter(
-                  (notification) => notification.id !== newNotification.notification!.id
-                ),
-              ]);
-            } else {
-              return sortNotifications([
-                newNotification.notification!,
-                ...existingNotifications,
-              ]);
-            }
-          });
-          toast.success("New notification received");
-          break;
-
-        case "update":
-          queryClient.setQueryData(cacheKey, (existingNotifications: any[] = []) =>
-            sortNotifications(
-              existingNotifications.map((notification) =>
-                notification.id === newNotification.notification!.id
-                  ? newNotification.notification!
-                  : notification
-              )
-            )
-          );
-          toast.success("Notification updated");
-          break;
-
-        case "delete":
-          queryClient.setQueryData(cacheKey, (existingNotifications: any[] = []) =>
-            existingNotifications.filter(
-              (notification) => notification.id !== newNotification.notification!.id
-            )
-          );
-          toast.success("Notification deleted");
-          break;
-
-        case "mark_viewed":
-          queryClient.setQueryData(cacheKey, (existingNotifications: any[] = []) =>
-            existingNotifications.map((notification) =>
-              notification.id === newNotification.notification!.id
-                ? newNotification.notification!
-                : notification
-            )
-          );
-          break;
-
-        default:
-          console.warn('Unknown notification action:', newNotification.action);
-      }
-    } catch (error) {
-      console.error('Error processing WebSocket message:', error);
-    }
-  }, [queryClient, sortNotifications]);
-
-  // WebSocket Connection effect
-  useEffect(() => {
-    if (isConnected && ws) {
-      ws.onmessage = handleWebSocketMessage;
-    }
-  }, [isConnected, ws, handleWebSocketMessage]);
-
-  // Mark notification as viewed
-  const markAsViewed = useCallback((notification: NotificationType) => {
-    if (!notification.viewed && ws && ws.readyState === WebSocket.OPEN) {
-      const payload = {
-        action: "mark_viewed",
-        notification: notification,
-      };
-      ws.send(JSON.stringify(payload));
-    } else if (!ws || ws.readyState !== WebSocket.OPEN) {
-      console.error("WebSocket is not connected.");
-    }
-  }, [ws]);
+  const checkIfNotificationIsRead = (
+    notification: NotificationResponse
+  ): boolean => {
+    if (!user) return false;
+    return notification.recipients.some(
+      (recipient) => recipient.id === user.id && recipient.has_read === true
+    );
+  };
 
   // Handle notification click
-  const handleNotificationClick = useCallback((notification: NotificationType) => {
-    markAsViewed(notification);
-    setModalContent({
-      title: notification.title,
-      message: notification.message,
-      time: notification.created_at ? timeSince(notification.created_at) : 'Unknown time',
-    });
-    setShowModal(true);
-  }, [markAsViewed]);
+  const handleNotificationClick = useCallback(
+    async (notification: NotificationResponse) => {
+      if (!user) {
+        toast.error("User not found. Please log in.");
+        return;
+      }
+      if (!checkIfNotificationIsRead(notification)) {
+        await markAsRead({
+          notification_id: notification.id,
+          user_id: user.id!,
+          is_read: true,
+        });
+      }
+      setModalContent(notification);
+      setShowModal(true);
+    },
+    [markAsRead, user]
+  );
 
   // Toggle modal
   const toggleModal = useCallback(() => {
-    setShowModal(prev => !prev);
+    setShowModal((prev) => !prev);
   }, []);
 
-  // Memoized calculations
-  const unreadNotifications = useMemo(() => 
-    notifications?.filter((notification) => !notification.viewed) || [], 
-    [notifications]
-  );
+  const handleRemoveUserAsRecipient = async (
+    notification: NotificationResponse
+  ) => {
+    const toastId = toast.loading("Removing you as a recipient...");
+    try {
+      await removeUserAsRecipient({
+        notification_id: notification.id,
+        user_id: user?.id!,
+      });
+      toast.success("notification removed successfully", {
+        id: toastId,
+      });
+    } catch (error) {
+      console.error("Failed to remove user as recipient:", error);
+      toast.error("Failed to remove notification", {
+        id: toastId,
+      });
+    }
+  };
 
-  const unseenCount = useMemo(() => unreadNotifications.length, [unreadNotifications]);
+  // Memoized unread notifications count
+  const unreadNotifications = useMemo(() => {
+    if (!notifications || !user) return [];
+    return notifications.filter(
+      (notification) =>
+        !notification.recipients.some(
+          (recipient) => recipient.id === user.id && recipient.has_read
+        )
+    );
+  }, [notifications, user]);
 
-  // Handle loading and error states
-  if (error) {
-    console.error('Error fetching notifications:', error);
-  }
+  const unseenCount = useMemo(() => {
+    if (!notifications || !user) return 0;
+    return notifications.reduce((count, notification) => {
+      const recipient = notification.recipients.find((r) => r.id === user.id);
+      return recipient && !recipient.has_read ? count + 1 : count;
+    }, 0);
+  }, [notifications, user]);
 
   return (
     <li className="nav-item dropdown">
       {/* Notification bell icon */}
-      <a 
-        className="nav-link nav-icon" 
-        href="#" 
+      <a
+        className="nav-link nav-icon"
+        href="#"
         data-bs-toggle="dropdown"
         role="button"
         aria-label="View notifications"
         aria-expanded="false"
+        onClick={() => {
+          if (!hasChecked) {
+            setHasChecked(true);
+          }
+        }}
       >
         <i className="bi bi-bell"></i>
         {unseenCount > 0 && (
@@ -203,18 +138,19 @@ const NavNotice: React.FC = memo(() => {
       <ul className="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications">
         {/* Dropdown header */}
         <li className="dropdown-header text-primary">
-          {unreadNotifications.length > 0 
-            ? `You have ${unreadNotifications.length} unread notification${unreadNotifications.length > 1 ? 's' : ''}`
-            : "You have no unread notifications at the moment"
-          }
+          {unreadNotifications.length > 0
+            ? `You have ${unreadNotifications.length} unread notification${
+                unreadNotifications.length > 1 ? "s" : ""
+              }`
+            : "You have no unread notifications at the moment"}
         </li>
         <li>
           <hr className="dropdown-divider" />
         </li>
 
         {/* Notification items */}
-        {notifications && notifications.length > 0 ? (
-          notifications.map((notification, index) => (
+        {sortedNotifications && sortedNotifications.length > 0 ? (
+          sortedNotifications.map((notification, index) => (
             <React.Fragment key={notification.id}>
               <li
                 className="notification-item"
@@ -223,34 +159,60 @@ const NavNotice: React.FC = memo(() => {
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
+                  if (e.key === "Enter" || e.key === " ") {
                     handleNotificationClick(notification);
                   }
                 }}
                 aria-label={`View notification: ${notification.title}`}
               >
-                <i
-                  className={`bi ${
-                    notification.viewed
-                      ? "bi-check-all text-primary"
-                      : "bi-exclamation-circle text-secondary"
-                  }`}
-                />
+                {notification.image_url ? (
+                  <img
+                    src={notification.image_url}
+                    alt="Notification"
+                    className="rounded-circle"
+                    style={{
+                      width: "40px",
+                      height: "40px",
+                      objectFit: "cover",
+                      marginRight: "10px",
+                    }}
+                  />
+                ) : (
+                  <div className="notification-icon">
+                    <i
+                      className={`bi ${
+                        checkIfNotificationIsRead(notification)
+                          ? "bi-check-all text-primary"
+                          : "bi-exclamation-circle text-secondary"
+                      }`}
+                    />
+                  </div>
+                )}
                 <div>
                   <h4
                     className={
-                      notification.viewed ? "text-primary" : "text-secondary"
+                      checkIfNotificationIsRead(notification)
+                        ? "text-primary line-clamp-2"
+                        : "text-secondary line-clamp-2"
                     }
                   >
                     {notification.title}
                   </h4>
-                  <p className={notification.viewed ? "" : "text-dark"}>
+                  <p
+                    className={
+                      checkIfNotificationIsRead(notification) ? "" : "text-dark"
+                    }
+                  >
                     {shortenMessage(notification.message, 50)}
                   </p>
-                  <p>{notification.created_at ? timeSince(notification.created_at) : 'Unknown time'}</p>
+                  <p>
+                    {notification.created_at
+                      ? timeSince(notification.created_at)
+                      : "Unknown time"}
+                  </p>
                 </div>
               </li>
-              {index < notifications.length - 1 && (
+              {index < sortedNotifications.length - 1 && (
                 <li key={`divider-${notification.id}`}>
                   <hr className="dropdown-divider" />
                 </li>
@@ -263,10 +225,9 @@ const NavNotice: React.FC = memo(() => {
             <div>
               <h4>Notice</h4>
               <p>
-                {isLoading 
-                  ? "Loading notifications..." 
-                  : "No notice available at the moment"
-                }
+                {isLoading
+                  ? "Loading notifications..."
+                  : "No notice available at the moment"}
               </p>
             </div>
           </li>
@@ -276,10 +237,19 @@ const NavNotice: React.FC = memo(() => {
       {/* Notification detail modal */}
       <Modal showmodal={showmodal} toggleModal={toggleModal}>
         <div className="modal-body">
-          <h6>{modalContent.title}</h6>
-          <p className="small text-muted">{modalContent.time}</p>
+          <h6>{modalContent?.title}</h6>
+          <p className="small text-muted">
+            {moment(modalContent?.updated_at).fromNow()}
+          </p>
           <hr />
-          <p>{modalContent.message}</p>
+          {modalContent?.image_url && (
+            <img
+              src={modalContent?.image_url}
+              alt="Notification Image"
+              className="img-fluid mb-3"
+            />
+          )}
+          <p>{modalContent?.message}</p>
           <div className="d-flex justify-content-end mt-3">
             <button
               className="btn btn-primary"
@@ -288,6 +258,18 @@ const NavNotice: React.FC = memo(() => {
             >
               Close
             </button>
+            <button
+              className="btn btn-danger ms-2"
+              onClick={() => {
+                if (modalContent) {
+                  handleRemoveUserAsRecipient(modalContent);
+                  toggleModal();
+                }
+              }}
+              type="button"
+            >
+              Remove Notification
+            </button>
           </div>
         </div>
       </Modal>
@@ -295,6 +277,6 @@ const NavNotice: React.FC = memo(() => {
   );
 });
 
-NavNotice.displayName = 'NavNotice';
+NavNotice.displayName = "NavNotice";
 
 export default NavNotice;
