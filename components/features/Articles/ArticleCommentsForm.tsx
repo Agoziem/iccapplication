@@ -11,7 +11,6 @@ import { ArticleResponse, CreateComment, CommentResponse } from "@/types/article
 
 interface ArticleCommentsFormProps {
   article: ArticleResponse;
-  comments?: CommentResponse;
   className?: string;
   style?: React.CSSProperties;
   onCommentAdded?: () => void;
@@ -21,7 +20,6 @@ interface ArticleCommentsFormProps {
 
 const ArticleCommentsForm: React.FC<ArticleCommentsFormProps> = ({ 
   article, 
-  comments,
   className = "",
   style = {},
   onCommentAdded
@@ -103,7 +101,7 @@ const ArticleCommentsForm: React.FC<ArticleCommentsFormProps> = ({
       {user ? (
         <button
           type="button"
-          className="btn btn-primary me-3"
+          className="btn btn-accent-secondary me-3"
           onClick={openModal}
           disabled={isSubmittingComment}
         >
@@ -126,15 +124,9 @@ const ArticleCommentsForm: React.FC<ArticleCommentsFormProps> = ({
       )}
 
       <Modal showmodal={showModal} toggleModal={closeModal}>
-        <div className="modal-body">
+        <div className="p-2">
           <div className="d-flex align-items-center justify-content-between mb-4">
             <h4 className="mb-0">Add Comment</h4>
-            <button
-              type="button"
-              className="btn-close"
-              onClick={closeModal}
-              aria-label="Close"
-            />
           </div>
           
           <form onSubmit={handleSubmit(onSubmit)} noValidate>

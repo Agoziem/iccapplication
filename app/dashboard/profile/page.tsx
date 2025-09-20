@@ -1,7 +1,6 @@
 "use client";
 import PageTitle from "@/components/custom/PageTitle/PageTitle";
 import React, { useState } from "react";
-import ProfileForm from "@/components/features/Profile/ProfileForm";
 import ProfileCard from "@/components/features/Profile/ProfileCard";
 
 interface AlertState {
@@ -11,7 +10,6 @@ interface AlertState {
 }
 
 const ProfilePage = () => {
-  const [editMode, setEditMode] = useState(false);
   const [alert, setAlert] = useState<AlertState>({
     show: false,
     message: "",
@@ -20,15 +18,7 @@ const ProfilePage = () => {
   return (
     <div style={{ minHeight: "100vh" }}>
       <PageTitle pathname="Profile" />
-      {editMode ? (
-        <ProfileForm setAlert={setAlert} setEditMode={setEditMode} />
-      ) : (
-        <ProfileCard
-          alert={alert}
-          setAlert={setAlert}
-          setEditMode={setEditMode}
-        />
-      )}
+      <ProfileCard alert={alert} setAlert={setAlert} />
     </div>
   );
 };

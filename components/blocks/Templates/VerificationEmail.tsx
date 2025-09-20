@@ -1,18 +1,16 @@
-import { ORGANIZATION_ID } from "@/data/constants";
-import { useOrganization } from "@/data/hooks/organization.hooks";
+import { Organization } from "@/types/organizations";
 import React from "react";
 
 const VerificationEmail = ({
   confirmLink,
   expire_time,
+  organizationData,
 }: {
   confirmLink: string;
   expire_time: string;
+  organizationData: Organization;
 }) => {
   const currentYear = new Date().getFullYear();
-  const { data: OrganizationData } = useOrganization(
-    Number(ORGANIZATION_ID || 1)
-  );
   return (
     <div style={{ fontFamily: "Arial, sans-serif", lineHeight: "1.6", color: "#333" }}>
       <h2 style={{ color: "var(--primary)" }}>Verify Your Email Address</h2>
@@ -44,7 +42,7 @@ const VerificationEmail = ({
       </p>
       <p>If you did not create this account, you can safely ignore this email.</p>
       <p style={{ marginTop: "30px", fontSize: "12px", color: "#888" }}>
-        &copy; {currentYear} {OrganizationData?.name || "Your Company"}. All rights reserved.
+        &copy; {currentYear} {organizationData?.name || "Your Company"}. All rights reserved.
       </p>
     </div>
   );

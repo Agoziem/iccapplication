@@ -10,34 +10,31 @@ import { Subject, Test as TestType } from "@/types/cbt";
 import { useParams } from "next/navigation";
 
 const Test: React.FC = () => {
-  const { testID } = useParams() as { testID: string };
-  const { data: OrganizationData } = useOrganization(parseInt(ORGANIZATION_ID || "0"));
+  const { id } = useParams() as { id: string };
+  const { data: OrganizationData } = useOrganization(
+    parseInt(ORGANIZATION_ID || "0")
+  );
   const [currentSubject, setCurrentSubject] = useState<Subject | null>(null);
-  const { data: testData } = useTest(testID ? parseInt(testID) : 0);
-  const [test, setTest] = useState<TestType | null>(null);
+  const { data: testData } = useTest(id ? parseInt(id) : 0);
 
   useEffect(() => {
-    if (testData) {
-      setTest(testData);
+    if (testData && testData.testSubject && testData.testSubject.length > 0) {
+      setCurrentSubject(testData.testSubject[0]);
     }
   }, [testData]);
 
-  useEffect(() => {
-    if (test && test.testSubject && test.testSubject.length > 0) {
-      setCurrentSubject(test.testSubject[0]);
-    }
-  }, [test]);
-
   return (
     <>
-      {!test ? (
+      {!testData ? (
         <div className="card p-3">No test available</div>
       ) : (
         <div className="row mt-5">
-          <div className="col-12 col-md-4">
+          <div className="col-12 col-md-5">
             {/* The test details Card */}
             <div className="card p-3">
-              <h6 className="mb-1">{OrganizationData?.name || "Organization"}</h6>
+              <h6 className="mb-1">
+                {OrganizationData?.name || "Organization"}
+              </h6>
               <hr />
               <div className="d-flex">
                 <div
@@ -47,24 +44,24 @@ const Test: React.FC = () => {
                   <FaQuestionCircle className="mb-0" />
                 </div>
                 <div className="flex-fill">
-                  <p className="mb-1 text-secondary">{test.testYear?.year}</p>
-                  <h6>{test.texttype?.testtype}</h6>
+                  <p className="mb-1 text-secondary">
+                    {testData.testYear?.year}
+                  </p>
+                  <h6>{testData.texttype?.testtype}</h6>
                 </div>
               </div>
             </div>
             {/* The test Subjects details */}
             <div className="mt-2">
-              {test && (
+              {testData && (
                 <SubjectDetails
-                  test={test}
-                  setTest={setTest as any}
-                  subjects={test.testSubject || []}
+                  currentSubject={currentSubject}
                   setCurrentSubject={setCurrentSubject}
                 />
               )}
             </div>
           </div>
-          <div className="col-12 col-md-8">
+          <div className="col-12 col-md-7">
             <h4 className="text-center">
               {currentSubject?.subjectname}{" "}
               {currentSubject?.subjectduration &&
@@ -72,10 +69,8 @@ const Test: React.FC = () => {
             </h4>
             {/* The QuestionForm */}
             <div>
-              {test && (
+              {testData && (
                 <QuestionForm
-                  test={test}
-                  setTest={setTest}
                   currentSubject={currentSubject}
                   setCurrentSubject={setCurrentSubject}
                 />
@@ -89,4 +84,3 @@ const Test: React.FC = () => {
 };
 
 export default Test;
-

@@ -91,6 +91,30 @@
 
 
 /* ------------------------------------------- */
+/* Borders overide */
+/* --------------------------------------------- */
+.body .border-primary {
+  border-color: var(--primary) !important;
+}
+
+.body .border-primary-light {
+  border-color: var(--bgDarkerColor) !important;
+}
+
+.body .border-secondary {
+  border-color: var(--secondary) !important;
+}
+
+.body .border-success {
+  border-color: var(--success) !important;
+}
+
+.body .border-danger {
+  border-color: var(--danger) !important;
+}
+
+
+/* ------------------------------------------- */
 /* dropdown */
 /* ------------------------------------------- */
 
@@ -273,9 +297,9 @@
 
 .body .card-header,
 .body .card-footer {
-  border-color: #ebeef4;
-  background-color: #fff;
-  color: #798eb3;
+  border-color: var(--bgDarkerColor);
+  background-color: var(--bgLightColor);
+  color: var(--primary);
   padding: 15px;
 }
 

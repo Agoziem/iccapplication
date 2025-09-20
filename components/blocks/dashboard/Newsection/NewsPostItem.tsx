@@ -48,10 +48,10 @@ const NewsPostItem: React.FC<NewsPostItemProps> = React.memo(({ item, index, ite
         </div>
         
         <div className="ms-3 flex-grow-1">
-          <h6 className="text-wrap text-break mb-2">
+          <h6 className="mb-2 line-clamp-3">
             <Link 
               href={`/articles/${item.slug}`}
-              className="text-decoration-none text-dark hover-text-primary"
+              className="text-decoration-none"
               title={item.title}
             >
               {item.title}

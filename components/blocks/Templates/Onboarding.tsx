@@ -10,13 +10,14 @@ import { FaXTwitter } from "react-icons/fa6";
 import { IoLogoWhatsapp } from "react-icons/io5";
 import Link from "next/link";
 import { User } from "@/types/users";
-import { useOrganization } from "@/data/hooks/organization.hooks";
-import { ORGANIZATION_ID } from "@/data/constants";
+import { Organization } from "@/types/organizations";
 
-const Onboarding = ({ user }: { user: User }) => {
-  const { data: OrganizationData } = useOrganization(
-    Number(ORGANIZATION_ID || 1)
-  );
+interface OnboardingProps {
+  user: User;
+  organizationData?: Organization;
+}
+
+const Onboarding = ({ user, organizationData }: OnboardingProps) => {
   return (
     <div>
       <div>
@@ -42,7 +43,7 @@ const Onboarding = ({ user }: { user: User }) => {
 
       {/* Social Media icons */}
       <div style={{ display: "flex", gap: "20px" }}>
-        <Link href={OrganizationData?.facebooklink || "#"} target="_blank">
+        <Link href={organizationData?.facebooklink || "#"} target="_blank">
           <FaFacebook
             className="me-2"
             style={{
@@ -50,7 +51,7 @@ const Onboarding = ({ user }: { user: User }) => {
             }}
           />
         </Link>
-        <Link href={OrganizationData?.whatsapplink || "#"} target="_blank">
+        <Link href={organizationData?.whatsapplink || "#"} target="_blank">
           <IoLogoWhatsapp
             className="mx-2"
             style={{
@@ -58,7 +59,7 @@ const Onboarding = ({ user }: { user: User }) => {
             }}
           />
         </Link>
-        <Link href={OrganizationData?.instagramlink || "#"} target="_blank">
+        <Link href={organizationData?.instagramlink || "#"} target="_blank">
           <FaInstagram
             className="mx-2"
             style={{
@@ -66,7 +67,7 @@ const Onboarding = ({ user }: { user: User }) => {
             }}
           />
         </Link>
-        <Link href={OrganizationData?.twitterlink || "#"} target="_blank">
+        <Link href={organizationData?.twitterlink || "#"} target="_blank">
           <FaXTwitter
             className="mx-2"
             style={{
@@ -74,7 +75,7 @@ const Onboarding = ({ user }: { user: User }) => {
             }}
           />
         </Link>
-        <Link href={OrganizationData?.linkedinlink || "#"} target="_blank">
+        <Link href={organizationData?.linkedinlink || "#"} target="_blank">
           <FaLinkedinIn
             className="mx-2"
             style={{
@@ -82,7 +83,7 @@ const Onboarding = ({ user }: { user: User }) => {
             }}
           />
         </Link>
-        <Link href={OrganizationData?.tiktoklink || "#"} target="_blank">
+        <Link href={organizationData?.tiktoklink || "#"} target="_blank">
           <FaTiktok
             className="mx-2"
             style={{

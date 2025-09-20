@@ -77,3 +77,92 @@ export const formatPrice = (price: string) => {
     }
   };
 
+// ===============================
+// LocalStorage Utilities
+// ===============================
+
+/**
+ * Safely clear corrupted localStorage entries
+ */
+export const clearCorruptedLocalStorageEntries = (): void => {
+  if (typeof window === 'undefined') return;
+
+  const keysToRemove: string[] = [];
+
+  // Check all localStorage keys for corrupted values
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key) {
+      const value = localStorage.getItem(key);
+      if (value === "undefined" || value === "null" || value === "NaN" || value === "") {
+        keysToRemove.push(key);
+      } else {
+        try {
+          JSON.parse(value || "");
+        } catch (error) {
+          console.warn(`Corrupted localStorage entry found for key: ${key}`, error);
+          keysToRemove.push(key);
+        }
+      }
+    }
+  }
+
+  // Remove corrupted entries
+  keysToRemove.forEach(key => {
+    try {
+      localStorage.removeItem(key);
+      console.log(`Removed corrupted localStorage entry: ${key}`);
+    } catch (error) {
+      console.error(`Failed to remove corrupted localStorage entry: ${key}`, error);
+    }
+  });
+
+  if (keysToRemove.length > 0) {
+    console.log(`Cleaned up ${keysToRemove.length} corrupted localStorage entries`);
+  }
+};
+
+/**
+ * Get localStorage item safely with fallback
+ */
+export const getLocalStorageItem = <T>(key: string, fallback: T): T => {
+  if (typeof window === 'undefined') return fallback;
+
+  try {
+    const item = localStorage.getItem(key);
+    if (item === null || item === "undefined" || item === "null" || item === "") {
+      return fallback;
+    }
+    return JSON.parse(item);
+  } catch (error) {
+    console.warn(`Error reading localStorage key "${key}":`, error);
+    // Clear the corrupted entry
+    try {
+      localStorage.removeItem(key);
+    } catch (removeError) {
+      console.error(`Error removing corrupted localStorage key "${key}":`, removeError);
+    }
+    return fallback;
+  }
+};
+
+/**
+ * Set localStorage item safely
+ */
+export const setLocalStorageItem = <T>(key: string, value: T): boolean => {
+  if (typeof window === 'undefined') return false;
+
+  try {
+    if (value === undefined || value === null) {
+      localStorage.removeItem(key);
+      return true;
+    }
+    
+    localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch (error) {
+    console.error(`Error setting localStorage key "${key}":`, error);
+    return false;
+  }
+};
+

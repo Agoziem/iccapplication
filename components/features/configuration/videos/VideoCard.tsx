@@ -43,10 +43,10 @@ const VideoCard: React.FC<VideoCardProps> = ({
 
   return (
     <div className="col-12 col-md-6 col-lg-4 mb-4">
-      <div className="card h-100 shadow-sm border-0 position-relative overflow-hidden">
+      <div className="card shadow-sm border-0 position-relative overflow-hidden" style={{ height: "420px" }}>
         {/* Video Thumbnail */}
         <div className="position-relative">
-          <div className="d-flex justify-content-center align-items-center p-3 bg-light position-relative" style={{ minHeight: "200px" }}>
+          <div className="d-flex justify-content-center align-items-center p-3 position-relative border border-bottom" style={{ minHeight: "200px", backgroundColor: "var(--bgColor)" }}>
             {item.img_url || item.thumbnail ? (
               <>
                 <Image
@@ -89,17 +89,17 @@ const VideoCard: React.FC<VideoCardProps> = ({
         {/* Card Body */}
         <div className="card-body d-flex flex-column">
           {/* Video Title */}
-          <h6 className="card-title fw-bold text-dark mb-2" title={item.title}>
+          <h6 className="fw-bold mb-2 line-clamp-1" title={item.title}>
             {truncateText(item.title, 40)}
           </h6>
 
           {/* Video Description */}
-          <p className="card-text text-muted small mb-3 flex-grow-1">
+          <p className="card-text text-muted small mb-1 flex-grow-1">
             {truncateText(item.description, 100)}
           </p>
 
           {/* Video Statistics */}
-          <div className="d-flex justify-content-between align-items-center mb-3 small text-muted">
+          <div className="d-flex justify-content-between align-items-center mb-2 small text-muted">
             <span>
               {item.number_of_times_bought || 0} purchase{(item.number_of_times_bought || 0) !== 1 ? 's' : ''}
             </span>
@@ -117,23 +117,23 @@ const VideoCard: React.FC<VideoCardProps> = ({
             </span>
             
             {/* Action Buttons */}
-            <div className="btn-group" role="group">
+            <div className="d-flex gap-1" role="group">
               <button
-                className="btn btn-sm btn-outline-primary"
+                className="badge bg-primary-light text-primary border-0 p-2"
                 onClick={() => onEdit(item)}
                 title="Edit Video"
               >
                 <FiEdit size={14} />
               </button>
               <button
-                className="btn btn-sm btn-outline-info"
+                className="badge bg-secondary-light text-secondary border-0 p-2"
                 onClick={() => openModal(item)}
                 title="View Details"
               >
                 <FiEye size={14} />
               </button>
               <button
-                className="btn btn-sm btn-outline-danger"
+                className="badge bg-danger text-white border-0 p-2"
                 onClick={() => onDelete(item)}
                 title="Delete Video"
               >

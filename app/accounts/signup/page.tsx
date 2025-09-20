@@ -80,14 +80,15 @@ const SignupPage = () => {
         const result = await registerUser(registrationData);
 
         if (result.message && result.user) {
-          if (result.user.email && result.user.verificationToken) {
+          if (result.user.email && result.user.verificationToken && OrganizationData) {
             const expire_time = result.user.expireTime
               ? new Date(result.user.expireTime)
               : new Date(Date.now() + 60 * 60 * 1000); // 1 hour ahead
             await sendVerificationEmail(
               result.user.email,
               result.user.verificationToken,
-              expire_time
+              expire_time,
+              OrganizationData
             );
             setAlert({
               show: true,

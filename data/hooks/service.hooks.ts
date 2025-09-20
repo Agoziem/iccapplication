@@ -280,11 +280,12 @@ export const useAddServiceToCompleted = (): UseMutationResult<SuccessResponse, E
   
   return useMutation({
     mutationFn: ({ serviceId, userId }) => addServiceToCompleted(serviceId, userId),
-    // onSuccess: (_, { serviceId, userId }) => {
-    // //   queryClient.invalidateQueries(SERVICE_KEYS.usersCompleted(serviceId));
-    // //   queryClient.invalidateQueries(SERVICE_KEYS.usersInProgress(serviceId));
-    // //   queryClient.invalidateQueries(SERVICE_KEYS.users(serviceId));
-    // },
+    onSuccess: (_, { serviceId, userId }) => {
+      queryClient.invalidateQueries(SERVICE_KEYS.usersCompleted(serviceId));
+      queryClient.invalidateQueries(SERVICE_KEYS.usersInProgress(serviceId));
+      queryClient.invalidateQueries(SERVICE_KEYS.users(serviceId));
+      queryClient.invalidateQueries(["services", "detail", serviceId]);
+    },
     onError: (error: Error) => {
       console.error('Error adding service to completed:', error);
       throw error;
@@ -297,10 +298,12 @@ export const useAddServiceToProgress = (): UseMutationResult<SuccessResponse, Er
   
   return useMutation({
     mutationFn: ({ serviceId, userId }) => addServiceToProgress(serviceId, userId),
-    // onSuccess: (_, { serviceId, userId }) => {
-    //   queryClient.invalidateQueries(SERVICE_KEYS.usersInProgress(serviceId));
-    //   queryClient.invalidateQueries(SERVICE_KEYS.users(serviceId));
-    // },
+    onSuccess: (_, { serviceId, userId }) => {
+      queryClient.invalidateQueries(SERVICE_KEYS.usersCompleted(serviceId));
+      queryClient.invalidateQueries(SERVICE_KEYS.usersInProgress(serviceId));
+      queryClient.invalidateQueries(SERVICE_KEYS.users(serviceId));
+      queryClient.invalidateQueries(["services", "detail", serviceId]);
+    },
     onError: (error: Error) => {
       console.error('Error adding service to progress:', error);
       throw error;
@@ -313,10 +316,12 @@ export const useRemoveServiceFromCompleted = (): UseMutationResult<SuccessRespon
   
   return useMutation({
     mutationFn: ({ serviceId, userId }) => removeServiceFromCompleted(serviceId, userId),
-    // onSuccess: (_, { serviceId, userId }) => {
-    //   queryClient.invalidateQueries(SERVICE_KEYS.usersCompleted(serviceId));
-    //   queryClient.invalidateQueries(SERVICE_KEYS.users(serviceId));
-    // },
+    onSuccess: (_, { serviceId, userId }) => {
+      queryClient.invalidateQueries(SERVICE_KEYS.usersCompleted(serviceId));
+      queryClient.invalidateQueries(SERVICE_KEYS.usersInProgress(serviceId));
+      queryClient.invalidateQueries(SERVICE_KEYS.users(serviceId));
+      queryClient.invalidateQueries(["services", "detail", serviceId]);
+    },
     onError: (error: Error) => {
       console.error('Error removing service from completed:', error);
       throw error;
@@ -329,10 +334,12 @@ export const useRemoveServiceFromProgress = (): UseMutationResult<SuccessRespons
   
   return useMutation({
     mutationFn: ({ serviceId, userId }) => removeServiceFromProgress(serviceId, userId),
-    // onSuccess: (_, { serviceId, userId }) => {
-    //   queryClient.invalidateQueries(SERVICE_KEYS.usersInProgress(serviceId));
-    //   queryClient.invalidateQueries(SERVICE_KEYS.users(serviceId));
-    // },
+    onSuccess: (_, { serviceId, userId }) => {
+      queryClient.invalidateQueries(SERVICE_KEYS.usersCompleted(serviceId));
+      queryClient.invalidateQueries(SERVICE_KEYS.usersInProgress(serviceId));
+      queryClient.invalidateQueries(SERVICE_KEYS.users(serviceId));
+      queryClient.invalidateQueries(["services", "detail", serviceId]);
+    },
     onError: (error: Error) => {
       console.error('Error removing service from progress:', error);
       throw error;

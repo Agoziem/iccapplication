@@ -187,21 +187,21 @@ export const deleteComment = async (commentId: number): Promise<void> => {
 };
 
 export const addLike = async (
-  blogId: number,
+  blogSlug: string,
   userId: number
-): Promise<ArticleResponse> => {
+): Promise<{message: string}> => {
   const response = await AxiosInstanceWithToken.get(
-    `${articleAPIendpoint}/addlike/${blogId}/${userId}/`
+    `${articleAPIendpoint}/addlike/${blogSlug}/${userId}/`
   );
   return response.data;
 };
 
 export const deleteLike = async (
-  blogId: number,
+  blogSlug: string,
   userId: number
-): Promise<ArticleResponse> => {
+): Promise<{message: string}> => {
   const response = await AxiosInstanceWithToken.delete(
-    `${articleAPIendpoint}/deletelike/${blogId}/${userId}/`
+    `${articleAPIendpoint}/deletelike/${blogSlug}/${userId}/`
   );
   return response.data;
 };
@@ -476,18 +476,16 @@ export const useDeleteComment = (): UseMutationResult<void, Error, number> => {
 
 // Like and View Mutations
 export const useAddLike = (): UseMutationResult<
-  ArticleResponse,
+  {message: string},
   Error,
-  { blogId: number; userId: number }
+  { blogSlug: string; userId: number }
 > => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ blogId, userId }) => addLike(blogId, userId),
-    onSuccess: (data) => {
-      if (data.id) {
-        queryClient.invalidateQueries(ARTICLE_KEYS.article(data.id));
-      }
+    mutationFn: ({ blogSlug, userId }) => addLike(blogSlug, userId),
+    onSuccess: (_, { blogSlug }) => {
+      queryClient.invalidateQueries(ARTICLE_KEYS.articleBySlug(blogSlug));
       queryClient.invalidateQueries(ARTICLE_KEYS.articles());
     },
     onError: (error: Error) => {
@@ -498,18 +496,16 @@ export const useAddLike = (): UseMutationResult<
 };
 
 export const useDeleteLike = (): UseMutationResult<
-  ArticleResponse,
+  {message: string},
   Error,
-  { blogId: number; userId: number }
+  { blogSlug: string; userId: number }
 > => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ blogId, userId }) => deleteLike(blogId, userId),
-    onSuccess: (data) => {
-      if (data.id) {
-        queryClient.invalidateQueries(ARTICLE_KEYS.article(data.id));
-      }
+    mutationFn: ({ blogSlug, userId }) => deleteLike(blogSlug, userId),
+    onSuccess: (_, { blogSlug }) => {
+      queryClient.invalidateQueries(ARTICLE_KEYS.articleBySlug(blogSlug));
       queryClient.invalidateQueries(ARTICLE_KEYS.articles());
     },
     onError: (error: Error) => {

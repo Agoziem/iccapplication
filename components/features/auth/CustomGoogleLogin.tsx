@@ -55,7 +55,6 @@ const CustomGoogleLogin: React.FC<CustomGoogleLoginProps> = ({
 
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
-      console.log("Token Response:", tokenResponse);
       setIsLoading(true);
 
       try {
@@ -69,7 +68,6 @@ const CustomGoogleLogin: React.FC<CustomGoogleLoginProps> = ({
         }
 
         const googleUser: GoogleUser = await userInfoResponse.json();
-        console.log("Google User Info:", googleUser);
 
         // Prepare user data for your backend
         const userData: UserRegistrationOAuth = {
@@ -101,7 +99,7 @@ const CustomGoogleLogin: React.FC<CustomGoogleLoginProps> = ({
 
           // Redirect after short delay
           setTimeout(() => {
-            router.push(redirectPath);
+            router.push(redirectPath || DEFAULT_LOGIN_REDIRECT);
           }, 1500);
         } else {
           throw new Error("No access token received from server");

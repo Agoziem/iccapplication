@@ -20,7 +20,7 @@ const NavAvatar: React.FC = memo(() => {
       setShowModal(false);
       await logoutUser();
       toast.success("Logged out successfully");
-      router.push("/login");
+      router.push("/accounts/signin");
     } catch (error) {
       console.error("Logout failed:", error);
       toast.error("Logout failed");

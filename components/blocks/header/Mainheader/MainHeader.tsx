@@ -13,11 +13,13 @@ import { useCart } from "@/providers/context/Cartcontext";
 import Cartbutton from "@/components/custom/Cartbutton/cart-button";
 import { logoutUser, useMyProfile } from "@/data/hooks/user.hooks";
 import { useRouter } from "next/navigation";
+import { getToken } from "@/utils/auth";
 
 const MainHeader = () => {
   const { cart } = useCart();
   const [isOpen, setIsOpen] = useState(false);
   const [activeLink, setActiveLink] = useState("/");
+  const token = getToken();
   const { data: user } = useMyProfile();
   const router = useRouter();
   // const [toggleDropdown, setToggleDropdown] = useState(false);
@@ -53,7 +55,7 @@ const MainHeader = () => {
     setIsOpen(!isOpen);
   };
 
-  const handleLogout = async(e: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleLogout = async (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     try {
       await logoutUser();
@@ -105,10 +107,10 @@ const MainHeader = () => {
                 borderRadius: "25px",
               }}
             >
-              {user ? "Dashboard" : "Get Started"}
+              {token && user ? "Dashboard" : "Get Started"}
             </button>
           </Link>
-          {user && (
+          {token && user && (
             <div className="dropdown">
               <a href="#" data-bs-toggle="dropdown">
                 {user?.avatar_url ? (
@@ -198,7 +200,7 @@ const MainHeader = () => {
             onClick={toggleMenu}
             style={{ cursor: "pointer", fontSize: "28px" }}
           />
-          {user && (
+          {token && user && (
             <div className="dropdown d-inline">
               <a href="#" data-bs-toggle="dropdown">
                 {user.avatar_url ? (

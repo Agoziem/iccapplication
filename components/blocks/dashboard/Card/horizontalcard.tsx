@@ -72,7 +72,7 @@ const HorizontalCard: React.FC<HorizontalCardProps> = React.memo(({
               {formattedBody}
             </h4>
             
-            <span className="card-small text-muted small pt-1 d-block">
+            <span className="card-small text-muted small pt-1 d-block line-clamp-1">
               {cardspan}
             </span>
           </div>

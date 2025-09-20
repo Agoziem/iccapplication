@@ -1,3 +1,4 @@
+"use client";
 import PageTitle from "@/components/custom/PageTitle/PageTitle";
 import ArticleConf from "@/components/features/configuration/articles/ArticleConf";
 import React from "react";

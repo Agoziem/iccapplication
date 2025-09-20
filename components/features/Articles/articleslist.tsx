@@ -176,7 +176,7 @@ const ArticlesList: React.FC = () => {
 
                 return (
                   <Link
-                    href={`/articles/${item.slug || item.id}`}
+                    href={`/articles/${item.slug}`}
                     key={item.id}
                   >
                     <li

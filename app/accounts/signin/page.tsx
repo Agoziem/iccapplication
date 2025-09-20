@@ -15,6 +15,8 @@ import { useVerifyUser } from "@/data/hooks/user.hooks";
 import { UserLoginSchema } from "@/schemas/users";
 import { UserLogin } from "@/types/users";
 import { saveToken } from "@/utils/auth";
+import { useOrganization } from "@/data/hooks/organization.hooks";
+import { ORGANIZATION_ID } from "@/data/constants";
 
 const SigninPage = () => {
   const router = useRouter();
@@ -32,6 +34,9 @@ const SigninPage = () => {
   });
 
   const { mutateAsync: verifyUser } = useVerifyUser();
+  const { data: OrganizationData } = useOrganization(
+    parseInt(ORGANIZATION_ID || "1")
+  );
 
   // React Hook Form setup
   const {
@@ -77,14 +82,15 @@ const SigninPage = () => {
           }
         } else {
           // Send Verification email
-          if (response?.user.verificationToken && response?.user.email) {
+          if (response?.user.verificationToken && response?.user.email && OrganizationData) {
             const expire_time = response?.user?.expireTime
               ? new Date(response.user.expireTime)
               : new Date(Date.now() + 60 * 60 * 1000); // 1 hour ahead
             const emailResult = await sendVerificationEmail(
               response?.user.email || data.email,
               response?.user.verificationToken,
-              expire_time
+              expire_time,
+              OrganizationData
             );
             setAlert({
               show: true,

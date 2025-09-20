@@ -53,27 +53,27 @@ export const ArticleLoadingSkeleton = () => {
     <section className="px-4 px-md-5 mx-auto mb-5" style={{ maxWidth: "900px" }}>
       <div className="pt-2 ps-3 mb-4">
         <div className="d-flex align-items-center">
-          <div className="bg-light rounded" style={{ height: "20px", width: "200px" }}></div>
+          <div className="rounded" style={{ height: "20px", width: "200px", backgroundColor: "var(--bgDarkColor)" }}></div>
         </div>
       </div>
       
       {/* Article Header Skeleton */}
       <div className="article-header pb-4">
-        <div className="bg-light rounded mb-3" style={{ height: "40px", width: "70%" }}></div>
+        <div className=" rounded mb-3" style={{ height: "40px", width: "70%", backgroundColor: "var(--bgDarkColor)" }}></div>
         
         <div className="d-flex my-4">
-          <div className="rounded-circle bg-light" style={{ width: "50px", height: "50px" }}></div>
+          <div className="rounded-circle " style={{ width: "50px", height: "50px", backgroundColor: "var(--bgDarkColor)" }}></div>
           <div className="ms-3">
-            <div className="bg-light rounded mb-2" style={{ height: "20px", width: "150px" }}></div>
-            <div className="bg-light rounded" style={{ height: "15px", width: "200px" }}></div>
+            <div className="rounded mb-2" style={{ height: "20px", width: "150px", backgroundColor: "var(--bgDarkColor)" }}></div>
+            <div className="rounded" style={{ height: "15px", width: "200px", backgroundColor: "var(--bgDarkColor)"   }}></div>
           </div>
         </div>
         
         <hr />
         
         <div className="d-flex">
-          <div className="bg-light rounded me-3" style={{ height: "18px", width: "100px" }}></div>
-          <div className="bg-light rounded" style={{ height: "18px", width: "80px" }}></div>
+          <div className="rounded me-3" style={{ height: "18px", width: "100px", backgroundColor: "var(--bgDarkColor)" }}></div>
+          <div className="rounded" style={{ height: "18px", width: "80px", backgroundColor: "var(--bgDarkColor)" }}></div>
         </div>
         
         <hr />
@@ -81,21 +81,14 @@ export const ArticleLoadingSkeleton = () => {
       
       {/* Article Body Skeleton */}
       <div className="article-body pb-4">
-        <div className="bg-light rounded mb-4" style={{ height: "200px", width: "100%" }}></div>
+        <div className="rounded mb-4" style={{ height: "200px", width: "100%", backgroundColor: "var(--bgDarkColor)" }}></div>
         
         <div className="space-y-3">
-          <div className="bg-light rounded mb-3" style={{ height: "20px", width: "100%" }}></div>
-          <div className="bg-light rounded mb-3" style={{ height: "20px", width: "95%" }}></div>
-          <div className="bg-light rounded mb-3" style={{ height: "20px", width: "90%" }}></div>
-          <div className="bg-light rounded mb-3" style={{ height: "20px", width: "85%" }}></div>
+          <div className="rounded mb-3" style={{ height: "20px", width: "100%", backgroundColor: "var(--bgDarkColor)" }}></div>
+          <div className="rounded mb-3" style={{ height: "20px", width: "95%", backgroundColor: "var(--bgDarkColor)" }}></div>
+          <div className="rounded mb-3" style={{ height: "20px", width: "90%", backgroundColor: "var(--bgDarkColor)" }}></div>
+          <div className="rounded mb-3" style={{ height: "20px", width: "85%", backgroundColor: "var(--bgDarkColor)" }}></div>
         </div>
-      </div>
-      
-      <div className="text-center">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading article...</span>
-        </div>
-        <p className="mt-2 text-muted">Loading article content...</p>
       </div>
     </section>
   );

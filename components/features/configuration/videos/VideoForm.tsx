@@ -5,14 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { PulseLoader } from "react-spinners";
 import toast from "react-hot-toast";
-import {
-  FiVideo,
-  FiImage,
-  FiTag,
-  FiDollarSign,
-  FiFileText,
-} from "react-icons/fi";
-import { BsCheck2Circle } from "react-icons/bs";
 import VideoUploader from "@/components/custom/Fileuploader/VideoUploader";
 import ImageUploader from "@/components/custom/Imageuploader/ImageUploader";
 import {
@@ -107,9 +99,16 @@ const VideoForm: React.FC<VideoFormProps> = ({
   // Reset subcategory when category changes
   useEffect(() => {
     if (selectedCategory) {
-      setValue("subcategory", 0);
+      if (editMode && video) {
+        const currentSubcategory = videoSubcategories?.find(
+          (sub) => sub.id === video?.subcategory?.id
+        );
+        setValue("subcategory", currentSubcategory ? currentSubcategory.id : 0);
+      } else {
+        setValue("subcategory", 0);
+      }
     }
-  }, [selectedCategory, setValue]);
+  }, [selectedCategory, setValue, video]);
 
   // Initialize form when editing
   useEffect(() => {
@@ -165,335 +164,269 @@ const VideoForm: React.FC<VideoFormProps> = ({
   };
 
   return (
-    <div className="container-fluid p-4">
-      {/* Header */}
-      <div className="row mb-4">
-        <div className="col-12">
-          <div className="d-flex align-items-center justify-content-between">
-            <div className="d-flex align-items-center">
-              <FiVideo size={24} className="text-primary me-2" />
-              <h4 className="mb-0 fw-bold">
-                {editMode
-                  ? `Edit "${watchedTitle || video?.title}"`
-                  : "Add New Video"}
-              </h4>
-            </div>
-            {onCancel && (
-              <button
-                type="button"
-                className="btn btn-outline-secondary"
-                onClick={onCancel}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+    <div className="p-3">
+      <h5 className="text-center mb-4">
+        {editMode ? "Edit Video" : "Add New Video"}
+      </h5>
+      <hr />
 
-      <form onSubmit={handleSubmit(onSubmit)} className="row g-4">
-        {/* Left Column */}
-        <div className="col-lg-8">
-          {/* Video Title */}
-          <div className="card border-0 shadow-sm mb-4">
-            <div className="card-body">
-              <h6 className="card-title d-flex align-items-center mb-3">
-                <FiFileText size={18} className="text-primary me-2" />
-                Video Information
-              </h6>
-
-              <div className="row g-3">
-                <div className="col-12">
-                  <label htmlFor="title" className="form-label fw-medium">
-                    Title *
-                  </label>
-                  <Controller
-                    name="title"
-                    control={control}
-                    render={({ field }) => (
-                      <input
-                        {...field}
-                        type="text"
-                        className={`form-control ${
-                          errors.title ? "is-invalid" : ""
-                        }`}
-                        placeholder="Enter video title"
-                      />
-                    )}
-                  />
-                  {errors.title && (
-                    <div className="invalid-feedback">
-                      {errors.title.message}
-                    </div>
-                  )}
-                </div>
-
-                <div className="col-12">
-                  <label htmlFor="description" className="form-label fw-medium">
-                    Description *
-                  </label>
-                  <Controller
-                    name="description"
-                    control={control}
-                    render={({ field }) => (
-                      <textarea
-                        {...field}
-                        className={`form-control ${
-                          errors.description ? "is-invalid" : ""
-                        }`}
-                        rows={4}
-                        placeholder="Enter video description"
-                      />
-                    )}
-                  />
-                  {errors.description && (
-                    <div className="invalid-feedback">
-                      {errors.description.message}
-                    </div>
-                  )}
-                </div>
-
-                <div className="col-md-6">
-                  <label htmlFor="price" className="form-label fw-medium">
-                    <FiDollarSign size={16} className="me-1" />
-                    Price *
-                  </label>
-                  <Controller
-                    name="price"
-                    control={control}
-                    render={({ field }) => (
-                      <div className="input-group">
-                        <span className="input-group-text">₦</span>
-                        <input
-                          {...field}
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          className={`form-control ${
-                            errors.price ? "is-invalid" : ""
-                          }`}
-                          placeholder="0.00"
-                          onChange={(e) =>
-                            field.onChange(parseFloat(e.target.value) || 0)
-                          }
-                        />
-                      </div>
-                    )}
-                  />
-                  {errors.price && (
-                    <div className="invalid-feedback">
-                      {errors.price.message}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Categories */}
-          <div className="card border-0 shadow-sm mb-4">
-            <div className="card-body">
-              <h6 className="card-title d-flex align-items-center mb-3">
-                <FiTag size={18} className="text-primary me-2" />
-                Categories
-              </h6>
-
-              <div className="row g-3">
-                <div className="col-md-6">
-                  <label htmlFor="category" className="form-label fw-medium">
-                    Category *
-                  </label>
-                  <Controller
-                    name="category"
-                    control={control}
-                    render={({ field }) => (
-                      <select
-                        {...field}
-                        className={`form-select ${
-                          errors.category ? "is-invalid" : ""
-                        }`}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value) || 0)
-                        }
-                        disabled={loadingCategories}
-                      >
-                        <option value={0}>Select category</option>
-                        {videoCategories?.map((category) => (
-                          <option key={category.id} value={category.id}>
-                            {category.category}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  />
-                  {errors.category && (
-                    <div className="invalid-feedback">
-                      {errors.category.message}
-                    </div>
-                  )}
-                  {loadingCategories && (
-                    <small className="text-muted">
-                      <PulseLoader size={8} className="me-2" />
-                      Loading categories...
-                    </small>
-                  )}
-                </div>
-
-                <div className="col-md-6">
-                  <label htmlFor="subcategory" className="form-label fw-medium">
-                    Subcategory
-                  </label>
-                  <Controller
-                    name="subcategory"
-                    control={control}
-                    render={({ field }) => (
-                      <select
-                        {...field}
-                        className={`form-select ${
-                          errors.subcategory ? "is-invalid" : ""
-                        }`}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value) || 0)
-                        }
-                        disabled={loadingSubcategories || !selectedCategory}
-                      >
-                        <option value={0}>Select subcategory</option>
-                        {videoSubcategories?.map((subcategory) => (
-                          <option key={subcategory.id} value={subcategory.id}>
-                            {subcategory.subcategory}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  />
-                  {errors.subcategory && (
-                    <div className="invalid-feedback">
-                      {errors.subcategory.message}
-                    </div>
-                  )}
-                  {loadingSubcategories && (
-                    <small className="text-muted">
-                      <PulseLoader size={8} className="me-2" />
-                      Loading subcategories...
-                    </small>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column */}
-        <div className="col-lg-4">
-          {/* Media Upload */}
-          <div className="card border-0 shadow-sm mb-4">
-            <div className="card-body">
-              <h6 className="card-title d-flex align-items-center mb-3">
-                <FiImage size={18} className="text-primary me-2" />
-                Media Files
-              </h6>
-
-              {/* Thumbnail Upload */}
-              <div className="mb-4">
-                <label className="form-label fw-medium">Video Thumbnail</label>
-                <Controller
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+        {/* Video Thumbnail */}
+        <div className="mb-2">
+          <label htmlFor="thumbnail" className="form-label">
+            Video Thumbnail
+          </label>
+          <Controller
+            name="thumbnail"
+            control={control}
+            render={({ field, fieldState }) => (
+              <>
+                <ImageUploader
                   name="thumbnail"
-                  control={control}
-                  render={({ field }) => (
-                    <ImageUploader
-                      name="thumbnail"
-                      value={field.value}
-                      onChange={field.onChange}
-                      error={
-                        typeof errors.thumbnail?.message === "string"
-                          ? errors.thumbnail.message
-                          : undefined
-                      }
-                    />
-                  )}
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Upload video thumbnail"
+                  error={fieldState.error?.message}
                 />
-              </div>
-
-              {/* Video Upload */}
-              <div>
-                <label className="form-label fw-medium">Video File *</label>
-                <Controller
-                  name="video"
-                  control={control}
-                  render={({ field }) => (
-                    <VideoUploader
-                      name="video"
-                      value={field.value}
-                      onChange={field.onChange}
-                      error={
-                        typeof errors.video?.message === "string"
-                          ? errors.video.message
-                          : undefined
-                      }
-                    />
-                  )}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Video Settings */}
-          <div className="card border-0 shadow-sm">
-            <div className="card-body">
-              <h6 className="card-title d-flex align-items-center mb-3">
-                <BsCheck2Circle size={18} className="text-primary me-2" />
-                Video Settings
-              </h6>
-
-              <div className="form-check">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  id="free"
-                  defaultChecked={video?.free || false}
-                />
-                <label className="form-check-label fw-medium" htmlFor="free">
-                  Free Video
-                </label>
-                <small className="text-muted d-block">
-                  Make this video available for free
-                </small>
-              </div>
-            </div>
-          </div>
+              </>
+            )}
+          />
         </div>
 
-        {/* Submit Button */}
-        <div className="col-12">
-          <div className="d-flex justify-content-end gap-3 pt-3 border-top">
-            {onCancel && (
-              <button
-                type="button"
-                className="btn btn-outline-secondary px-4"
-                onClick={onCancel}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </button>
+        {/* Title */}
+        <div className="mb-3">
+          <label htmlFor="title" className="form-label">
+            Title *
+          </label>
+          <Controller
+            name="title"
+            control={control}
+            render={({ field, fieldState }) => (
+              <>
+                <input
+                  {...field}
+                  type="text"
+                  className={`form-control ${
+                    fieldState.error ? "is-invalid" : ""
+                  }`}
+                  id="title"
+                  placeholder="Enter video title"
+                />
+                {fieldState.error && (
+                  <div className="invalid-feedback">
+                    {fieldState.error.message}
+                  </div>
+                )}
+              </>
             )}
-            <button
-              type="submit"
-              className="btn btn-primary px-4"
-              disabled={isSubmitting || !isValid}
-            >
-              {isSubmitting ? (
-                <div className="d-flex align-items-center">
-                  <PulseLoader size={8} color="#ffffff" className="me-2" />
-                  {editMode ? "Updating..." : "Creating..."}
-                </div>
-              ) : (
-                <div className="d-flex align-items-center">
-                  {editMode ? "Update Video" : "Create Video"}
-                </div>
-              )}
-            </button>
-          </div>
+          />
+        </div>
+
+        {/* Description */}
+        <div className="mb-3">
+          <label htmlFor="description" className="form-label">
+            Description *
+          </label>
+          <Controller
+            name="description"
+            control={control}
+            render={({ field, fieldState }) => (
+              <>
+                <textarea
+                  {...field}
+                  className={`form-control ${
+                    fieldState.error ? "is-invalid" : ""
+                  }`}
+                  id="description"
+                  placeholder="Enter video description"
+                  rows={4}
+                />
+                {fieldState.error && (
+                  <div className="invalid-feedback">
+                    {fieldState.error.message}
+                  </div>
+                )}
+              </>
+            )}
+          />
+        </div>
+
+        {/* Price */}
+        <div className="mb-3">
+          <label htmlFor="price" className="form-label">
+            Price (₦) *
+          </label>
+          <Controller
+            name="price"
+            control={control}
+            render={({ field, fieldState }) => (
+              <>
+                <input
+                  {...field}
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className={`form-control ${
+                    fieldState.error ? "is-invalid" : ""
+                  }`}
+                  id="price"
+                  placeholder="Enter video price"
+                  onChange={(e) =>
+                    field.onChange(parseFloat(e.target.value) || 0)
+                  }
+                />
+                {fieldState.error && (
+                  <div className="invalid-feedback">
+                    {fieldState.error.message}
+                  </div>
+                )}
+              </>
+            )}
+          />
+        </div>
+
+        {/* Category */}
+        <div className="mb-3">
+          <label htmlFor="category" className="form-label">
+            Category *
+          </label>
+          <Controller
+            name="category"
+            control={control}
+            render={({ field, fieldState }) => (
+              <>
+                <select
+                  {...field}
+                  className={`form-select ${
+                    fieldState.error ? "is-invalid" : ""
+                  }`}
+                  id="category"
+                  onChange={(e) =>
+                    field.onChange(parseInt(e.target.value) || 0)
+                  }
+                  disabled={loadingCategories}
+                >
+                  <option value={0}>Select a category</option>
+                  {videoCategories?.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.category}
+                    </option>
+                  ))}
+                </select>
+                {loadingCategories && (
+                  <div className="form-text">
+                    <PulseLoader size={8} color="#0d6efd" />
+                  </div>
+                )}
+                {fieldState.error && (
+                  <div className="invalid-feedback">
+                    {fieldState.error.message}
+                  </div>
+                )}
+              </>
+            )}
+          />
+        </div>
+
+        {/* Subcategory */}
+        <div className="mb-3">
+          <label htmlFor="subcategory" className="form-label">
+            Subcategory
+          </label>
+          <Controller
+            name="subcategory"
+            control={control}
+            render={({ field, fieldState }) => (
+              <>
+                <select
+                  {...field}
+                  id="subcategory"
+                  className={`form-select ${
+                    fieldState.error ? "is-invalid" : ""
+                  }`}
+                  onChange={(e) =>
+                    field.onChange(parseInt(e.target.value) || 0)
+                  }
+                  disabled={!selectedCategory || loadingSubcategories}
+                >
+                  <option value={0}>
+                    {!selectedCategory
+                      ? "Select a category first"
+                      : "Select a subcategory (optional)"}
+                  </option>
+                  {videoSubcategories?.map((subcategory) => (
+                    <option key={subcategory.id} value={subcategory.id}>
+                      {subcategory.subcategory}
+                    </option>
+                  ))}
+                </select>
+                {loadingSubcategories && (
+                  <div className="form-text">
+                    <PulseLoader size={8} color="var(--primary)" />
+                  </div>
+                )}
+                {fieldState.error && (
+                  <div className="invalid-feedback">
+                    {fieldState.error.message}
+                  </div>
+                )}
+              </>
+            )}
+          />
+        </div>
+
+        {/* Video File */}
+        <div className="mb-3">
+          <label htmlFor="video" className="form-label">
+            Video File *
+          </label>
+          <Controller
+            name="video"
+            control={control}
+            render={({ field, fieldState }) => (
+              <>
+                <VideoUploader
+                  name="video"
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={fieldState.error?.message}
+                />
+                {fieldState.error && (
+                  <div className="text-danger small mt-1">
+                    {fieldState.error.message}
+                  </div>
+                )}
+              </>
+            )}
+          />
+        </div>
+
+        {/* Form Actions */}
+        <div className="d-flex justify-content-end gap-2 mt-4">
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={isSubmitting || !isValid}
+          >
+            {isSubmitting ? (
+              <>
+                <PulseLoader size={8} color="#ffffff" className="me-2" />
+                {editMode ? "Updating..." : "Creating..."}
+              </>
+            ) : editMode ? (
+              "Update Video"
+            ) : (
+              "Create Video"
+            )}
+          </button>
         </div>
       </form>
     </div>

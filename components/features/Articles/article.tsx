@@ -35,7 +35,7 @@ const Article: React.FC<ArticleProps> = ({
   className = "",
   style = {},
   showRelatedArticles = true,
-  maxRelatedArticles = 5
+  maxRelatedArticles = 6
 }) => {
   const { slug } = useParams();
   const searchParams = useSearchParams();
@@ -85,6 +85,7 @@ const Article: React.FC<ArticleProps> = ({
     isLoading: loadingComments,
     isError: commentsError,
     error: commentsErrorMessage,
+    refetch: refetchComments
   } = useComments(article?.id, { page: commentpage, page_size: pageSize });
 
 
@@ -266,8 +267,8 @@ const Article: React.FC<ArticleProps> = ({
                 </span>
               </div>
 
-              <div className="my-3 my-md-0">
-                <ArticleCommentsForm article={article} comments={comments} />
+              <div className="my-3 my-md-0 d-flex align-items-center">
+                <ArticleCommentsForm article={article} onCommentAdded={refetchComments} />
                 <ArticleLikes article={article} />
               </div>
             </div>
@@ -296,7 +297,7 @@ const Article: React.FC<ArticleProps> = ({
                 </h5>
                 <div>
                   {(comments.count || 0) > 0 ? (
-                    <ArticleComments comments={comments.results || []} />
+                    <ArticleComments comments={comments.results || []} refetchComments={refetchComments} />
                   ) : (
                     <p>No comments yet</p>
                   )}

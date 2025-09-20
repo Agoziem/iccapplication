@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { imageSchema } from './custom-validation';
 /**
  * User Mini Schema (AuthUserMini from API)
  * Minimal user information for referencing in other schemas
@@ -87,7 +88,7 @@ export const UserUpdateSchema = z.object({
   email: z.string().email().min(1).optional(),
   phone: z.string().min(1).max(20).optional(),
   address: z.string().min(1).max(255).optional(),
-  avatar: z.string().url().optional(),
+  avatar: imageSchema,
 });
 
 /**

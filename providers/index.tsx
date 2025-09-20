@@ -7,6 +7,27 @@ import { GOOGLE_CLIENT_ID } from "@/data/constants";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 const Providers = ({ children }: { children: React.ReactNode }) => {
+  // Add development warning suppression for concurrent rendering
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      const originalError = console.error;
+      console.error = (...args: any[]) => {
+        if (
+          typeof args[0] === "string" &&
+          args[0].includes("Detected multiple renderers concurrently rendering the same context provider")
+        ) {
+          // Suppress this specific error in development
+          return;
+        }
+        originalError(...args);
+      };
+
+      return () => {
+        console.error = originalError;
+      };
+    }
+  }, []);
+
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <QueryProvider>

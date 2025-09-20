@@ -10,6 +10,8 @@ import { Metadata } from "next";
 import { useMyProfile } from "@/data/hooks/user.hooks";
 import { useEffect } from "react";
 import { sendOnboardingMessage } from "@/utils/mail";
+import { useOrganization } from "@/data/hooks/organization.hooks";
+import { ORGANIZATION_ID } from "@/data/constants";
 
 const metadata: Metadata = {
   title: "ICC dashboard",
@@ -19,6 +21,9 @@ const metadata: Metadata = {
 
 const Dashboardlayout = ({ children }: { children: React.ReactNode }) => {
   const { data: user } = useMyProfile();
+  const { data: organizationData } = useOrganization(
+    parseInt(ORGANIZATION_ID || "1")
+  );
 
   // Send onboarding email if user is logging in for the first time
   useEffect(() => {
@@ -31,7 +36,7 @@ const Dashboardlayout = ({ children }: { children: React.ReactNode }) => {
 
         const isFirstTime = joinedDate === today;
         if (isFirstTime) {
-          await sendOnboardingMessage(user);
+          await sendOnboardingMessage(user, organizationData);
         }
       }
     };

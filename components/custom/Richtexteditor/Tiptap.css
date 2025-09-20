@@ -4,21 +4,48 @@
   overflow: auto;
   font-size: 15px;
   max-width: 100%;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .body .tiptapinput:focus {
     border: 1px solid var(--bgDarkerColor);
 }
 
+/* Drag and drop visual feedback */
+.tiptapinput.dragover {
+  border: 2px dashed #007bff;
+  background-color: rgba(0, 123, 255, 0.05);
+  box-shadow: 0 0 10px rgba(0, 123, 255, 0.2);
+}
+
 .custom-image-class{
   max-width: 100%;
   height: auto;
   display: block;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 10px auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.custom-image-class:hover {
+  transform: scale(1.02);
 }
 
 .custom-link-class{
   color: var(--secondary) !important;
   text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.custom-link-class:hover {
+  opacity: 0.8;
+}
+
+/* Toolbar enhancements */
+.tiptap-toolbar {
+  background: rgba(248, 249, 250, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 8px 8px 0 0;
 }

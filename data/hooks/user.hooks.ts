@@ -16,7 +16,7 @@ import {
   SuccessResponse,
   Users
 } from "@/types/users";
-import { getRefreshToken, TokenType } from "@/utils/auth";
+import { getRefreshToken, removeToken, TokenType } from "@/utils/auth";
 
 export const authAPIendpoint = "/authapi";
 
@@ -109,6 +109,7 @@ export const logoutUser = async (): Promise<SuccessResponse> => {
     throw new Error("No refresh token available for logout.");
   }
   const response = await AxiosInstanceWithToken.post(`${authAPIendpoint}/logout/`, { refresh_token });
+  removeToken();
   return response.data;
 };
 
@@ -171,6 +172,8 @@ export const useUpdateUser = (): UseMutationResult<User, Error, { userId: number
     onSuccess: (data, { userId }) => {
       queryClient.setQueryData(USER_KEYS.detail(userId), data);
       queryClient.invalidateQueries(USER_KEYS.lists());
+      queryClient.invalidateQueries(USER_KEYS.personaldetail());
+      
     },
     onError: (error: Error) => {
       console.error('Error updating user:', error);

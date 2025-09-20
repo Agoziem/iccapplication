@@ -4,16 +4,23 @@ import React, { useContext, useEffect, useState } from "react";
 import "./section.css";
 import { FaLongArrowAltRight } from "react-icons/fa";
 import { MdOutlineArticle } from "react-icons/md";
-import { articleAPIendpoint, fetchArticles, useArticles } from "@/data/hooks/articles.hooks";
+import {
+  articleAPIendpoint,
+  fetchArticles,
+  useArticles,
+} from "@/data/hooks/articles.hooks";
 import AnimationContainer from "@/components/animation/animation-container";
 
 const BlogSection = () => {
-const { data: articles } = useArticles()
+  const { data: articles } = useArticles(undefined, {
+    page: 1,
+    page_size: 6,
+  });
 
   return (
     <>
-      <hr className="text-primary pt-4 mx-5" />
-      <section className="blog-section px-4 px-md-5">
+      <hr className="text-primary pt-3 mx-5" />
+      <section className="blog-section py-5 px-4 px-md-5">
         <div className=" blog-text text-center d-flex flex-column align-items-center mb-4">
           <h2>Articles and news</h2>
           <p className="align-self-center">
@@ -24,7 +31,7 @@ const { data: articles } = useArticles()
 
         <div className="row px-3 px-md-5">
           {articles && articles.results.length > 0 ? (
-            articles.results.map((blog,index) => (
+            articles.results.map((blog, index) => (
               <AnimationContainer
                 slideDirection="down"
                 delay={0.1 * index}

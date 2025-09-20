@@ -5,15 +5,20 @@ import { z } from "zod";
 import Modal from "@/components/custom/Modal/modal";
 import Alert from "@/components/custom/Alert/Alert";
 import { Subject, Test } from "@/types/cbt";
-import { useCreateSubject, useDeleteSubject, useUpdateSubject } from "@/data/hooks/cbt.hooks";
+import {
+  useCreateSubject,
+  useDeleteSubject,
+  useSubjects,
+  useUpdateSubject,
+} from "@/data/hooks/cbt.hooks";
 import { createSubjectSchema } from "@/schemas/cbt";
+import { useParams } from "next/navigation";
+import toast from "react-hot-toast";
 
 type SubjectFormData = z.infer<typeof createSubjectSchema>;
 
 type SubjectDetailsProps = {
-  test: Test;
-  setTest: React.Dispatch<React.SetStateAction<Test>>;
-  subjects: Subject[];
+  currentSubject: Subject | null;
   setCurrentSubject: React.Dispatch<React.SetStateAction<Subject | null>>;
 };
 
@@ -24,11 +29,10 @@ interface AlertState {
 }
 
 const SubjectDetails: React.FC<SubjectDetailsProps> = ({
-  test,
-  setTest,
-  subjects,
+  currentSubject,
   setCurrentSubject,
 }) => {
+  const { id: testId } = useParams() as { id: string };
   const [alert, setAlert] = useState<AlertState>({
     show: false,
     message: "",
@@ -39,6 +43,7 @@ const SubjectDetails: React.FC<SubjectDetailsProps> = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editSubjectId, setEditSubjectId] = useState<number | null>(null);
+  const { data: subjects } = useSubjects(testId ? parseInt(testId) : 0);
   const { mutateAsync: deleteSubjectMutation } = useDeleteSubject();
   const { mutateAsync: updateSubjectMutation } = useUpdateSubject();
   const { mutateAsync: createSubjectMutation } = useCreateSubject();
@@ -70,7 +75,7 @@ const SubjectDetails: React.FC<SubjectDetailsProps> = ({
       });
     } finally {
       toggleModal(false);
-      setCurrentSubject(test.testSubject.length > 0 ? test.testSubject[0] : null);
+      setCurrentSubject(subjects && subjects.length > 0 ? subjects[0] : null);
       setTimeout(() => {
         setAlert({ show: false, message: "", type: "info" });
       }, 3000);
@@ -83,9 +88,6 @@ const SubjectDetails: React.FC<SubjectDetailsProps> = ({
     setShowModal(show);
     setEditMode(false);
     setSubjectToDelete(null);
-    if (!show) {
-      form.reset();
-    }
   };
 
   // Open edit modal
@@ -103,25 +105,18 @@ const SubjectDetails: React.FC<SubjectDetailsProps> = ({
   // Submit form
   const onSubmit = async (formData: SubjectFormData) => {
     try {
-      if (!test.id || (editMode && !editSubjectId)) {
-        throw new Error("Invalid test or subject ID");
+      if (editMode && !editSubjectId) {
+        throw new Error("Invalid subject ID");
       }
-      const responseSubject = editMode
-        ? await updateSubjectMutation({ subjectId: editSubjectId!, subjectData: formData })
-        : await createSubjectMutation({ testId: test.id!, subjectData: formData });
-
-      if (editMode) {
-        // Update subject in the subjects array
-        const updatedSubjects = subjects.map((subject) => {
-          if (subject.id === responseSubject.id) {
-            return responseSubject;
-          }
-          return subject;
-        });
-        setTest({ ...test, testSubject: updatedSubjects });
-      } else {
-        setTest({ ...test, testSubject: [...test.testSubject, responseSubject] });
-      }
+      editMode
+        ? await updateSubjectMutation({
+            subjectId: editSubjectId!,
+            subjectData: formData,
+          })
+        : await createSubjectMutation({
+            testId: Number(testId),
+            subjectData: formData,
+          });
 
       setAlert({
         show: true,
@@ -130,6 +125,7 @@ const SubjectDetails: React.FC<SubjectDetailsProps> = ({
           : "Subject added Successfully",
         type: "success",
       });
+      form.reset();
     } catch (error) {
       console.error(error);
       setAlert({
@@ -150,7 +146,8 @@ const SubjectDetails: React.FC<SubjectDetailsProps> = ({
   return (
     <div>
       <h5 className="">
-        {subjects?.length} Test Subject{subjects?.length > 0 ? "s" : ""}
+        {subjects?.length} Test Subject
+        {subjects && subjects.length > 0 ? "s" : ""}
       </h5>
       <div className="d-flex justify-content-end mb-3">
         <button
@@ -161,7 +158,7 @@ const SubjectDetails: React.FC<SubjectDetailsProps> = ({
         </button>
       </div>
       {alert.show && <Alert type={alert.type}>{alert.message}</Alert>}
-      {subjects?.length > 0 ? (
+      {subjects && subjects.length > 0 ? (
         <div className="my-2">
           {subjects.map((subject, index) => (
             <div key={subject.id} className="card p-4">
@@ -180,7 +177,10 @@ const SubjectDetails: React.FC<SubjectDetailsProps> = ({
               <div className="d-flex justify-content-end">
                 <button
                   className="btn btn-sm btn-accent-primary rounded py-1 shadow-none me-3"
-                  onClick={() => setCurrentSubject(subject)}
+                  onClick={() => {
+                    toast.success(`${subject.subjectname} selected`);
+                    setCurrentSubject(subject);
+                  }}
                 >
                   questions
                 </button>
@@ -252,12 +252,16 @@ const SubjectDetails: React.FC<SubjectDetailsProps> = ({
                   <input
                     {...field}
                     type="text"
-                    className={`form-control ${fieldState.error ? "is-invalid" : ""}`}
+                    className={`form-control ${
+                      fieldState.error ? "is-invalid" : ""
+                    }`}
                     id="subjectname"
                     placeholder="Enter subject name"
                   />
                   {fieldState.error && (
-                    <div className="invalid-feedback">{fieldState.error.message}</div>
+                    <div className="invalid-feedback">
+                      {fieldState.error.message}
+                    </div>
                   )}
                 </>
               )}
@@ -275,13 +279,19 @@ const SubjectDetails: React.FC<SubjectDetailsProps> = ({
                   <input
                     {...field}
                     type="number"
-                    className={`form-control ${fieldState.error ? "is-invalid" : ""}`}
+                    className={`form-control ${
+                      fieldState.error ? "is-invalid" : ""
+                    }`}
                     id="subjectduration"
                     placeholder="Enter subject duration"
-                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    onChange={(e) =>
+                      field.onChange(parseInt(e.target.value) || 0)
+                    }
                   />
                   {fieldState.error && (
-                    <div className="invalid-feedback">{fieldState.error.message}</div>
+                    <div className="invalid-feedback">
+                      {fieldState.error.message}
+                    </div>
                   )}
                 </>
               )}
@@ -301,7 +311,10 @@ const SubjectDetails: React.FC<SubjectDetailsProps> = ({
               disabled={form.formState.isSubmitting}
             >
               {form.formState.isSubmitting ? (
-                <div className="spinner-border spinner-border-sm me-2" role="status">
+                <div
+                  className="spinner-border spinner-border-sm me-2"
+                  role="status"
+                >
                   <span className="visually-hidden">Loading...</span>
                 </div>
               ) : null}

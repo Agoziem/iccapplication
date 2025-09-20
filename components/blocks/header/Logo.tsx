@@ -1,11 +1,11 @@
 "use client";
-import React, { useContext, useCallback, memo } from 'react';
-import './logo.css';
-import Link from 'next/link';
-import Image from 'next/image';
-import { RefContext } from '../sidebar/sideBarTogglerContext';
-import { useOrganization } from '@/data/hooks/organization.hooks';
-import { ORGANIZATION_ID } from '@/data/constants';
+import React, { useContext, useCallback, memo } from "react";
+import "./logo.css";
+import Link from "next/link";
+import Image from "next/image";
+import { RefContext } from "../sidebar/sideBarTogglerContext";
+import { useOrganization } from "@/data/hooks/organization.hooks";
+import { ORGANIZATION_ID } from "@/data/constants";
 
 interface LogoProps {
   portalname?: string;
@@ -26,16 +26,15 @@ const Logo: React.FC<LogoProps> = memo(({ portalname, portallink }) => {
     <div className="d-flex align-items-center justify-content-between">
       <Link href={`/`} className="logo d-flex align-items-center">
         {OrganizationData?.Organizationlogo && (
-          <Image 
-            src={OrganizationData.Organizationlogo} 
-            alt="Organization logo" 
-            width={50} 
-            height={50} 
-            className='me-3' 
+          <img
+            src={OrganizationData.Organizationlogo}
+            alt="Organization logo"
+            width={50}
+            height={50}
+            className="me-3"
             style={{ height: "auto" }}
-            priority
           />
-        )} 
+        )}
         <span className="d-none d-lg-block">{portalname}</span>
       </Link>
       <i
@@ -45,7 +44,7 @@ const Logo: React.FC<LogoProps> = memo(({ portalname, portallink }) => {
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
+          if (e.key === "Enter" || e.key === " ") {
             handleToggleSideBar();
           }
         }}
@@ -55,6 +54,6 @@ const Logo: React.FC<LogoProps> = memo(({ portalname, portallink }) => {
   );
 });
 
-Logo.displayName = 'Logo';
+Logo.displayName = "Logo";
 
 export default Logo;

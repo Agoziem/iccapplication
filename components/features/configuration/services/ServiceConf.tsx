@@ -15,8 +15,8 @@ export interface StatusCategory {
   name: string;
   description: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
-  color: string;
-  bgColor: string;
+  color?: string;
+  bgColor?: string;
 }
 
 const categories: StatusCategory[] = [
@@ -26,15 +26,15 @@ const categories: StatusCategory[] = [
     description: "All Users who purchased this service",
     icon: FiUsers,
     color: "var(--primary)",
-    bgColor: "var(--primary-100)",
+    bgColor: "var(--bgDarkColor)",
   },
   {
     id: 2,
     name: "Progress", 
     description: "Services currently in progress",
     icon: FiClock,
-    color: "var(--warning)",
-    bgColor: "var(--warning-100)",
+    color: "var(--secondary)",
+    bgColor: "var(--secondary-300)"
   },
   {
     id: 3,
@@ -42,7 +42,7 @@ const categories: StatusCategory[] = [
     description: "Services that have been completed",
     icon: FiCheckCircle,
     color: "var(--success)",
-    bgColor: "var(--success-100)",
+    bgColor: "var(--success-300)",
   },
 ];
 
@@ -131,19 +131,19 @@ const ServiceConfig: React.FC = () => {
           <div className="card border-0 shadow-sm">
             <div className="card-body">
               <div className="d-flex align-items-center mb-3">
-                <BsGear size={32} className="text-primary me-3" />
+                <BsGear size={25} className="text-primary me-3" />
                 <div>
                   <h4 className="mb-1 fw-bold">{service?.name || "Service Configuration"}</h4>
                   <div className="d-flex align-items-center text-muted">
-                    <span className="me-3">
-                      <strong>Category:</strong> {service?.category?.category || "Unknown"}
+                    <span className="me-3 text-primary">
+                      <strong className="text-secondary">Category:</strong> {service?.category?.category || "Unknown"}
                     </span>
-                    <span className="me-3">
-                      <strong>Price:</strong> ₦{service?.price || "0"}
+                    <span className="me-3 text-primary">
+                      <strong className="text-secondary">Price:</strong> ₦{service?.price || "0"}
                     </span>
                     {service?.created_at && (
-                      <span>
-                        <strong>Created:</strong> {new Date(service.created_at).toLocaleDateString()}
+                      <span className="text-primary">
+                        <strong className="text-secondary">Created:</strong> {new Date(service.created_at).toLocaleDateString()}
                       </span>
                     )}
                   </div>
@@ -153,35 +153,35 @@ const ServiceConfig: React.FC = () => {
               {/* Service Statistics */}
               <div className="row g-3">
                 <div className="col-md-4">
-                  <div className="d-flex align-items-center p-3 bg-primary bg-opacity-10 rounded">
+                  <div className="d-flex align-items-center p-3 bg-primary-light bg-opacity-10 rounded border border-primary">
                     <BsPeople size={24} className="text-primary me-2" />
                     <div>
                       <div className="fw-bold text-primary">
                         {service?.number_of_times_bought || 0}
                       </div>
-                      <small className="text-muted">Total Purchases</small>
+                      <small>Total Purchases</small>
                     </div>
                   </div>
                 </div>
                 <div className="col-md-4">
-                  <div className="d-flex align-items-center p-3 bg-warning bg-opacity-10 rounded">
-                    <FiClock size={24} className="text-warning me-2" />
+                  <div className="d-flex align-items-center p-3 bg-secondary-light text-secondary bg-opacity-10 rounded border border-secondary">
+                    <FiClock size={24} className="me-2" />
                     <div>
-                      <div className="fw-bold text-warning">
+                      <div className="fw-bold">
                         {service?.userIDs_whose_services_is_in_progress?.length || 0}
                       </div>
-                      <small className="text-muted">In Progress</small>
+                      <small>In Progress</small>
                     </div>
                   </div>
                 </div>
                 <div className="col-md-4">
-                  <div className="d-flex align-items-center p-3 bg-success bg-opacity-10 rounded">
+                  <div className="d-flex align-items-center p-3 bg-success-light text-success bg-opacity-10 rounded border border-success">
                     <BsClipboardCheck size={24} className="text-success me-2" />
                     <div>
                       <div className="fw-bold text-success">
                         {service?.userIDs_whose_services_have_been_completed?.length || 0}
                       </div>
-                      <small className="text-muted">Completed</small>
+                      <small className="text-success">Completed</small>
                     </div>
                   </div>
                 </div>
@@ -211,16 +211,16 @@ const ServiceConfig: React.FC = () => {
                   }`}
                   style={{
                     borderRadius: "25px",
-                    border: isActive ? `2px solid ${category.color}` : "2px solid var(--bs-border-color)",
-                    backgroundColor: isActive ? category.bgColor : "transparent",
-                    color: isActive ? category.color : "var(--bs-body-color)",
+                    border: isActive ? `1.5px solid var(--secondary)` : "1.5px solid var(--bgDarkerColor)",
+                    backgroundColor: isActive ? "var(--secondary-300)" : "var(--bgDarkColor)",
+                    color: isActive ? "var(--secondary)" : "var(--primary)",
                   }}
                   onClick={() => handleCategoryChange(category.name)}
                 >
                   <IconComponent size={16} className="me-2" />
                   <span className="fw-medium">{category.name}</span>
-                  <span className="badge bg-light text-dark ms-2 small">
-                    {category.name === "All" 
+                  <span className={`badge ms-2 small ${isActive ? "bg-secondary text-white" : "bg-primary text-white"}`}>
+                    {category.name === "All"
                       ? users?.count || 0
                       : category.name === "Progress"
                       ? service?.userIDs_whose_services_is_in_progress?.length || 0
@@ -261,7 +261,6 @@ const ServiceConfig: React.FC = () => {
             </div>
           ) : (
             <ServiceUsers
-              users={users?.results}
               service={service || null}
               category={currentCategoryData}
               searchQuery={searchQuery}

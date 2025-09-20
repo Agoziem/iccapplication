@@ -15,6 +15,7 @@ interface ArticleCommentsProps {
   className?: string;
   style?: React.CSSProperties;
   maxInitialComments?: number;
+  refetchComments?: () => void;
 }
 
 const ArticleComments: React.FC<ArticleCommentsProps> = ({
@@ -22,6 +23,7 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
   className = "",
   style = {},
   maxInitialComments = 6,
+  refetchComments,
 }) => {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [deleteMode, setDeleteMode] = useState<boolean>(false);
@@ -78,6 +80,9 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
       deleteComment(commentToEdit.id, {
         onSuccess: () => {
           closeModal();
+          if (refetchComments) {
+            refetchComments();
+          }
         },
         onError: (error) => {
           console.error("Failed to delete comment:", error);
@@ -105,6 +110,9 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
         updateComment(updateData, {
           onSuccess: () => {
             closeModal();
+            if (refetchComments) {
+              refetchComments();
+            }
           },
           onError: (error) => {
             console.error("Failed to update comment:", error);

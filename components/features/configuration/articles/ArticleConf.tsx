@@ -3,13 +3,11 @@ import React, { useState } from "react";
 import ArticleForm from "./ArticleForm";
 import ArticleList from "./ArticleList";
 import ArticleCategoryForm from "./ArticleCategoryForm";
-import { useSearchParams } from "next/navigation";
 import { useArticleCategories, useArticles } from "@/data/hooks/articles.hooks";
 import { ArticleResponse } from "@/types/articles";
 import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
 
 const ArticleConf: React.FC = () => {
-  const searchParams = useSearchParams();
   const [currentCategory, setCurrentCategory] = useQueryState(
     "category",
     parseAsString.withDefault("All")

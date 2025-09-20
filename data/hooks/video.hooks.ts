@@ -54,6 +54,7 @@ export const createVideo = async (organizationId: number, videoData: CreateVideo
 };
 
 export const updateVideo = async (videoId: number, videoData: UpdateVideo): Promise<Video> => {
+  console.log(videoId, videoData);
   const formData = converttoformData(videoData);
   const response = await AxiosInstancemultipartWithToken.put(`${videosAPIendpoint}/update_video/${videoId}/`, formData);
   return response.data;

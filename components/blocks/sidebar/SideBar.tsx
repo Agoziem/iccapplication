@@ -38,7 +38,7 @@ const SideBar: React.FC<SideBarProps> = memo(({ navList }) => {
       console.log('Logging out...');
       await logoutUser();
       toast.success("Logged out successfully");
-      router.push('/login');
+      router.push("/accounts/signin");
     } catch (error) {
       console.error("Logout failed:", error);
       toast.error("Logout failed");

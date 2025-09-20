@@ -98,26 +98,26 @@ const DashboardBody: React.FC = memo(() => {
                 <div className="col-12 col-md-4">
                   <HorizontalCard
                     iconcolor="secondary"
-                    cardtitle="Orders"
+                    cardtitle="Service Orders"
                     icon="bi bi-cart3"
                     cardbody={String(orders?.length || 0)}
                     cardspan={`Service${
                       userOrders && userOrders?.length > 1 ? "s" : ""
-                    } Ordered`}
+                    }`}
                     loading={loadingUserOrders}
                   />
                 </div>
                 <div className="col-12 col-md-4">
                   <HorizontalCard
                     iconcolor="success"
-                    cardtitle="Customers"
-                    icon="bi bi-people"
-                    cardbody={String(orderReport?.customers?.length ?? 0)}
-                    cardspan={`Total Customer${
+                    cardtitle={`Total Customer${
                       orderReport && orderReport?.customers?.length > 1
                         ? "s"
                         : ""
                     }`}
+                    icon="bi bi-people"
+                    cardbody={String(orderReport?.customers?.length ?? 0)}
+                    cardspan={"Total"}
                     loading={loadingOrderReport}
                   />
                 </div>
@@ -154,7 +154,7 @@ const DashboardBody: React.FC = memo(() => {
                         userOrders.filter((item) => item.status === "Completed")
                           .length
                     )}
-                    cardspan="Completed Orders"
+                    cardspan="Completed"
                     loading={loadingUserOrders}
                   />
                 </div>

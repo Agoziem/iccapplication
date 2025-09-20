@@ -1,5 +1,16 @@
-import { AxiosInstance, AxiosInstancemultipart, AxiosInstanceWithToken, AxiosInstancemultipartWithToken } from "../instance";
-import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from "react-query";
+import {
+  AxiosInstance,
+  AxiosInstancemultipart,
+  AxiosInstanceWithToken,
+  AxiosInstancemultipartWithToken,
+} from "../instance";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  UseQueryResult,
+  UseMutationResult,
+} from "react-query";
 import {
   Year,
   YearArray,
@@ -23,27 +34,31 @@ import {
   SubjectSummary,
   TestSummary,
   AnswerOption,
-  TestScore
+  TestScore,
+  QuestionArray,
 } from "@/types/cbt";
 
 export const cbtAPIendpoint = "/CBTapi";
 
 // Query Keys
 export const CBT_KEYS = {
-  all: ['cbt'] as const,
-  years: () => [...CBT_KEYS.all, 'years'] as const,
+  all: ["cbt"] as const,
+  years: () => [...CBT_KEYS.all, "years"] as const,
   year: (id: number) => [...CBT_KEYS.years(), id] as const,
-  testTypes: () => [...CBT_KEYS.all, 'testTypes'] as const,
+  testTypes: () => [...CBT_KEYS.all, "testTypes"] as const,
   testType: (id: number) => [...CBT_KEYS.testTypes(), id] as const,
-  subjects: (testId?: number) => testId ? [...CBT_KEYS.all, 'subjects', testId] as const : [...CBT_KEYS.all, 'subjects'] as const,
+  subjects: (testId?: number) =>
+    testId
+      ? ([...CBT_KEYS.all, "subjects", testId] as const)
+      : ([...CBT_KEYS.all, "subjects"] as const),
   subject: (id: number) => [...CBT_KEYS.subjects(), id] as const,
-  tests: () => [...CBT_KEYS.all, 'tests'] as const,
+  tests: () => [...CBT_KEYS.all, "tests"] as const,
   test: (id: number) => [...CBT_KEYS.tests(), id] as const,
-  questions: (testId: number) => [...CBT_KEYS.all, 'questions', testId] as const,
-  results: () => [...CBT_KEYS.all, 'results'] as const,
+  questions: (subjectId?: number) =>
+    [...CBT_KEYS.all, "questions", subjectId] as const,
+  question: (id: number) => [...CBT_KEYS.questions(), id] as const,
+  results: () => [...CBT_KEYS.all, "results"] as const,
 } as const;
-
-
 
 export const fetchYears = async (): Promise<YearArray> => {
   const response = await AxiosInstance.get(`${cbtAPIendpoint}/years/`);
@@ -55,18 +70,29 @@ export const fetchYearById = async (yearId: number): Promise<Year> => {
   return response.data;
 };
 
-export const createYear = async (yearData: Omit<Year, 'id'>): Promise<Year> => {
-  const response = await AxiosInstanceWithToken.post(`${cbtAPIendpoint}/addyear/`, yearData);
+export const createYear = async (yearData: Omit<Year, "id">): Promise<Year> => {
+  const response = await AxiosInstanceWithToken.post(
+    `${cbtAPIendpoint}/addyear/`,
+    yearData
+  );
   return response.data;
 };
 
-export const updateYear = async (yearId: number, yearData: Partial<Year>): Promise<Year> => {
-  const response = await AxiosInstanceWithToken.put(`${cbtAPIendpoint}/updateyear/${yearId}/`, yearData);
+export const updateYear = async (
+  yearId: number,
+  yearData: Partial<Year>
+): Promise<Year> => {
+  const response = await AxiosInstanceWithToken.put(
+    `${cbtAPIendpoint}/updateyear/${yearId}/`,
+    yearData
+  );
   return response.data;
 };
 
 export const deleteYear = async (yearId: number): Promise<void> => {
-  await AxiosInstanceWithToken.delete(`${cbtAPIendpoint}/deleteyear/${yearId}/`);
+  await AxiosInstanceWithToken.delete(
+    `${cbtAPIendpoint}/deleteyear/${yearId}/`
+  );
 };
 
 export const fetchTestTypes = async (): Promise<TestTypeArray> => {
@@ -74,26 +100,46 @@ export const fetchTestTypes = async (): Promise<TestTypeArray> => {
   return response.data;
 };
 
-export const fetchTestTypeById = async (testTypeId: number): Promise<TestType> => {
-  const response = await AxiosInstance.get(`${cbtAPIendpoint}/testtype/${testTypeId}/`);
+export const fetchTestTypeById = async (
+  testTypeId: number
+): Promise<TestType> => {
+  const response = await AxiosInstance.get(
+    `${cbtAPIendpoint}/testtype/${testTypeId}/`
+  );
   return response.data;
 };
 
-export const createTestType = async (testTypeData: Omit<TestType, 'id'>): Promise<TestType> => {
-  const response = await AxiosInstanceWithToken.post(`${cbtAPIendpoint}/addtesttype/`, testTypeData);
+export const createTestType = async (
+  testTypeData: Omit<TestType, "id">
+): Promise<TestType> => {
+  const response = await AxiosInstanceWithToken.post(
+    `${cbtAPIendpoint}/addtesttype/`,
+    testTypeData
+  );
   return response.data;
 };
 
-export const updateTestType = async (testTypeId: number, testTypeData: Partial<TestType>): Promise<TestType> => {
-  const response = await AxiosInstanceWithToken.put(`${cbtAPIendpoint}/updatetesttype/${testTypeId}/`, testTypeData);
+export const updateTestType = async (
+  testTypeId: number,
+  testTypeData: Partial<TestType>
+): Promise<TestType> => {
+  const response = await AxiosInstanceWithToken.put(
+    `${cbtAPIendpoint}/updatetesttype/${testTypeId}/`,
+    testTypeData
+  );
   return response.data;
 };
 
 export const deleteTestType = async (testTypeId: number): Promise<void> => {
-  await AxiosInstanceWithToken.delete(`${cbtAPIendpoint}/deletetesttype/${testTypeId}/`);
+  await AxiosInstanceWithToken.delete(
+    `${cbtAPIendpoint}/deletetesttype/${testTypeId}/`
+  );
 };
 
-export const createQuestion = async (subjectId: number, questionData: CreateQuestion): Promise<Question> => {
+export const createQuestion = async (
+  subjectId: number,
+  questionData: CreateQuestion
+): Promise<Question> => {
   const response = await AxiosInstanceWithToken.post(
     `${cbtAPIendpoint}/addQuestion/${subjectId}/`,
     questionData
@@ -101,7 +147,10 @@ export const createQuestion = async (subjectId: number, questionData: CreateQues
   return response.data;
 };
 
-export const updateQuestion = async (questionId: number, questionData: Partial<CreateQuestion>): Promise<Question> => {
+export const updateQuestion = async (
+  questionId: number,
+  questionData: Partial<CreateQuestion>
+): Promise<Question> => {
   const response = await AxiosInstanceWithToken.put(
     `${cbtAPIendpoint}/updateQuestion/${questionId}/`,
     questionData
@@ -110,26 +159,47 @@ export const updateQuestion = async (questionId: number, questionData: Partial<C
 };
 
 export const deleteQuestion = async (questionId: number): Promise<void> => {
-  await AxiosInstanceWithToken.delete(`${cbtAPIendpoint}/deleteQuestion/${questionId}/`);
+  await AxiosInstanceWithToken.delete(
+    `${cbtAPIendpoint}/deleteQuestion/${questionId}/`
+  );
 };
 
-export const getTestQuestions = async (testId?: string | number): Promise<Question[]> => {
-  if (!testId) return [];
-  const response = await AxiosInstance.get(`${cbtAPIendpoint}/questions/${testId}/`);
+export const fetchQuestions = async (
+  subjectId: number
+): Promise<QuestionArray> => {
+  const response = await AxiosInstance.get(
+    `${cbtAPIendpoint}/questions/${subjectId}/`
+  );
+  return response.data;
+};
+
+export const fetchQuestionById = async (
+  questionId: number
+): Promise<Question> => {
+  const response = await AxiosInstance.get(
+    `${cbtAPIendpoint}/question/${questionId}/`
+  );
   return response.data;
 };
 
 export const fetchSubjects = async (testId: number): Promise<SubjectArray> => {
-  const response = await AxiosInstance.get(`${cbtAPIendpoint}/subjects/${testId}/`);
+  const response = await AxiosInstance.get(
+    `${cbtAPIendpoint}/subjects/${testId}/`
+  );
   return response.data;
 };
 
 export const fetchSubjectById = async (subjectId: number): Promise<Subject> => {
-  const response = await AxiosInstance.get(`${cbtAPIendpoint}/subject/${subjectId}/`);
+  const response = await AxiosInstance.get(
+    `${cbtAPIendpoint}/subject/${subjectId}/`
+  );
   return response.data;
 };
 
-export const createSubject = async (testId: number, subjectData: CreateSubject): Promise<Subject> => {
+export const createSubject = async (
+  testId: number,
+  subjectData: CreateSubject
+): Promise<Subject> => {
   const response = await AxiosInstanceWithToken.post(
     `${cbtAPIendpoint}/addsubject/${testId}/`,
     subjectData
@@ -137,7 +207,10 @@ export const createSubject = async (testId: number, subjectData: CreateSubject):
   return response.data;
 };
 
-export const updateSubject = async (subjectId: number, subjectData: Partial<CreateSubject>): Promise<Subject> => {
+export const updateSubject = async (
+  subjectId: number,
+  subjectData: Partial<CreateSubject>
+): Promise<Subject> => {
   const response = await AxiosInstanceWithToken.put(
     `${cbtAPIendpoint}/updatesubject/${subjectId}/`,
     subjectData
@@ -146,12 +219,18 @@ export const updateSubject = async (subjectId: number, subjectData: Partial<Crea
 };
 
 export const deleteSubject = async (subjectId: number): Promise<void> => {
-  await AxiosInstanceWithToken.delete(`${cbtAPIendpoint}/deletesubject/${subjectId}/`);
+  await AxiosInstanceWithToken.delete(
+    `${cbtAPIendpoint}/deletesubject/${subjectId}/`
+  );
 };
 
-export const fetchTests = async (organizationId: number | null): Promise<TestArray> => {
+export const fetchTests = async (
+  organizationId: number | null
+): Promise<TestArray> => {
   if (!organizationId) return [];
-  const response = await AxiosInstance.get(`${cbtAPIendpoint}/tests/${organizationId}/`);
+  const response = await AxiosInstance.get(
+    `${cbtAPIendpoint}/tests/${organizationId}/`
+  );
   return response.data;
 };
 
@@ -160,7 +239,10 @@ export const fetchTestById = async (testId: number): Promise<Test> => {
   return response.data;
 };
 
-export const createTest = async (organizationId: number, createTestData: CreateTest): Promise<Test> => {
+export const createTest = async (
+  organizationId: number,
+  createTestData: CreateTest
+): Promise<Test> => {
   const response = await AxiosInstanceWithToken.post(
     `${cbtAPIendpoint}/addtest/${organizationId}/`,
     createTestData
@@ -168,27 +250,50 @@ export const createTest = async (organizationId: number, createTestData: CreateT
   return response.data;
 };
 
-export const updateTest = async (testId: number, testData: Partial<CreateTest>): Promise<Test> => {
-  const response = await AxiosInstanceWithToken.put(`${cbtAPIendpoint}/updatetest/${testId}/`, testData);
+export const updateTest = async (
+  testId: number,
+  testData: Partial<CreateTest>
+): Promise<Test> => {
+  const response = await AxiosInstanceWithToken.put(
+    `${cbtAPIendpoint}/updatetest/${testId}/`,
+    testData
+  );
   return response.data;
 };
 
 export const deleteTest = async (testId: number): Promise<void> => {
-  await AxiosInstanceWithToken.delete(`${cbtAPIendpoint}/deletetest/${testId}/`);
+  await AxiosInstanceWithToken.delete(
+    `${cbtAPIendpoint}/deletetest/${testId}/`
+  );
 };
 
-export const practiceTest = async (practiceData: StudentTestRequest): Promise<Test> => {
-  const response = await AxiosInstanceWithToken.post(`${cbtAPIendpoint}/practicetest/`, practiceData);
+export const practiceTest = async (
+  practiceData: StudentTestRequest
+): Promise<Test> => {
+  const response = await AxiosInstanceWithToken.post(
+    `${cbtAPIendpoint}/practicetest/`,
+    practiceData
+  );
   return response.data;
 };
 
-export const submitTest = async (organizationId: number, testSubmission: TestSubmission): Promise<TestScoreResponse> => {
-  const response = await AxiosInstanceWithToken.post(`${cbtAPIendpoint}/submittest/${organizationId}/`, testSubmission);
+export const submitTest = async (
+  organizationId: number,
+  testSubmission: TestSubmission
+): Promise<TestScoreResponse> => {
+  const response = await AxiosInstanceWithToken.post(
+    `${cbtAPIendpoint}/submittest/${organizationId}/`,
+    testSubmission
+  );
   return response.data;
 };
 
-export const fetchTestResults = async (organizationId: number): Promise<TestResultArray> => {
-  const response = await AxiosInstance.get(`${cbtAPIendpoint}/testresult/${organizationId}/`);
+export const fetchTestResults = async (
+  organizationId: number
+): Promise<TestResultArray> => {
+  const response = await AxiosInstance.get(
+    `${cbtAPIendpoint}/testresult/${organizationId}/`
+  );
   return response.data;
 };
 
@@ -200,7 +305,7 @@ export const useYears = (): UseQueryResult<YearArray, Error> => {
     queryKey: CBT_KEYS.years(),
     queryFn: fetchYears,
     onError: (error: Error) => {
-      console.error('Error fetching years:', error);
+      console.error("Error fetching years:", error);
       throw error;
     },
   });
@@ -212,7 +317,7 @@ export const useYear = (yearId: number): UseQueryResult<Year, Error> => {
     queryFn: () => fetchYearById(yearId),
     enabled: !!yearId,
     onError: (error: Error) => {
-      console.error('Error fetching year:', error);
+      console.error("Error fetching year:", error);
       throw error;
     },
   });
@@ -224,33 +329,52 @@ export const useTestTypes = (): UseQueryResult<TestTypeArray, Error> => {
     queryKey: CBT_KEYS.testTypes(),
     queryFn: fetchTestTypes,
     onError: (error: Error) => {
-      console.error('Error fetching test types:', error);
+      console.error("Error fetching test types:", error);
       throw error;
     },
   });
 };
 
 // Subjects Hooks
-export const useSubjects = (testId: number): UseQueryResult<SubjectArray, Error> => {
+export const useSubjects = (
+  testId: number
+): UseQueryResult<SubjectArray, Error> => {
   return useQuery({
     queryKey: CBT_KEYS.subjects(testId),
     queryFn: () => fetchSubjects(testId),
     enabled: !!testId,
     onError: (error: Error) => {
-      console.error('Error fetching subjects:', error);
+      console.error("Error fetching subjects:", error);
+      throw error;
+    },
+  });
+};
+
+// Question Hooks
+export const useTestQuestions = (
+  subjectId: number
+): UseQueryResult<Question[], Error> => {
+  return useQuery({
+    queryKey: CBT_KEYS.questions(subjectId),
+    queryFn: () => fetchQuestions(subjectId),
+    enabled: !!subjectId,
+    onError: (error: Error) => {
+      console.error("Error fetching test questions:", error);
       throw error;
     },
   });
 };
 
 // Tests Hooks
-export const useTests = (organizationId: number | null): UseQueryResult<TestArray, Error> => {
+export const useTests = (
+  organizationId: number | null
+): UseQueryResult<TestArray, Error> => {
   return useQuery({
     queryKey: CBT_KEYS.tests(),
     queryFn: () => fetchTests(organizationId),
     enabled: !!organizationId,
     onError: (error: Error) => {
-      console.error('Error fetching tests:', error);
+      console.error("Error fetching tests:", error);
       throw error;
     },
   });
@@ -262,57 +386,55 @@ export const useTest = (testId: number): UseQueryResult<Test, Error> => {
     queryFn: () => fetchTestById(testId),
     enabled: !!testId,
     onError: (error: Error) => {
-      console.error('Error fetching test:', error);
-      throw error;
-    },
-  });
-};
-
-// Test Questions Hooks
-export const useTestQuestions = (testId: number): UseQueryResult<Question[], Error> => {
-  return useQuery({
-    queryKey: CBT_KEYS.questions(testId),
-    queryFn: () => getTestQuestions(testId),
-    enabled: !!testId,
-    onError: (error: Error) => {
-      console.error('Error fetching test questions:', error);
+      console.error("Error fetching test:", error);
       throw error;
     },
   });
 };
 
 // Test Results Hooks
-export const useTestResults = (organizationId: number): UseQueryResult<TestResultArray, Error> => {
+export const useTestResults = (
+  organizationId: number
+): UseQueryResult<TestResultArray, Error> => {
   return useQuery({
     queryKey: CBT_KEYS.results(),
     queryFn: () => fetchTestResults(organizationId),
     enabled: !!organizationId,
     onError: (error: Error) => {
-      console.error('Error fetching test results:', error);
+      console.error("Error fetching test results:", error);
       throw error;
     },
   });
 };
 
 // Test Management Mutations
-export const useCreateTest = (): UseMutationResult<Test, Error, { organizationId: number; testData: CreateTest }> => {
+export const useCreateTest = (): UseMutationResult<
+  Test,
+  Error,
+  { organizationId: number; testData: CreateTest }
+> => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ organizationId, testData }) => createTest(organizationId, testData),
+    mutationFn: ({ organizationId, testData }) =>
+      createTest(organizationId, testData),
     onSuccess: () => {
       queryClient.invalidateQueries(CBT_KEYS.tests());
     },
     onError: (error: Error) => {
-      console.error('Error creating test:', error);
+      console.error("Error creating test:", error);
       throw error;
     },
   });
 };
 
-export const useUpdateTest = (): UseMutationResult<Test, Error, { testId: number; testData: Partial<CreateTest> }> => {
+export const useUpdateTest = (): UseMutationResult<
+  Test,
+  Error,
+  { testId: number; testData: Partial<CreateTest> }
+> => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: ({ testId, testData }) => updateTest(testId, testData),
     onSuccess: (data) => {
@@ -322,7 +444,7 @@ export const useUpdateTest = (): UseMutationResult<Test, Error, { testId: number
       queryClient.invalidateQueries(CBT_KEYS.tests());
     },
     onError: (error: Error) => {
-      console.error('Error updating test:', error);
+      console.error("Error updating test:", error);
       throw error;
     },
   });
@@ -330,53 +452,66 @@ export const useUpdateTest = (): UseMutationResult<Test, Error, { testId: number
 
 export const useDeleteTest = (): UseMutationResult<void, Error, number> => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: deleteTest,
     onSuccess: () => {
       queryClient.invalidateQueries(CBT_KEYS.tests());
     },
     onError: (error: Error) => {
-      console.error('Error deleting test:', error);
+      console.error("Error deleting test:", error);
       throw error;
     },
   });
 };
 
-export const useSubmitTest = (): UseMutationResult<TestScoreResponse, Error, { organizationId: number; testSubmission: TestSubmission }> => {
+export const useSubmitTest = (): UseMutationResult<
+  TestScoreResponse,
+  Error,
+  { organizationId: number; testSubmission: TestSubmission }
+> => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ organizationId, testSubmission }) => submitTest(organizationId, testSubmission),
+    mutationFn: ({ organizationId, testSubmission }) =>
+      submitTest(organizationId, testSubmission),
     onSuccess: () => {
       queryClient.invalidateQueries(CBT_KEYS.results());
     },
     onError: (error: Error) => {
-      console.error('Error submitting test:', error);
+      console.error("Error submitting test:", error);
       throw error;
     },
   });
 };
 
 // Year Management Mutations
-export const useCreateYear = (): UseMutationResult<Year, Error, Omit<Year, 'id'>> => {
+export const useCreateYear = (): UseMutationResult<
+  Year,
+  Error,
+  Omit<Year, "id">
+> => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: createYear,
     onSuccess: () => {
       queryClient.invalidateQueries(CBT_KEYS.years());
     },
     onError: (error: Error) => {
-      console.error('Error creating year:', error);
+      console.error("Error creating year:", error);
       throw error;
     },
   });
 };
 
-export const useUpdateYear = (): UseMutationResult<Year, Error, { yearId: number; yearData: Partial<Year> }> => {
+export const useUpdateYear = (): UseMutationResult<
+  Year,
+  Error,
+  { yearId: number; yearData: Partial<Year> }
+> => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: ({ yearId, yearData }) => updateYear(yearId, yearData),
     onSuccess: (data) => {
@@ -386,7 +521,7 @@ export const useUpdateYear = (): UseMutationResult<Year, Error, { yearId: number
       queryClient.invalidateQueries(CBT_KEYS.years());
     },
     onError: (error: Error) => {
-      console.error('Error updating year:', error);
+      console.error("Error updating year:", error);
       throw error;
     },
   });
@@ -394,52 +529,63 @@ export const useUpdateYear = (): UseMutationResult<Year, Error, { yearId: number
 
 export const useDeleteYear = (): UseMutationResult<void, Error, number> => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: deleteYear,
     onSuccess: () => {
       queryClient.invalidateQueries(CBT_KEYS.years());
     },
     onError: (error: Error) => {
-      console.error('Error deleting year:', error);
+      console.error("Error deleting year:", error);
       throw error;
     },
   });
 };
 
 // Test Type Management Mutations
-export const useTestType = (testTypeId: number): UseQueryResult<TestType, Error> => {
+export const useTestType = (
+  testTypeId: number
+): UseQueryResult<TestType, Error> => {
   return useQuery({
     queryKey: CBT_KEYS.testType(testTypeId),
     queryFn: () => fetchTestTypeById(testTypeId),
     enabled: !!testTypeId,
     onError: (error: Error) => {
-      console.error('Error fetching test type:', error);
+      console.error("Error fetching test type:", error);
       throw error;
     },
   });
 };
 
-export const useCreateTestType = (): UseMutationResult<TestType, Error, Omit<TestType, 'id'>> => {
+export const useCreateTestType = (): UseMutationResult<
+  TestType,
+  Error,
+  Omit<TestType, "id">
+> => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: createTestType,
     onSuccess: () => {
       queryClient.invalidateQueries(CBT_KEYS.testTypes());
     },
     onError: (error: Error) => {
-      console.error('Error creating test type:', error);
+      console.error("Error creating test type:", error);
       throw error;
     },
   });
 };
 
-export const useUpdateTestType = (): UseMutationResult<TestType, Error, { testTypeId: number; testTypeData: Partial<TestType> }> => {
+export const useUpdateTestType = (): UseMutationResult<
+  TestType,
+  Error,
+  { testTypeId: number; testTypeData: Partial<TestType> }
+> => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ testTypeId, testTypeData }) => updateTestType(testTypeId, testTypeData),
+    mutationFn: ({ testTypeId, testTypeData }) =>
+      updateTestType(testTypeId, testTypeData),
     onSuccess: (data) => {
       if (data.id) {
         queryClient.invalidateQueries(CBT_KEYS.testType(data.id));
@@ -447,7 +593,7 @@ export const useUpdateTestType = (): UseMutationResult<TestType, Error, { testTy
       queryClient.invalidateQueries(CBT_KEYS.testTypes());
     },
     onError: (error: Error) => {
-      console.error('Error updating test type:', error);
+      console.error("Error updating test type:", error);
       throw error;
     },
   });
@@ -455,60 +601,71 @@ export const useUpdateTestType = (): UseMutationResult<TestType, Error, { testTy
 
 export const useDeleteTestType = (): UseMutationResult<void, Error, number> => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: deleteTestType,
     onSuccess: () => {
       queryClient.invalidateQueries(CBT_KEYS.testTypes());
     },
     onError: (error: Error) => {
-      console.error('Error deleting test type:', error);
+      console.error("Error deleting test type:", error);
       throw error;
     },
   });
 };
 
 // Subject Management Hooks and Mutations
-export const useSubject = (subjectId: number): UseQueryResult<Subject, Error> => {
+export const useSubject = (
+  subjectId: number
+): UseQueryResult<Subject, Error> => {
   return useQuery({
     queryKey: CBT_KEYS.subject(subjectId),
     queryFn: () => fetchSubjectById(subjectId),
     enabled: !!subjectId,
     onError: (error: Error) => {
-      console.error('Error fetching subject:', error);
+      console.error("Error fetching subject:", error);
       throw error;
     },
   });
 };
 
-export const useCreateSubject = (): UseMutationResult<Subject, Error, { testId: number; subjectData: CreateSubject }> => {
+export const useCreateSubject = (): UseMutationResult<
+  Subject,
+  Error,
+  { testId: number; subjectData: CreateSubject }
+> => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: ({ testId, subjectData }) => createSubject(testId, subjectData),
     onSuccess: (_, { testId }) => {
       queryClient.invalidateQueries(CBT_KEYS.subjects(testId));
     },
     onError: (error: Error) => {
-      console.error('Error creating subject:', error);
+      console.error("Error creating subject:", error);
       throw error;
     },
   });
 };
 
-export const useUpdateSubject = (): UseMutationResult<Subject, Error, { subjectId: number; subjectData: Partial<CreateSubject> }> => {
+export const useUpdateSubject = (): UseMutationResult<
+  Subject,
+  Error,
+  { subjectId: number; subjectData: Partial<CreateSubject> }
+> => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ subjectId, subjectData }) => updateSubject(subjectId, subjectData),
-    onSuccess: (data) => {
+    mutationFn: ({ subjectId, subjectData }) =>
+      updateSubject(subjectId, subjectData),
+    onSuccess: (data, variables) => {
       if (data.id) {
         queryClient.invalidateQueries(CBT_KEYS.subject(data.id));
       }
       queryClient.invalidateQueries(CBT_KEYS.subjects());
     },
     onError: (error: Error) => {
-      console.error('Error updating subject:', error);
+      console.error("Error updating subject:", error);
       throw error;
     },
   });
@@ -516,73 +673,99 @@ export const useUpdateSubject = (): UseMutationResult<Subject, Error, { subjectI
 
 export const useDeleteSubject = (): UseMutationResult<void, Error, number> => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: deleteSubject,
     onSuccess: () => {
       queryClient.invalidateQueries(CBT_KEYS.subjects());
     },
     onError: (error: Error) => {
-      console.error('Error deleting subject:', error);
+      console.error("Error deleting subject:", error);
       throw error;
     },
   });
 };
 
 // Question Management Mutations
-export const useCreateQuestion = (): UseMutationResult<Question, Error, { subjectId: number; questionData: CreateQuestion }> => {
+export const useCreateQuestion = (): UseMutationResult<
+  Question,
+  Error,
+  { testId: number; subjectId: number; questionData: CreateQuestion }
+> => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ subjectId, questionData }) => createQuestion(subjectId, questionData),
-    onSuccess: () => {
-      queryClient.invalidateQueries(CBT_KEYS.all); // Invalidate all questions since we don't know which test they belong to
+    mutationFn: ({ subjectId, questionData }) =>
+      createQuestion(subjectId, questionData),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries(CBT_KEYS.questions(variables.subjectId)); // Invalidate all questions since we don't know which test they belong to
+      queryClient.invalidateQueries(CBT_KEYS.subjects(variables.testId)); // Invalidate subjects to reflect question count changes
     },
     onError: (error: Error) => {
-      console.error('Error creating question:', error);
+      console.error("Error creating question:", error);
       throw error;
     },
   });
 };
 
-export const useUpdateQuestion = (): UseMutationResult<Question, Error, { questionId: number; questionData: Partial<CreateQuestion> }> => {
+export const useUpdateQuestion = (): UseMutationResult<
+  Question,
+  Error,
+  {
+    testId: number;
+    subjectId: number;
+    questionId: number;
+    questionData: Partial<CreateQuestion>;
+  }
+> => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ questionId, questionData }) => updateQuestion(questionId, questionData),
-    onSuccess: () => {
-      queryClient.invalidateQueries(CBT_KEYS.all); // Invalidate all questions since we don't know which test they belong to
+    mutationFn: ({ questionId, questionData }) =>
+      updateQuestion(questionId, questionData),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries(CBT_KEYS.questions(variables.subjectId));
+      queryClient.invalidateQueries(CBT_KEYS.subjects(variables.testId));
     },
     onError: (error: Error) => {
-      console.error('Error updating question:', error);
+      console.error("Error updating question:", error);
       throw error;
     },
   });
 };
 
-export const useDeleteQuestion = (): UseMutationResult<void, Error, number> => {
+export const useDeleteQuestion = (): UseMutationResult<
+  void,
+  Error,
+  { questionId: number; subjectId: number; testId: number }
+> => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: deleteQuestion,
-    onSuccess: () => {
-      queryClient.invalidateQueries(CBT_KEYS.all); // Invalidate all questions since we don't know which test they belong to
+    mutationFn: ({ questionId }) => deleteQuestion(questionId),
+    onSuccess: (_, { subjectId, testId }) => {
+      queryClient.invalidateQueries(CBT_KEYS.questions(subjectId));
+      queryClient.invalidateQueries(CBT_KEYS.subjects(testId));
     },
     onError: (error: Error) => {
-      console.error('Error deleting question:', error);
+      console.error("Error deleting question:", error);
       throw error;
     },
   });
 };
 
 // Practice Test Hook
-export const usePracticeTest = (): UseMutationResult<Test, Error, StudentTestRequest> => {
+export const usePracticeTest = (): UseMutationResult<
+  Test,
+  Error,
+  StudentTestRequest
+> => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: practiceTest,
     onError: (error: Error) => {
-      console.error('Error with practice test:', error);
+      console.error("Error with practice test:", error);
       throw error;
     },
   });
@@ -593,60 +776,44 @@ export const usePracticeTest = (): UseMutationResult<Test, Error, StudentTestReq
 // ==============================================
 
 // Test Summaries for listing
-export const useTestSummaries = (organizationId: number): UseQueryResult<TestSummary[], Error> => {
+export const useTestSummaries = (
+  organizationId: number
+): UseQueryResult<TestSummary[], Error> => {
   return useQuery({
-    queryKey: [...CBT_KEYS.tests(), 'summaries'],
+    queryKey: [...CBT_KEYS.tests(), "summaries"],
     queryFn: async () => {
       const tests = await fetchTests(organizationId);
-      return tests.map(test => ({
+      return tests.map((test) => ({
         id: test.id,
         testYear: test.testYear,
-        texttype: test.texttype
+        texttype: test.texttype,
       }));
     },
     enabled: !!organizationId,
     onError: (error: Error) => {
-      console.error('Error fetching test summaries:', error);
+      console.error("Error fetching test summaries:", error);
       throw error;
     },
   });
 };
 
 // Subject Summaries for a specific test
-export const useSubjectSummaries = (testId: number): UseQueryResult<SubjectSummary[], Error> => {
+export const useSubjectSummaries = (
+  testId: number
+): UseQueryResult<SubjectSummary[], Error> => {
   return useQuery({
-    queryKey: [...CBT_KEYS.subjects(testId), 'summaries'],
+    queryKey: [...CBT_KEYS.subjects(testId), "summaries"],
     queryFn: async () => {
       const subjects = await fetchSubjects(testId);
-      return subjects.map(subject => ({
+      return subjects.map((subject) => ({
         id: subject.id,
         subjectname: subject.subjectname,
-        subjectduration: subject.subjectduration
+        subjectduration: subject.subjectduration,
       }));
     },
     enabled: !!testId,
     onError: (error: Error) => {
-      console.error('Error fetching subject summaries:', error);
-      throw error;
-    },
-  });
-};
-
-// Question Previews for a test (without full question data)
-export const useQuestionPreviews = (testId: number): UseQueryResult<QuestionPreview[], Error> => {
-  return useQuery({
-    queryKey: [...CBT_KEYS.questions(testId), 'previews'],
-    queryFn: async () => {
-      const questions = await getTestQuestions(testId);
-      return questions.map(question => ({
-        id: question.id,
-        questiontext: question.questiontext,
-        questionMark: question.questionMark
-      }));
-    },
-    enabled: !!testId,
-    onError: (error: Error) => {
-      console.error('Error fetching question previews:', error);
+      console.error("Error fetching subject summaries:", error);
       throw error;
     },
   });
@@ -655,27 +822,26 @@ export const useQuestionPreviews = (testId: number): UseQueryResult<QuestionPrev
 // Test Statistics Hook
 export const useTestStats = (organizationId: number) => {
   return useQuery({
-    queryKey: [...CBT_KEYS.tests(), 'stats'],
+    queryKey: [...CBT_KEYS.tests(), "stats"],
     queryFn: async () => {
       const tests = await fetchTests(organizationId);
       const results = await fetchTestResults(organizationId);
-      
+
       return {
         totalTests: tests.length,
         totalResults: results.length,
-        activeTests: tests.filter(test => test.id).length, // Assuming active tests have IDs
-        averageScore: results.length > 0 
-          ? results.reduce((sum, result) => sum + (result.mark || 0), 0) / results.length 
-          : 0
+        activeTests: tests.filter((test) => test.id).length, // Assuming active tests have IDs
+        averageScore:
+          results.length > 0
+            ? results.reduce((sum, result) => sum + (result.mark || 0), 0) /
+              results.length
+            : 0,
       };
     },
     enabled: !!organizationId,
     onError: (error: Error) => {
-      console.error('Error fetching test statistics:', error);
+      console.error("Error fetching test statistics:", error);
       throw error;
     },
   });
 };
-
-
-

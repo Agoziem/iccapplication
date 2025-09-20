@@ -24,7 +24,7 @@ const FormWrapper: React.FC<FormWrapperProps> = ({
   showSocial = true,
 }) => {
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") || DEFAULT_LOGIN_REDIRECT;
+  const next = searchParams.get("redirect") || DEFAULT_LOGIN_REDIRECT;
   return (
     <div>
       <div>

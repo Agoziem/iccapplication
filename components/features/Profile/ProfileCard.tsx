@@ -19,7 +19,6 @@ interface AlertState {
 interface ProfileCardProps {
   alert: AlertState;
   setAlert: (alert: AlertState) => void;
-  setEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 type ProfileSection = "account" | "verification" | "delete";
@@ -36,7 +35,7 @@ interface OrdersSummary {
  * Optimized with React.memo and proper error handling
  */
 const ProfileCard: React.FC<ProfileCardProps> = React.memo(
-  ({ alert, setAlert, setEditMode }) => {
+  ({ alert, setAlert }) => {
     // State management
     const [showModal, setShowModal] = useState<boolean>(false);
     const [activeSection, setActiveSection] =

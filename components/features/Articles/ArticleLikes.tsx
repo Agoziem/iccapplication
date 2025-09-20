@@ -32,12 +32,10 @@ const ArticleLikes: React.FC<ArticleLikesProps> = ({ article }) => {
     
     try {
       if (isLiked) {
-        await removeLike({ blogId: article.id!, userId });
-        setLikes(prev => prev.filter(id => id !== userId));
+        await removeLike({ blogSlug: article.slug!, userId });
         toast.success("You unliked the article");
       } else {
-        await addLike({ blogId: article.id!, userId });
-        setLikes(prev => [...prev, userId]);
+        await addLike({ blogSlug: article.slug!, userId });
         toast.success("You liked the article");
       }
     } catch (error) {

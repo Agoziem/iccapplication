@@ -186,7 +186,7 @@ const Services = () => {
   if (loadingServices) {
     return (
       <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "400px" }}>
-        <PulseLoader color="#0d6efd" size={15} />
+        <PulseLoader color="var(--primary)" size={15} />
       </div>
     );
   }
@@ -194,7 +194,7 @@ const Services = () => {
   return (
     <div className="container-fluid">
       {/* Header */}
-      <div className="row mb-4">
+      <div className="row mb-4 align-items-center">
         <div className="col-md-6">
           <div className="d-flex align-items-center">
             <BsPersonFillGear size={32} className="text-primary me-2" />

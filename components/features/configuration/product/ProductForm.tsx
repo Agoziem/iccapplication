@@ -125,14 +125,15 @@ const ProductForm: React.FC<ProductFormProps> = ({
   return (
     <div className="p-3">
       <h5 className="text-center mb-4">
-        {editMode ? `Edit ${product?.name}` : "Add Product"}
+        {editMode ? "Edit Product" : "Add New Product"}
       </h5>
       <hr />
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+
+      <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
         {/* Product Preview Image */}
         <div className="mb-2">
           <label htmlFor="preview" className="form-label">
-            Product Preview image
+            Product Preview Image
           </label>
           <Controller
             name="preview"
@@ -140,8 +141,10 @@ const ProductForm: React.FC<ProductFormProps> = ({
             render={({ field, fieldState }) => (
               <>
                 <ImageUploader
-                  {...field}
-                  placeholder="Upload product preview image"
+                  name="preview"
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Upload preview image"
                   error={fieldState.error?.message}
                 />
               </>
@@ -152,7 +155,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
         {/* Name */}
         <div className="mb-3">
           <label htmlFor="name" className="form-label">
-            Name
+            Name *
           </label>
           <Controller
             name="name"
@@ -181,7 +184,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
         {/* Description */}
         <div className="mb-3">
           <label htmlFor="description" className="form-label">
-            Description
+            Description *
           </label>
           <Controller
             name="description"
@@ -210,7 +213,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
         {/* Price */}
         <div className="mb-3">
           <label htmlFor="price" className="form-label">
-            Price
+            Price (₦) *
           </label>
           <Controller
             name="price"
@@ -221,6 +224,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                   {...field}
                   type="number"
                   step="0.01"
+                  min="0"
                   className={`form-control ${
                     fieldState.error ? "is-invalid" : ""
                   }`}
@@ -243,7 +247,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
         {/* Category */}
         <div className="mb-3">
           <label htmlFor="category" className="form-label">
-            Category
+            Category *
           </label>
           <Controller
             name="category"
@@ -257,12 +261,12 @@ const ProductForm: React.FC<ProductFormProps> = ({
                   }`}
                   id="category"
                   onChange={(e) => {
-                    const categoryId = parseInt(e.target.value);
+                    const categoryId = parseInt(e.target.value) || 0;
                     field.onChange(categoryId);
                     handleCategoryChange(categoryId);
                   }}
                 >
-                  <option value={0}>Select category</option>
+                  <option value={0}>Select a category</option>
                   {productcategories?.map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.category}
@@ -282,7 +286,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
         {/* Subcategory */}
         <div className="mb-3">
           <label htmlFor="subcategory" className="form-label">
-            Sub-Category
+            Subcategory
           </label>
           <Controller
             name="subcategory"
@@ -295,21 +299,25 @@ const ProductForm: React.FC<ProductFormProps> = ({
                     fieldState.error ? "is-invalid" : ""
                   }`}
                   id="subcategory"
-                  disabled={loadingsubcategories || selectedCategoryId === 0}
+                  onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                  disabled={!selectedCategoryId || loadingsubcategories}
                 >
-                  {loadingsubcategories ? (
-                    <option>Loading...</option>
-                  ) : (
-                    <>
-                      <option value={0}>Select subcategory</option>
-                      {subcategories?.map((subcategory) => (
-                        <option key={subcategory.id} value={subcategory.id}>
-                          {subcategory.subcategory}
-                        </option>
-                      ))}
-                    </>
-                  )}
+                  <option value={0}>
+                    {!selectedCategoryId
+                      ? "Select a category first"
+                      : "Select a subcategory (optional)"}
+                  </option>
+                  {subcategories?.map((subcategory) => (
+                    <option key={subcategory.id} value={subcategory.id}>
+                      {subcategory.subcategory}
+                    </option>
+                  ))}
                 </select>
+                {loadingsubcategories && (
+                  <div className="form-text">
+                    <PulseLoader size={8} color="#0d6efd" />
+                  </div>
+                )}
                 {fieldState.error && (
                   <div className="invalid-feedback">
                     {fieldState.error.message}
@@ -320,7 +328,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
           />
         </div>
 
-        {/* Digital */}
+        {/* Digital Product Option */}
         <div className="mb-3">
           <div className="form-check">
             <Controller
@@ -345,7 +353,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
           </div>
         </div>
 
-        {/* Free */}
+        {/* Free Product Option */}
         <div className="mb-3">
           <div className="form-check">
             <Controller
@@ -373,25 +381,37 @@ const ProductForm: React.FC<ProductFormProps> = ({
         {/* File Upload for Digital Products */}
         {form.watch("digital") && (
           <div className="mb-3">
-            <label className="form-label">Product File</label>
+            <label className="form-label">
+              Product File *
+            </label>
             <Controller
               name="product"
               control={form.control}
               render={({ field, fieldState }) => (
-                <FileUploader
-                  {...field}
-                  placeholder="Upload digital product file"
-                  error={fieldState.error?.message}
-                />
+                <>
+                  <FileUploader
+                    name="product"
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Upload digital product file"
+                    error={fieldState.error?.message}
+                  />
+                  {fieldState.error && (
+                    <div className="text-danger small mt-1">
+                      {fieldState.error.message}
+                    </div>
+                  )}
+                </>
               )}
             />
           </div>
         )}
 
+        {/* Form Actions */}
         <div className="d-flex justify-content-end gap-2 mt-4">
           <button
             type="button"
-            className="btn btn-accent-secondary rounded px-4"
+            className="btn btn-secondary"
             onClick={onCancel}
             disabled={isSubmitting}
           >
@@ -399,18 +419,18 @@ const ProductForm: React.FC<ProductFormProps> = ({
           </button>
           <button
             type="submit"
-            className="btn btn-primary rounded px-4"
-            disabled={isSubmitting}
+            className="btn btn-primary"
+            disabled={isSubmitting || !form.formState.isValid}
           >
             {isSubmitting ? (
-              <div className="d-inline-flex align-items-center justify-content-center gap-2">
-                <div>{editMode ? "Updating" : "Adding"} Product</div>
-                <PulseLoader size={8} color={"#ffffff"} loading={true} />
-              </div>
+              <>
+                <PulseLoader size={8} color="#ffffff" className="me-2" />
+                {editMode ? "Updating..." : "Creating..."}
+              </>
             ) : editMode ? (
               "Update Product"
             ) : (
-              "Add Product"
+              "Create Product"
             )}
           </button>
         </div>

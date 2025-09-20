@@ -13,6 +13,7 @@ import { PaymentResponse } from "@/types/payments";
 import { Service, ServiceUser } from "@/types/items";
 import React from "react";
 import { EmailResponse as EmailResponseType } from "@/types/emails";
+import { Organization } from "@/types/organizations";
 
 const resend = new Resend(process.env.NEXT_PUBLIC_RESEND_API_KEY);
 
@@ -29,7 +30,8 @@ export interface EmailResponse {
 export const sendVerificationEmail = async (
   email: string,
   token: string,
-  expire_time: string | Date
+  expire_time: string | Date,
+  organizationData: Organization
 ): Promise<EmailResponse> => {
   const confirmLink = `${process.env.NEXT_PUBLIC_URL}/accounts/new-verification?token=${token}`;
   const stringifiedDate = typeof expire_time === 'string' ? expire_time : expire_time.toISOString();
@@ -38,7 +40,7 @@ export const sendVerificationEmail = async (
       from: "ICCapp <onboarding@innovationscybercafe.com>", // Set your "from" email address
       to: email,
       subject: "Verify your email",
-      react: React.createElement(VerificationEmail, { confirmLink, expire_time: stringifiedDate }),
+      react: React.createElement(VerificationEmail, { confirmLink, expire_time: stringifiedDate, organizationData }),
       reply_to: "innovationscybercafe@gmail.com",
     });
     return {
@@ -147,13 +149,16 @@ export const sendMultipleEmails = async (
 // ------------------------------------------------
 // Send Template Message for Onboarding User
 // ------------------------------------------------
-export const sendOnboardingMessage = async (user: User): Promise<EmailResponse> => {
+export const sendOnboardingMessage = async (
+  user: User, 
+  organizationData?: Organization
+): Promise<EmailResponse> => {
   try {
     await resend.emails.send({
       from: `ICCapp <onboarding@innovationscybercafe.com>`,
       to: user.email,
       subject: `Welcome onboard ${user.username || user.first_name}`,
-      react: React.createElement(Onboarding, { user }),
+      react: React.createElement(Onboarding, { user, organizationData }),
       reply_to: "innovationscybercafe@gmail.com",
     });
     return {
@@ -277,6 +282,7 @@ export const sendServiceCompletedEmail = async (service: Service, user: ServiceU
       message: "We have sent your message successfully.",
     };
   } catch (error: any) {
+    console.log(error.message);
     return {
       success: false,
       message: "Failed to send message",

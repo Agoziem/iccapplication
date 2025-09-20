@@ -3,6 +3,7 @@
     transition: 0.3s ease-in-out;
     font-weight: 500;
     color: var(--primary);
+    background-color: var(--bgColor);
 }
 .activeprofilelink{
     background-color: var(--secondary-300);

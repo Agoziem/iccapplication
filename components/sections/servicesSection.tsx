@@ -322,9 +322,9 @@ const ServicesSection: React.FC = () => {
           <div className="row justify-content-center">
             <div className="col-12 col-md-8 col-lg-6">
               <div className="text-center py-5">
-                <i className="bi bi-inbox display-1 text-muted mb-3"></i>
-                <h5 className="text-muted mb-3">No Services Available</h5>
-                <p className="text-muted">
+                <i className="bi bi-inbox display-1 mb-3" style={{ color: 'var(--bgDarkerColor)' }}></i>
+                <h5 className="text-primary mb-3">No Services Available</h5>
+                <p className="text-primary">
                   We&apos;re currently updating our services. Please check back soon for exciting new offerings!
                 </p>
                 <Link href="/dashboard" className="btn btn-primary">

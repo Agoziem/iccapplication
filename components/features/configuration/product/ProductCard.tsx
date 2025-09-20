@@ -10,12 +10,12 @@ interface ProductCardProps {
   className?: string;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ 
-  product, 
-  onEdit, 
-  onDelete, 
+const ProductCard: React.FC<ProductCardProps> = ({
+  product,
+  onEdit,
+  onDelete,
   onView,
-  className = "" 
+  className = "",
 }) => {
   const handleViewMore = () => {
     if (onView) {
@@ -33,17 +33,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
     }).format(numPrice);
   };
 
-  const truncateDescription = (text: string, maxLength: number = 80): string => {
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + "...";
-  };
-
   return (
     <div className={`col-12 col-md-4 ${className}`.trim()}>
-      <div className="card h-100 shadow-sm hover-card">
+      <div className="card shadow-sm hover-card" style={{ height: "360px" }}>
         <div className="card-body p-3">
           {/* Product Image */}
-          <div className="d-flex justify-content-center mb-3">
+          <div className="d-flex justify-content-center mb-3 py-4 rounded bg-primary-light">
             {product.img_url ? (
               <img
                 src={product.img_url}
@@ -62,48 +57,45 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
           {/* Product Info */}
           <div className="text-center">
-            <h6 className="card-title fw-bold text-truncate" title={product.name}>
+            <h6
+              className="line-clamp-1"
+              title={product.name}
+            >
               {product.name}
             </h6>
-            
+
             {/* Product Badges */}
             <div className="mb-2">
               {product.digital && (
-                <span className="badge bg-info text-dark me-1">Digital</span>
+                <span className="badge bg-info-light text-info me-1">
+                  Digital
+                </span>
               )}
               {product.free && (
-                <span className="badge bg-success me-1">Free</span>
+                <span className="badge bg-success-light text-success me-1">
+                  Free
+                </span>
               )}
               {product.category && (
-                <span className="badge bg-secondary">{product.category.category}</span>
+                <span className="badge bg-secondary-light text-secondary">
+                  {product.category.category}
+                </span>
               )}
             </div>
 
             {/* Description */}
-            <p className="card-text text-muted small mb-3">
-              {product.description.length > 80 ? (
-                <>
-                  {truncateDescription(product.description)}
-                  {onView && (
-                    <span
-                      className="text-primary fw-bold ms-1"
-                      style={{ cursor: "pointer" }}
-                      onClick={handleViewMore}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          handleViewMore();
-                        }
-                      }}
-                    >
-                      view more
-                    </span>
-                  )}
-                </>
-              ) : (
-                product.description
-              )}
+            <p className="card-text text-muted small mb-3 line-clamp-2">
+              <div
+                style={{ cursor: "pointer" }}
+                onClick={handleViewMore}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    handleViewMore();
+                  }
+                }}
+              >
+                {product.description}
+              </div>
             </p>
 
             {/* Price */}
@@ -119,7 +111,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         <div className="card-footer bg-transparent border-top-0 pt-0">
           <div className="d-flex gap-2 justify-content-center">
             <button
-              className="btn btn-sm btn-outline-primary flex-fill"
+              className="badge bg-primary-light text-primary px-3 py-2 border-0 flex-fill"
               onClick={() => onEdit(product)}
               type="button"
               aria-label={`Edit ${product.name}`}
@@ -128,7 +120,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
               Edit
             </button>
             <button
-              className="btn btn-sm btn-outline-danger flex-fill"
+              className="badge bg-danger text-white px-3 py-2 border-0 flex-fill"
               onClick={() => onDelete(product)}
               type="button"
               aria-label={`Delete ${product.name}`}

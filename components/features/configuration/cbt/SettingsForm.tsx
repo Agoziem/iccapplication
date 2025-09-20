@@ -10,7 +10,7 @@ import { useOrganization } from "@/data/hooks/organization.hooks";
 import { ORGANIZATION_ID } from "@/data/constants";
 import { Subject, Test, CreateTest } from "@/types/cbt";
 import { createTestSchema } from "@/schemas/cbt";
-import { useCreateTest, useDeleteTest, useTests } from "@/data/hooks/cbt.hooks";
+import { useCreateTest, useDeleteTest, useTests, useTestTypes, useYears } from "@/data/hooks/cbt.hooks";
 
 interface TestFormData {
   testYear: number;
@@ -40,6 +40,8 @@ const SettingsForm = () => {
   });
   const [showModal, setShowModal] = useState(false);
   const [testtoDelete, setTesttoDelete] = useState<Test | null>(null);
+  const { data: years } = useYears();
+  const { data: testtypes } = useTestTypes();
   // const [newSubject, setNewSubject] = useState("");
   // const [subjectsList, setSubjectsList] = useState<string[]>([]);
 
@@ -49,8 +51,8 @@ const SettingsForm = () => {
   const form = useForm<TestFormData>({
     resolver: zodResolver(createTestSchema),
     defaultValues: {
-      testYear: new Date().getFullYear(),
-      texttype: 1,
+      testYear: 0, // Will be set to first available year or current year
+      texttype: 0, // Will be set to first available test type
       testSubject: [],
     },
   });
@@ -147,21 +149,23 @@ const SettingsForm = () => {
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <>
-                      <input
+                      <select
                         {...field}
-                        type="number"
                         className={`form-control ${
                           fieldState.error ? "is-invalid" : ""
                         }`}
-                        placeholder="2021, 2022, etc."
-                        min="2000"
-                        max="2100"
                         onChange={(e) =>
-                          field.onChange(
-                            parseInt(e.target.value) || new Date().getFullYear()
-                          )
+                          field.onChange(parseInt(e.target.value) || 0)
                         }
-                      />
+                        disabled={!years || years.length === 0}
+                      >
+                        <option value="">Select a year</option>
+                        {years?.map((year) => (
+                          <option key={year.id} value={year.id}>
+                            {year.year}
+                          </option>
+                        )) || <option disabled>Loading years...</option>}
+                      </select>
                       {fieldState.error && (
                         <div className="invalid-feedback">
                           {fieldState.error.message}
@@ -185,13 +189,16 @@ const SettingsForm = () => {
                           fieldState.error ? "is-invalid" : ""
                         }`}
                         onChange={(e) =>
-                          field.onChange(parseInt(e.target.value) || 1)
+                          field.onChange(parseInt(e.target.value) || 0)
                         }
+                        disabled={!testtypes || testtypes.length === 0}
                       >
-                        <option value={1}>JAMB</option>
-                        <option value={2}>WAEC</option>
-                        <option value={3}>NECO</option>
-                        <option value={4}>Other</option>
+                        <option value="">Select a test type</option>
+                        {testtypes?.map((testtype) => (
+                          <option key={testtype.id} value={testtype.id}>
+                            {testtype.testtype}
+                          </option>
+                        )) || <option disabled>Loading test types...</option>}
                       </select>
                       {fieldState.error && (
                         <div className="invalid-feedback">

@@ -13,7 +13,6 @@ const CustomSwiper = () => {
   )
   return (
     <>
-      <hr className="text-primary pt-3 mx-5" />
       <section id="testimonials" className="testimonials p-3 pb-4 p-md-5">
         <div className="mb-4 px-3 px-md-5">
           <h6>Testimonials</h6>
