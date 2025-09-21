@@ -94,6 +94,7 @@ const ContactCard: React.FC<ContactCardProps> = React.memo(
               <h6
                 className="mb-1 fw-semibold text-truncate line-clamp-1"
                 title={displayName}
+                style={{ maxWidth: "150px" }}
               >
                 {displayName}
               </h6>
@@ -105,7 +106,7 @@ const ContactCard: React.FC<ContactCardProps> = React.memo(
                   <span
                     className="text-muted"
                     style={{ fontSize: "0.85rem" }}
-                    title={shortenBody(contact?.last_message?.body) || ""}
+                    title={contact?.last_message?.body || ""}
                   >
                     {shortenBody(contact?.last_message?.body) ||
                       "No messages yet"}

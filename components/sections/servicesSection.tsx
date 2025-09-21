@@ -23,12 +23,14 @@ const ServicesSection: React.FC = () => {
   const { openModal } = useOrganization();
   const { cart, addToCart, removeFromCart } = useCart();
   const { data: user } = useMyProfile();
-  const [categoryServices, setCategoryServices] = useState<CategorizedServices[]>([]);
+  const [categoryServices, setCategoryServices] = useState<
+    CategorizedServices[]
+  >([]);
 
-  const { 
-    data: categories, 
+  const {
+    data: categories,
     isLoading: loadingCategories,
-    error: categoriesError 
+    error: categoriesError,
   } = useServiceCategories();
 
   const {
@@ -38,15 +40,18 @@ const ServicesSection: React.FC = () => {
   } = useServices(parseInt(ORGANIZATION_ID || "0"));
 
   // Memoized featured services list
-  const featuredServices = useMemo(() => [
-    "Sales of JAMB/Post UTME forms",
-    "Sales of Checker cards",
-    "Printing of WAEC Certificate, Neco Certificate and E-Verification",
-    "Academic Consultation",
-    "Processing of Affidavits and All Documents for School Clearance",
-    "Tutorials and Skill Acquisition for Students Productivity.",
-    "Hostel bookings Campus & Off-campus",
-  ], []);
+  const featuredServices = useMemo(
+    () => [
+      "Sales of JAMB/Post UTME forms",
+      "Sales of Checker cards",
+      "Printing of WAEC Certificate, Neco Certificate and E-Verification",
+      "Academic Consultation",
+      "Processing of Affidavits and All Documents for School Clearance",
+      "Tutorials and Skill Acquisition for Students Productivity.",
+      "Hostel bookings Campus & Off-campus",
+    ],
+    []
+  );
 
   // Process categories and services with useCallback for performance
   const processServices = useCallback(() => {
@@ -75,21 +80,37 @@ const ServicesSection: React.FC = () => {
   }, [processServices]);
 
   // Check if user has purchased a service
-  const hasUserPurchased = useCallback((service: Service): boolean => {
-    if (!user?.id) return false;
-    return service.userIDs_that_bought_this_service?.includes(user.id) || false;
-  }, [user?.id]);
+  const hasUserPurchased = useCallback(
+    (service: Service): boolean => {
+      if (!user?.id) return false;
+      return (
+        service.userIDs_that_bought_this_service?.includes(user.id) || false
+      );
+    },
+    [user?.id]
+  );
 
   // Check if service is completed for user
-  const isServiceCompleted = useCallback((service: Service): boolean => {
-    if (!user?.id) return false;
-    return service.userIDs_whose_services_have_been_completed?.includes(user.id) || false;
-  }, [user?.id]);
+  const isServiceCompleted = useCallback(
+    (service: Service): boolean => {
+      if (!user?.id) return false;
+      return (
+        service.userIDs_whose_services_have_been_completed?.includes(user.id) ||
+        false
+      );
+    },
+    [user?.id]
+  );
 
   // Check if service is in cart
-  const isInCart = useCallback((serviceId: number): boolean => {
-    return cart.some(item => item.id === serviceId && item.cartType === "service");
-  }, [cart]);
+  const isInCart = useCallback(
+    (serviceId: number): boolean => {
+      return cart.some(
+        (item) => item.id === serviceId && item.cartType === "service"
+      );
+    },
+    [cart]
+  );
 
   // Loading state
   const isLoading = loadingCategories || loadingServices;
@@ -158,11 +179,17 @@ const ServicesSection: React.FC = () => {
           <div className="row justify-content-center">
             <div className="col-12 col-md-8 col-lg-6">
               <div className="d-flex flex-column align-items-center text-center py-5">
-                <div className="spinner-border text-primary mb-3" role="status" style={{ width: "3rem", height: "3rem" }}>
+                <div
+                  className="spinner-border text-primary mb-3"
+                  role="status"
+                  style={{ width: "3rem", height: "3rem" }}
+                >
                   <span className="visually-hidden">Loading...</span>
                 </div>
                 <h5 className="text-muted">Loading Services...</h5>
-                <p className="text-muted small">Please wait while we fetch our services for you.</p>
+                <p className="text-muted small">
+                  Please wait while we fetch our services for you.
+                </p>
               </div>
             </div>
           </div>
@@ -174,17 +201,24 @@ const ServicesSection: React.FC = () => {
         <div className="container-fluid py-5">
           <div className="row justify-content-center">
             <div className="col-12 col-md-8 col-lg-6">
-              <div className="alert alert-danger d-flex align-items-center" role="alert">
+              <div
+                className="alert alert-danger d-flex align-items-center"
+                role="alert"
+              >
                 <i className="bi bi-exclamation-triangle-fill me-2"></i>
                 <div>
-                  <h6 className="alert-heading mb-1">Unable to load services</h6>
+                  <h6 className="alert-heading mb-1">
+                    Unable to load services
+                  </h6>
                   <p className="mb-0 small">
-                    There was an error loading our services. Please try refreshing the page or contact support if the problem persists.
+                    There was an error loading our services. Please try
+                    refreshing the page or contact support if the problem
+                    persists.
                   </p>
                 </div>
               </div>
               <div className="text-center">
-                <button 
+                <button
                   className="btn btn-outline-primary"
                   onClick={() => window.location.reload()}
                 >
@@ -209,7 +243,7 @@ const ServicesSection: React.FC = () => {
                     <div
                       key={service.id}
                       className="card p-4 d-flex flex-column justify-content-between h-100"
-                      style={{ minHeight: "330px" }}
+                      style={{ height: "350px" }}
                     >
                       {/* Body Section */}
                       <div>
@@ -239,26 +273,20 @@ const ServicesSection: React.FC = () => {
                           )}
                         </div>
                         <div className="text-center mt-3">
-                          <h5>
+                          <h5 className="line-clamp-1">
                             {service.name && service.name.length > 30
                               ? service.name.slice(0, 30) + "..."
                               : service.name}
                           </h5>
-                          <p className="text-primary mb-1">
-                            {service.description && service.description.length > 100 ? (
-                              <span>
-                                {service.description.substring(0, 100)}...{" "}
-                                <span
-                                  className="text-secondary fw-bold"
-                                  style={{ cursor: "pointer" }}
-                                  onClick={() => openModal(service)}
-                                >
-                                  view more
-                                </span>
-                              </span>
-                            ) : (
-                              service.description
-                            )}
+                          <p className="text-primary mb-1 line-clamp-3">
+                            {service.description && service.description.substring(0, 100)}...{" "}
+                            <span
+                              className="text-secondary fw-bold"
+                              style={{ cursor: "pointer" }}
+                              onClick={() => openModal(service)}
+                            >
+                              view more
+                            </span>
                           </p>
                         </div>
                       </div>
@@ -270,9 +298,10 @@ const ServicesSection: React.FC = () => {
                           <div className="fw-bold text-primary me-2">
                             &#8358;{parseFloat(service.price || "0")}
                           </div>
-                          
+
                           {/* Service purchase status and cart actions */}
-                          {hasUserPurchased(service) && !isServiceCompleted(service) ? (
+                          {hasUserPurchased(service) &&
+                          !isServiceCompleted(service) ? (
                             <div className="badge bg-primary-light text-primary p-2">
                               <i className="bi bi-check-circle me-1"></i>
                               Purchased
@@ -280,7 +309,9 @@ const ServicesSection: React.FC = () => {
                           ) : isInCart(service.id || 0) ? (
                             <button
                               className="btn btn-sm btn-outline-secondary"
-                              onClick={() => removeFromCart(service.id || 0, "service")}
+                              onClick={() =>
+                                removeFromCart(service.id || 0, "service")
+                              }
                               disabled={!service.id}
                             >
                               <i className="bi bi-cart-dash me-1"></i>
@@ -304,7 +335,7 @@ const ServicesSection: React.FC = () => {
               </div>
             </React.Fragment>
           ))}
-          
+
           {/* Services button */}
           <div className="d-flex justify-content-center mt-0 mb-5">
             <Link href="/services" className="btn btn-primary px-5">
@@ -322,10 +353,14 @@ const ServicesSection: React.FC = () => {
           <div className="row justify-content-center">
             <div className="col-12 col-md-8 col-lg-6">
               <div className="text-center py-5">
-                <i className="bi bi-inbox display-1 mb-3" style={{ color: 'var(--bgDarkerColor)' }}></i>
+                <i
+                  className="bi bi-inbox display-1 mb-3"
+                  style={{ color: "var(--bgDarkerColor)" }}
+                ></i>
                 <h5 className="text-primary mb-3">No Services Available</h5>
                 <p className="text-primary">
-                  We&apos;re currently updating our services. Please check back soon for exciting new offerings!
+                  We&apos;re currently updating our services. Please check back
+                  soon for exciting new offerings!
                 </p>
                 <Link href="/dashboard" className="btn btn-primary">
                   <i className="bi bi-house-fill me-2"></i>

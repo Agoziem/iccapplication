@@ -10,6 +10,7 @@ import { WAMessageEventSchema } from "@/schemas/whatsapp";
 import { WEBSOCKET_URL } from "@/data/constants";
 import { WAMessage } from "@/types/whatsapp";
 import "./whatsapp.css";
+import { toast } from "sonner";
 
 // Component to show when there are no chat messages
 interface NoMessagesProps {
@@ -97,6 +98,7 @@ const ChatBody: React.FC = React.memo(() => {
             return [...oldData, newMessage.message];
           }
         );
+        toast.info("New message received");
       }
     } catch (error) {
       console.error("Error processing WebSocket message:", error);

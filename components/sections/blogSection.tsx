@@ -35,9 +35,9 @@ const BlogSection = () => {
                 slideDirection="down"
                 delay={0.1 * index}
                 key={blog.id}
-                className="col-12 col-md d-flex justify-content-center"
+                className="col-12 col-md-4 d-flex justify-content-center"
               >
-                <div className="card mx-auto" style={{ width: "350px" }}>
+                <div className="card mx-auto" style={{ width: "100%" }}>
                   <div
                     className="blog-image"
                     style={{
