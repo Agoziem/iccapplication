@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+export const lastMessageSchema = z.object({
+  id: z.number().int().positive().optional(),
+  message_id: z.string().min(1).max(100),
+  message_type: z.enum(["text", "image", "video", "audio", "document", "sticker"]).optional(),
+  body: z.string().optional(),
+  timestamp: z.coerce.date().optional(),
+});
+
 // ---------------------------------------------------------------------
 // Core Contact Schema (Based on API Contact model)
 // ---------------------------------------------------------------------
@@ -7,8 +15,8 @@ export const ContactSchema = z.object({
   id: z.number().int().positive().optional(),
   wa_id: z.string().min(1).max(50),
   profile_name: z.string().max(255).optional(),
-  last_message: z.string().optional(),
-  unread_message_count: z.string().optional(),
+  last_message: lastMessageSchema.optional(),
+  unread_message_count: z.number().min(0).optional(),
 });
 
 /**
@@ -137,7 +145,7 @@ export const WAMessageEventSchema = z.object({
 });
 
 export const WAContactEventSchema = z.object({
-  operation: z.enum(["update_seen_status", "contact_update", "contact_delete"]), // extend as needed
+  operation: z.enum(["update_seen_status", "create", "delete"]), // extend as needed
   contact: ContactSchema,
 });
 

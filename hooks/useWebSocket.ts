@@ -32,7 +32,11 @@ const useWebSocket = (
     }
 
     // Close existing connection if any
-    if (wsRef.current && wsRef.current.readyState !== WebSocket.CLOSED) {
+    if (
+      wsRef.current &&
+      wsRef.current.readyState === WebSocket.OPEN &&
+      wsRef.current.url !== url
+    ) {
       wsRef.current.close();
     }
 
@@ -51,7 +55,7 @@ const useWebSocket = (
     wsInstance.onclose = (event: CloseEvent) => {
       console.log(`WebSocket for ${url} disconnected`, event.reason);
       setIsConnected(false);
-      
+
       // Attempt to reconnect if autoReconnect is enabled
       if (autoReconnect && !event.wasClean) {
         reconnectTimeoutRef.current = setTimeout(() => {

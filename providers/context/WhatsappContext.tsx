@@ -1,12 +1,11 @@
 "use client";
 import { useSendTemplateMessage } from "@/data/hooks/whatsapp.hooks";
 import { Contact } from "@/types/whatsapp";
-import React from "react";
+import React, { useCallback } from "react";
 
 const { createContext, useState, useContext, useRef } = React;
 type ReactNode = React.ReactNode;
 type RefObject<T> = React.RefObject<T>;
-
 
 interface WhatsappAPIContextValue {
   selectedContact: Contact | null;
@@ -18,7 +17,11 @@ interface WhatsappAPIContextValue {
   imageInputRef: RefObject<HTMLInputElement | null>;
   videoInputRef: RefObject<HTMLInputElement | null>;
   scrollToBottom: () => void;
-  sendWhatsappTemplateMessage: (to_phone_number: string, template_name: string, language_code?: string) => Promise<any>;
+  sendWhatsappTemplateMessage: (
+    to_phone_number: string,
+    template_name: string,
+    language_code?: string
+  ) => Promise<any>;
 }
 
 interface WhatsappAPIProviderProps {
@@ -30,10 +33,12 @@ interface WhatsappAPIProviderProps {
 // ------------------------------------------------------
 const WhatsappAPIContext = createContext<WhatsappAPIContextValue | null>(null);
 
-const WhatsappAPIProvider: React.FC<WhatsappAPIProviderProps> = ({ children }) => {
+const WhatsappAPIProvider: React.FC<WhatsappAPIProviderProps> = ({
+  children,
+}) => {
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [atthebottom, setAtthebottom] = useState<boolean>(false);
-  const { mutateAsync: sendTemplateMessage } = useSendTemplateMessage(); 
+  const { mutateAsync: sendTemplateMessage } = useSendTemplateMessage();
 
   // ------------------------------------------------------
   // Reference to the bottom of the chat messages
@@ -45,12 +50,12 @@ const WhatsappAPIProvider: React.FC<WhatsappAPIProviderProps> = ({ children }) =
   // ------------------------------------------------------
   // function that scrolls to the bottom of the chat messages
   // ------------------------------------------------------
-  const scrollToBottom = (): void => {
+  const scrollToBottom = useCallback((): void => {
     if (bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
       setAtthebottom(true);
     }
-  };
+  }, []);
 
   // ------------------------------------------------------
   // Send WhatsApp Template message
@@ -61,14 +66,19 @@ const WhatsappAPIProvider: React.FC<WhatsappAPIProviderProps> = ({ children }) =
     language_code: string = "en_US"
   ): Promise<any> => {
     try {
-      await sendTemplateMessage({ to_phone_number, template_name, language_code });
+      await sendTemplateMessage({
+        to_phone_number,
+        template_name,
+        language_code,
+      });
     } catch (error: any) {
       console.error("Failed to send WhatsApp message", error);
-      return { status: "error", message: error.response?.data || error.message };
+      return {
+        status: "error",
+        message: error.response?.data || error.message,
+      };
     }
   };
-
- 
 
   return (
     <WhatsappAPIContext.Provider
@@ -93,7 +103,9 @@ const WhatsappAPIProvider: React.FC<WhatsappAPIProviderProps> = ({ children }) =
 const useWhatsappAPIContext = (): WhatsappAPIContextValue => {
   const context = useContext(WhatsappAPIContext);
   if (!context) {
-    throw new Error('useWhatsappAPIContext must be used within a WhatsappAPIProvider');
+    throw new Error(
+      "useWhatsappAPIContext must be used within a WhatsappAPIProvider"
+    );
   }
   return context;
 };

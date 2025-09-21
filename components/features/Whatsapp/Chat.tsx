@@ -87,7 +87,7 @@ const Chat: React.FC<ChatProps> = React.memo(({ showlist, setShowlist }) => {
               aria-hidden="true"
             />
           </div>
-          <p className="text-muted">No contact selected</p>
+          <p className="text-muted mb-0">No contact selected</p>
           <small className="text-muted">Select a contact from the list to start chatting</small>
         </div>
       )}

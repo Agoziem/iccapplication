@@ -31,13 +31,13 @@ const NoMessages: React.FC<NoMessagesProps> = React.memo(({ messagesloading, mes
         Error occurred while fetching messages.
       </div>
     )}
-    <div className="text-center px-4">
+    <div className="text-center px-4" style={{color: "var(--bgColor)"}}>
       <BsWhatsapp
         className="mb-3"
-        style={{ fontSize: "4.5rem", color: "var(--bgColor)" }}
+        style={{ fontSize: "4.5rem" }}
         aria-hidden="true"
       />
-      <div className="text-muted">
+      <div className="">
         No chat messages found. Select a contact to start messaging. Note that
         messaging must be initiated from the contact side.
       </div>

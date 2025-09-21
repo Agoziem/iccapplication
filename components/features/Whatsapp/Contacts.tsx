@@ -99,10 +99,10 @@ const Contacts: React.FC<ContactsProps> = React.memo(({ showlist, setShowlist })
   // Sort contacts by timestamp - since last_message is a string, we'll use a different approach
   const sortContacts = useCallback((contactsToSort: Contact[]): Contact[] => {
     return contactsToSort.sort((a, b) => {
-      // Sort by ID for now since timestamp is not available in the current schema
-      const aId = a.id ?? 0;
-      const bId = b.id ?? 0;
-      return bId - aId;
+      // Sort date of last message
+      const aTime = a.last_message?.timestamp ? new Date(a.last_message.timestamp).getTime() : 0;
+      const bTime = b.last_message?.timestamp ? new Date(b.last_message.timestamp).getTime() : 0;
+      return bTime - aTime;
     });
   }, []);
 
@@ -120,7 +120,7 @@ const Contacts: React.FC<ContactsProps> = React.memo(({ showlist, setShowlist })
       const newContact = validatedcontact.data;
       const cacheKey = ["whatsapp", "contacts"];
 
-      if (newContact.operation === "update_seen_status" && newContact.contact) {
+      if (newContact.operation === "create" && newContact.contact) {
         queryClient.setQueryData<Contact[]>(cacheKey, (existingContacts = []) => {
           if (!Array.isArray(existingContacts)) return [newContact.contact];
           
