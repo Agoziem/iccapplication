@@ -91,14 +91,14 @@ const EmailBody: React.FC<EmailBodyProps> = memo(({
       );
     }
 
-    if (!emailresponses || !Array.isArray(emailresponses) || emailresponses.length === 0) {
+    if (!emailresponses || emailresponses.count === 0) {
       return null;
     }
 
-    return emailresponses.map((response, index) => {
+    return emailresponses.results.map((response, index) => {
       if (!response) return null;
 
-      const responseKey = response.id || response.created_at || index;
+      const responseKey = response.id || index;
       const responseMessage = response.response_message || 'No response content';
       const responseDate = moment(response.created_at).isValid()
         ? moment(response.created_at).format('MMM D, YYYY h:mm A')
@@ -113,12 +113,12 @@ const EmailBody: React.FC<EmailBodyProps> = memo(({
                   src={organizationData.logo}
                   alt="Organization Logo"
                   className="rounded-circle mb-2"
-                  style={{ width: "60px", height: "60px", objectFit: "cover" }}
+                  style={{ width: "40px", height: "40px", objectFit: "cover" }}
                 />
               ) : (
                 <div
                   className="rounded-circle mb-2 bg-primary d-flex align-items-center justify-content-center text-white"
-                  style={{ width: "60px", height: "60px", fontSize: "1.5rem" }}
+                  style={{ width: "40px", height: "40px", fontSize: "1.5rem" }}
                 >
                   {organizationData?.name?.charAt(0) || 'O'}
                 </div>

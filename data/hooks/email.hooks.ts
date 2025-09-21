@@ -28,7 +28,7 @@ export const emailAPIendpoint = "/emailsapi";
 export const EMAIL_KEYS = {
   all: ["emails"] as const,
   emails: (organizationId: number) =>
-    [...EMAIL_KEYS.all, "emails", organizationId] as const,
+    [...EMAIL_KEYS.all, organizationId] as const,
   email: (id: number) => [...EMAIL_KEYS.all, "email", id] as const,
   responses: (messageId: number) =>
     [...EMAIL_KEYS.all, "responses", messageId] as const,
@@ -78,7 +78,9 @@ export const updateEmail = async (
 };
 
 export const deleteEmail = async (emailId: number): Promise<void> => {
-  await AxiosInstanceWithToken.delete(`${emailAPIendpoint}/delete_email/${emailId}/`);
+  await AxiosInstanceWithToken.delete(
+    `${emailAPIendpoint}/delete_email/${emailId}/`
+  );
 };
 
 export const fetchEmailResponses = async (
@@ -102,7 +104,9 @@ export const createResponse = async (
   return response.data;
 };
 
-export const getSentEmails = async (params?: Record<string, any>): Promise<Emails> => {
+export const getSentEmails = async (
+  params?: Record<string, any>
+): Promise<Emails> => {
   const response = await AxiosInstanceWithToken.get(
     `${emailAPIendpoint}/emails/getsentemails/`,
     { params }
@@ -249,8 +253,10 @@ export const useCreateResponse = (): UseMutationResult<
 
   return useMutation({
     mutationFn: createResponse,
-    onSuccess: () => {
-      queryClient.invalidateQueries(EMAIL_KEYS.all);
+    onSuccess: ({ message }) => {
+      if (message) {
+        queryClient.invalidateQueries(EMAIL_KEYS.responses(message));
+      }
     },
     onError: (error: Error) => {
       console.error("Error creating response:", error);
@@ -292,7 +298,6 @@ export const useCreateEmailMessage = (): UseMutationResult<
     },
   });
 };
-
 
 // Bulk Email Operations
 export const useBulkDeleteEmails = (): UseMutationResult<
@@ -351,35 +356,6 @@ export const useFilterEmails = (
     enabled: !!organizationId,
     onError: (error: Error) => {
       console.error("Error filtering emails:", error);
-      throw error;
-    },
-  });
-};
-
-// Email Previews Hook - for listing emails with minimal data
-export const useEmailPreviews = (
-  organizationId: number,
-  params?: Record<string, any>
-): UseQueryResult<EmailPreview[], Error> => {
-  return useQuery({
-    queryKey: [...EMAIL_KEYS.emails(organizationId), "previews", params],
-    queryFn: async () => {
-      const emails = await fetchEmails(organizationId, params);
-      // Transform to preview format with only essential fields
-      return (
-        emails.results?.map((email) => ({
-          id: email.id,
-          name: email.name,
-          email: email.email,
-          subject: email.subject,
-          created_at: email.created_at,
-          read: email.read,
-        })) || []
-      );
-    },
-    enabled: !!organizationId,
-    onError: (error: Error) => {
-      console.error("Error fetching email previews:", error);
       throw error;
     },
   });

@@ -2,16 +2,18 @@ import React, { useState, useCallback, useEffect, memo, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { sendReplyEmail } from "@/utils/mail";
-import { CreateEmailResponseSchema, emailResponseSchema } from "@/schemas/emails";
+import {
+  CreateEmailResponseSchema,
+  emailResponseSchema,
+} from "@/schemas/emails";
 import Alert from "../../custom/Alert/Alert";
 import { useQueryClient } from "react-query";
 import { Email, CreateEmailResponse } from "@/types/emails";
+import { useCreateResponse } from "@/data/hooks/email.hooks";
 
 interface EmailInputProps {
   message: Email;
 }
-
-
 
 /**
  * Enhanced EmailInput component with comprehensive error handling and validation
@@ -20,13 +22,17 @@ const EmailInput: React.FC<EmailInputProps> = memo(({ message }) => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const queryClient = useQueryClient();
+  const { mutateAsync: saveEmailResponse } = useCreateResponse();
 
   // Safe message data extraction
-  const messageData = useMemo(() => ({
-    id: message?.id || null,
-    email: message?.email || "",
-    subject: message?.subject || "",
-  }), [message]);
+  const messageData = useMemo(
+    () => ({
+      id: message?.id || null,
+      email: message?.email || "",
+      subject: message?.subject || "",
+    }),
+    [message]
+  );
 
   // Initialize React Hook Form with enhanced validation
   const {
@@ -55,7 +61,9 @@ const EmailInput: React.FC<EmailInputProps> = memo(({ message }) => {
       reset({
         message: messageData.id || undefined,
         recipient_email: messageData.email || undefined,
-        response_subject: messageData.subject ? `Re: ${messageData.subject}` : undefined,
+        response_subject: messageData.subject
+          ? `Re: ${messageData.subject}`
+          : undefined,
         response_message: "",
       });
     }
@@ -75,45 +83,57 @@ const EmailInput: React.FC<EmailInputProps> = memo(({ message }) => {
   /**
    * Enhanced form submission with comprehensive error handling
    */
-  const onSubmit = useCallback(async (data: CreateEmailResponse) => {
-    if (!messageData.id) {
-      setError("Cannot send reply: Invalid message ID");
-      return;
-    }
-
-    if (!messageData.email) {
-      setError("Cannot send reply: No recipient email");
-      return;
-    }
-
-    try {
-      setError("");
-      setSuccess("");
-
-      // Enhance data with proper typing for the API
-      const enhancedData: CreateEmailResponse = {
-        ...data,
-        message: messageData.id,
-      };
-
-      const result = await sendReplyEmail(enhancedData);
-      
-      if (result && !result.error) {
-        setSuccess(result.message || "Response sent successfully!");
-        reset();
-        // Invalidate queries to refresh the UI
-        await queryClient.invalidateQueries(["responses", messageData.id]);
-      } else {
-        setError(result?.message || "Failed to send response");
+  const onSubmit = useCallback(
+    async (data: CreateEmailResponse) => {
+      if (!messageData.id) {
+        setError("Cannot send reply: Invalid message ID");
+        return;
       }
-    } catch (error) {
-      console.error("Error sending email response:", error);
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : "An unexpected error occurred while sending your response. Please try again.";
-      setError(errorMessage);
-    }
-  }, [messageData, queryClient, reset]);
+
+      if (!messageData.email) {
+        setError("Cannot send reply: No recipient email");
+        return;
+      }
+
+      try {
+        setError("");
+        setSuccess("");
+
+        // Enhance data with proper typing for the API
+        const enhancedData: CreateEmailResponse = {
+          ...data,
+          message: messageData.id,
+        };
+
+        const result = await sendReplyEmail(enhancedData);
+
+        if (result && !result.error) {
+          try {
+            const saveResult = await saveEmailResponse(enhancedData);
+            if (saveResult) {
+              setSuccess(result.message || "Response sent successfully!");
+              reset();
+            }
+          } catch (error) {
+            console.error("Error saving email response:", error);
+            setError(
+              "Response sent but failed to save record. Please check the responses list."
+            );
+          }
+        } else {
+          setError(result?.message || "Failed to send response");
+        }
+      } catch (error) {
+        console.error("Error sending email response:", error);
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred while sending your response. Please try again.";
+        setError(errorMessage);
+      }
+    },
+    [messageData, queryClient, reset]
+  );
 
   // Don't render if no message data
   if (!messageData.id) {
@@ -139,16 +159,8 @@ const EmailInput: React.FC<EmailInputProps> = memo(({ message }) => {
   return (
     <div>
       {/* Alert messages */}
-      {success && (
-        <Alert type="success">
-          {success}
-        </Alert>
-      )}
-      {error && (
-        <Alert type="danger">
-          {error}
-        </Alert>
-      )}
+      {success && <Alert type="success">{success}</Alert>}
+      {error && <Alert type="danger">{error}</Alert>}
 
       {/* Reply form */}
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -159,12 +171,17 @@ const EmailInput: React.FC<EmailInputProps> = memo(({ message }) => {
 
         {/* Reply textarea */}
         <div className="mb-3">
-          <label htmlFor="response_message" className="form-label visually-hidden">
+          <label
+            htmlFor="response_message"
+            className="form-label visually-hidden"
+          >
             Response Message
           </label>
           <textarea
             id="response_message"
-            className={`form-control ${errors.response_message ? 'is-invalid' : ''}`}
+            className={`form-control ${
+              errors.response_message ? "is-invalid" : ""
+            }`}
             placeholder="Type your response here..."
             rows={4}
             style={{
@@ -176,7 +193,7 @@ const EmailInput: React.FC<EmailInputProps> = memo(({ message }) => {
             {...register("response_message")}
             disabled={isSubmitting}
           />
-          
+
           {/* Validation error */}
           {errors.response_message && (
             <div className="invalid-feedback d-block">
@@ -195,9 +212,9 @@ const EmailInput: React.FC<EmailInputProps> = memo(({ message }) => {
             >
               {isSubmitting ? (
                 <>
-                  <span 
-                    className="spinner-border spinner-border-sm me-2" 
-                    role="status" 
+                  <span
+                    className="spinner-border spinner-border-sm me-2"
+                    role="status"
                     aria-hidden="true"
                   />
                   Sending...
@@ -212,9 +229,16 @@ const EmailInput: React.FC<EmailInputProps> = memo(({ message }) => {
         {/* Recipient info */}
         <div className="mt-2">
           <small className="text-muted">
-            Replying to: <strong>{messageData.email}</strong>
+            Replying to:{" "}
+            <strong className="text-primary">{messageData.email}</strong>
             {messageData.subject && (
-              <> • Subject: <strong>Re: {messageData.subject}</strong></>
+              <>
+                {" "}
+                • Subject:{" "}
+                <strong className="text-primary">
+                  Re: {messageData.subject}
+                </strong>
+              </>
             )}
           </small>
         </div>
@@ -223,6 +247,6 @@ const EmailInput: React.FC<EmailInputProps> = memo(({ message }) => {
   );
 });
 
-EmailInput.displayName = 'EmailInput';
+EmailInput.displayName = "EmailInput";
 
 export default EmailInput;

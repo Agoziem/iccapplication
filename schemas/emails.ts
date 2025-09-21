@@ -24,6 +24,7 @@ export const UpdateEmailSchema = z.object({
   email: z.string().email().min(1).max(254),
   subject: z.string().min(1).max(100),
   message: z.string().min(1),
+  read: z.boolean().optional(),
 });
 
 export const EmailResponseSchema = z.object({
