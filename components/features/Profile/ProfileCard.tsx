@@ -724,15 +724,6 @@ const ProfileCard: React.FC<ProfileCardProps> = React.memo(
             showmodal={editMode}
             toggleModal={() => setLocalEditMode(false)}
           >
-            <div className="modal-header">
-              <h5 className="modal-title">Edit Profile</h5>
-              <button
-                type="button"
-                className="btn-close"
-                onClick={() => setLocalEditMode(false)}
-                aria-label="Close"
-              />
-            </div>
             <div className="modal-body">
               <ProfileForm
                 setAlert={setAlert}

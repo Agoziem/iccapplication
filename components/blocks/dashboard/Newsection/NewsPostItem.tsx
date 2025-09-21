@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import Link from "next/link";
 import ArticlePlaceholder from "@/components/features/configuration/articles/ArticlePlaceholder";
 import { ArticleResponse, PaginatedArticleResponse } from "@/types/articles";
+import moment from "moment";
 
 interface NewsPostItemProps {
   item: ArticleResponse;
@@ -59,14 +60,13 @@ const NewsPostItem: React.FC<NewsPostItemProps> = React.memo(({ item, index, ite
           </h6>
           
           {truncatedSubtitle && (
-            <p className="text-muted small mb-0 lh-sm">
+            <p className="text-muted small mb-0 lh-sm line-clamp-3">
               {truncatedSubtitle}
             </p>
           )}
           
-          <small className="text-muted">
-            <i className="bi bi-calendar3 me-1" aria-hidden="true"></i>
-            {item.date ? new Date(item.date).toLocaleDateString() : 'No date'}
+          <small className="text-secondary">
+            {item.date ? moment(item.date).fromNow() : 'No date'}
           </small>
         </div>
       </div>

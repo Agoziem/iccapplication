@@ -14,11 +14,6 @@ const navlist: NavItem[] = [
   },
   {
     id: uuidv4(),
-    title: "About",
-    link: "/#about",
-  },
-  {
-    id: uuidv4(),
     title: "Services",
     link: "/services",
   },

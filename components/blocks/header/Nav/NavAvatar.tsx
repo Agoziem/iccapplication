@@ -4,12 +4,11 @@ import React, { useState, useCallback, memo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import useCurrentUser from "@/hooks/useCurrentUser";
 import Modal from "@/components/custom/Modal/modal";
-import { logoutUser } from "@/data/hooks/user.hooks";
+import { logoutUser, useMyProfile } from "@/data/hooks/user.hooks";
 
 const NavAvatar: React.FC = memo(() => {
-  const { currentRoot, currentUser } = useCurrentUser();
+  const { data: currentUser } = useMyProfile();
   const [showModal, setShowModal] = useState<boolean>(false);
   const [loggingOut, setLoggingOut] = useState<boolean>(false);
   const router = useRouter();
@@ -98,7 +97,7 @@ const NavAvatar: React.FC = memo(() => {
           <li>
             <Link
               className="dropdown-item d-flex align-items-center"
-              href={`/${currentRoot}/profile`}
+              href={`/dashboard/profile`}
             >
               <i className="bi bi-person"></i>
               <span>My Profile</span>
@@ -111,7 +110,7 @@ const NavAvatar: React.FC = memo(() => {
           <li>
             <Link
               className="dropdown-item d-flex align-items-center"
-              href={`/${currentRoot}/profile`}
+              href={`/dashboard/profile`}
             >
               <i className="bi bi-gear"></i>
               <span>Account Settings</span>
