@@ -35,7 +35,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <div className={`col-12 col-md-4 ${className}`.trim()}>
-      <div className="card shadow-sm hover-card" style={{ height: "360px" }}>
+      <div className="card shadow-sm hover-card" style={{ height: "380px" }}>
         <div className="card-body p-3">
           {/* Product Image */}
           <div className="d-flex justify-content-center mb-3 py-4 rounded bg-primary-light">
@@ -99,7 +99,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             </p>
 
             {/* Price */}
-            <div className="mb-3">
+            <div>
               <span className="h5 text-primary fw-bold">
                 {product.free ? "Free" : formatPrice(product.price)}
               </span>

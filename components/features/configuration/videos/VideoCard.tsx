@@ -94,7 +94,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
           </h6>
 
           {/* Video Description */}
-          <p className="card-text text-muted small mb-1 flex-grow-1">
+          <p className="card-text text-muted small mb-1 flex-grow-1 line-clamp-2">
             {truncateText(item.description, 100)}
           </p>
 
