@@ -8,8 +8,8 @@ interface ArticlePlaceholderProps {
 }
 
 const ArticlePlaceholder: React.FC<ArticlePlaceholderProps> = ({
-  width = 60,
-  height = 60,
+  width = 80,
+  height = 80,
   fontSize = "2rem",
 }) => {
   return (

@@ -36,8 +36,8 @@ const NewsPostItem: React.FC<NewsPostItemProps> = React.memo(({ item, index, ite
               alt={`Thumbnail for ${item.title}`}
               className="rounded shadow-sm"
               style={{
-                width: "60px",
-                height: "60px",
+                width: "80px",
+                height: "80px",
                 objectFit: "cover",
                 objectPosition: "top center",
               }}
@@ -49,10 +49,10 @@ const NewsPostItem: React.FC<NewsPostItemProps> = React.memo(({ item, index, ite
         </div>
         
         <div className="ms-3 flex-grow-1">
-          <h6 className="mb-2 line-clamp-3">
+          <h6 className="mb-2">
             <Link 
               href={`/articles/${item.slug}`}
-              className="text-decoration-none "
+              className="text-decoration-none text-break line-clamp-3"
               title={item.title}
             >
               {item.title}
