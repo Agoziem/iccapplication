@@ -16,12 +16,15 @@ import {
 } from "react-icons/md";
 import ImageUploader from "@/components/custom/Imageuploader/ImageUploader";
 import Modal from "../Modal/modal";
+import { useUploadRichTextImage } from "@/data/hooks/organization.hooks";
+import { toast } from "sonner";
 
 interface ToolbarProps {
   editor: Editor | null;
   content: string;
   className?: string;
   style?: React.CSSProperties;
+  onImageUploaded?: (imageUrl: string, imageId: number) => void;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -29,9 +32,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
   content,
   className = "",
   style = {},
+  onImageUploaded,
 }) => {
   const [showImageUpload, setShowImageUpload] = useState(false);
   const [imageUrl, setImageUrl] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  
+  // Hook for uploading images to the server
+  const { mutateAsync: uploadRichTextImage } = useUploadRichTextImage();
 
   // Handle image upload
   const handleImageUpload = useCallback(
@@ -47,19 +55,41 @@ const Toolbar: React.FC<ToolbarProps> = ({
 
   // Handle file upload from ImageUploader
   const handleFileUpload = useCallback(
-    (fileOrUrl: File | string) => {
+    async (fileOrUrl: File | string) => {
       if (!editor) return;
 
       if (typeof fileOrUrl === "string") {
+        // If it's a URL, just set it directly
         setImageUrl(fileOrUrl);
       } else {
-        // For File objects, we'd need to handle upload to server
-        // For now, we'll create a local URL (temporary solution)
-        const url = URL.createObjectURL(fileOrUrl);
-        setImageUrl(url);
+        // If it's a File, upload it to the server
+        try {
+          setIsUploading(true);
+          toast.loading("Uploading image...");
+          
+          const uploadedImage = await uploadRichTextImage(fileOrUrl);
+          
+          // Use the persistent URL from the server
+          setImageUrl(uploadedImage.image_url || "");
+          
+          // Notify parent component of the upload
+          if (onImageUploaded && uploadedImage.image_url && uploadedImage.id) {
+            const imageId = typeof uploadedImage.id === 'string' ? parseInt(uploadedImage.id) : uploadedImage.id;
+            onImageUploaded(uploadedImage.image_url, imageId);
+          }
+          
+          toast.dismiss();
+          toast.success("Image uploaded successfully!");
+        } catch (error) {
+          console.error("Error uploading image:", error);
+          toast.dismiss();
+          toast.error("Failed to upload image. Please try again.");
+        } finally {
+          setIsUploading(false);
+        }
       }
     },
-    [editor]
+    [editor, uploadRichTextImage]
   );
 
   // add image with upload option
@@ -73,6 +103,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   const closeModal = useCallback(() => {
     setShowImageUpload(false);
     setImageUrl("");
+    setIsUploading(false);
   }, []);
 
   const setLink = useCallback(() => {
@@ -191,7 +222,16 @@ const Toolbar: React.FC<ToolbarProps> = ({
               value={imageUrl}
               onChange={handleFileUpload}
               placeholder="Choose an image file"
+              disabled={isUploading}
             />
+            {isUploading && (
+              <div className="mt-2">
+                <div className="spinner-border spinner-border-sm text-primary me-2" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+                <small className="text-muted">Uploading image...</small>
+              </div>
+            )}
           </div>
 
           <div className="text-center my-3">
@@ -209,6 +249,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
               placeholder="https://example.com/image.jpg"
+              disabled={isUploading}
             />
           </div>
           <div className="">
@@ -218,7 +259,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
               onClick={() => {
                 setShowImageUpload(false);
                 setImageUrl("");
+                setIsUploading(false);
               }}
+              disabled={isUploading}
             >
               Cancel
             </button>
@@ -226,9 +269,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
               type="button"
               className="btn btn-primary"
               onClick={() => handleImageUpload(imageUrl)}
-              disabled={!imageUrl}
+              disabled={!imageUrl || isUploading}
             >
-              Insert Image
+              {isUploading ? "Uploading..." : "Insert Image"}
             </button>
           </div>
         </div>

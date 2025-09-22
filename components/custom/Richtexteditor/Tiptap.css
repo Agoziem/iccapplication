@@ -33,6 +33,30 @@
   transform: scale(1.02);
 }
 
+/* Image container with delete button */
+.image-container {
+  margin: 10px auto;
+  max-width: 100%;
+}
+
+.image-container:hover .image-delete-btn {
+  opacity: 1;
+}
+
+.image-delete-btn {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  font-size: 16px;
+  font-weight: bold;
+  border: none !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.image-delete-btn:hover {
+  background-color: #dc3545 !important;
+  transform: scale(1.1);
+}
+
 .custom-link-class{
   color: var(--secondary) !important;
   text-decoration: underline;

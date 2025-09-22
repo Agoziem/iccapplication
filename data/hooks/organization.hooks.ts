@@ -21,8 +21,10 @@ import {
   CreateSubscription,
   UpdateSubscription,
   PaginatedSubscription,
-  OrganizationArray
+  OrganizationArray,
+  RichTextEditorImages
 } from "@/types/organizations";
+import { SuccessResponse } from "@/types/users";
 
 export const organizationApiendpoint = "/api";
 
@@ -38,6 +40,7 @@ export const ORGANIZATION_KEYS = {
   departments: (orgId: number) => [...ORGANIZATION_KEYS.all, 'departments', orgId] as const,
   testimonials: (orgId: number) => [...ORGANIZATION_KEYS.all, 'testimonials', orgId] as const,
   subscriptions: (orgId: number) => [...ORGANIZATION_KEYS.all, 'subscriptions', orgId] as const,
+  richtextimages: () => [...ORGANIZATION_KEYS.all, 'richtextimages'] as const
 } as const;
 
 // Organization CRUD operations
@@ -212,6 +215,27 @@ export const updateSubscription = async (subscriptionId: number, updateData: Upd
 
 export const deleteSubscription = async (subscriptionId: number): Promise<void> => {
   await AxiosInstanceWithToken.delete(`${organizationApiendpoint}/subscription/delete/${subscriptionId}/`);
+};
+
+
+export const uploadRichTextImage = async (image: File ): Promise<RichTextEditorImages> => {
+  const formData = new FormData();
+  formData.append("image", image);
+  const response = await AxiosInstancemultipartWithToken.post(
+    `${organizationApiendpoint}/richtextimage/upload/`,
+    formData
+  );
+  return response.data;
+};
+
+export const deleteRichTextImage = async (imageId: number): Promise<SuccessResponse> => {
+  const response = await AxiosInstanceWithToken.delete(`${organizationApiendpoint}/richtextimage/delete/${imageId}/`);
+  return response.data;
+};
+
+export const fetchAllRichTextImages = async (): Promise<RichTextEditorImages[]> => {
+  const response = await AxiosInstance.get(`${organizationApiendpoint}/richtextimage/all/`);
+  return response.data;
 };
 
 // React Query Hooks
@@ -593,6 +617,46 @@ export const useDeleteSubscription = (): UseMutationResult<void, Error, { subscr
     },
     onError: (error: Error) => {
       console.error('Error deleting subscription:', error);
+      throw error;
+    },
+  });
+};
+
+// Rich Text Editor Images Query Hook
+export const useRichTextImages = (): UseQueryResult<RichTextEditorImages[], Error> => {
+  return useQuery({
+    queryKey: [...ORGANIZATION_KEYS.all, 'richtextimages'],
+    queryFn: fetchAllRichTextImages,
+    onError: (error: Error) => {
+      console.error('Error fetching rich text images:', error);
+      throw error;
+    },
+  });
+};
+
+// Rich Text Editor Images Management Mutations
+export const useUploadRichTextImage = (): UseMutationResult<RichTextEditorImages, Error, File> => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: uploadRichTextImage,
+    onSuccess: () => {
+      queryClient.invalidateQueries([...ORGANIZATION_KEYS.all, 'richtextimages']);
+    },
+    onError: (error: Error) => {
+      console.error('Error uploading rich text image:', error);
+      throw error;
+    },
+  });
+};
+export const useDeleteRichTextImage = (): UseMutationResult<SuccessResponse, Error, number> => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteRichTextImage,
+    onSuccess: () => {
+      queryClient.invalidateQueries([...ORGANIZATION_KEYS.all, 'richtextimages']);
+    },
+    onError: (error: Error) => {
+      console.error('Error deleting rich text image:', error);
       throw error;
     },
   });

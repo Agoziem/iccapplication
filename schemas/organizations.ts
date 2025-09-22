@@ -390,6 +390,19 @@ export const PaginatedSubscriptionSerializer = z.object({
   results: z.array(SubscriptionSchema),
 });
 
+// RichTextImage Schema (Based on API RichTextImage model)
+export const RichTextEditorImagesSchema = z.object({
+  id: z.number().or(z.string().uuid()), // depending on your model PK type
+  image: imageSchema,
+  image_url: z.string().url().nullable().optional(), // computed field
+  image_name: z.string().nullable().optional(), // computed field
+  uploaded_at: z.string().datetime(), // ISO datetime string
+});
+
+export const CreateRichTextEditorImagesSchema = z.object({
+  image: imageSchema,
+});
+
 // ---------------------------------------------------------------------
 // Array Schemas for bulk operations
 // ---------------------------------------------------------------------

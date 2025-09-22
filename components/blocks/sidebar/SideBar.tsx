@@ -8,6 +8,7 @@ import { RefContext } from "./sideBarTogglerContext";
 import Modal from "../../custom/Modal/modal";
 import { logoutUser, useMyProfile } from "@/data/hooks/user.hooks";
 import toast from "react-hot-toast";
+import { QueryClient } from "react-query";
 
 interface NavItem {
   _id: string;
@@ -29,14 +30,15 @@ const SideBar: React.FC<SideBarProps> = memo(({ navList }) => {
   const [showModal, setShowModal] = useState<boolean>(false);
   const { data: user } = useMyProfile();
   const [loggingOut, setLoggingOut] = useState<boolean>(false);
+  const queryClient = new QueryClient();
 
   // Memoized logout function
   const logoutDashboard = useCallback(async () => {
     setLoggingOut(true);
     setShowModal(false);
     try {
-      console.log('Logging out...');
       await logoutUser();
+      queryClient.removeQueries(["users", 'personaldetail'])
       toast.success("Logged out successfully");
       router.push("/accounts/signin");
     } catch (error) {

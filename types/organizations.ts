@@ -23,7 +23,9 @@ import {
   SubscriptionArraySchema,
   UpdateDepartmentSchema,
   UpdateTestimonialSchema,
-  UpdateSubscriptionSchema
+  UpdateSubscriptionSchema,
+  CreateRichTextEditorImagesSchema,
+  RichTextEditorImagesSchema
 } from "../schemas/organizations";
 
 // Extract TypeScript types from Zod schemas
@@ -50,6 +52,11 @@ export type Subscription = z.infer<typeof SubscriptionSchema>;
 export type CreateSubscription = z.infer<typeof CreateSubscriptionSchema>;
 export type UpdateSubscription = z.infer<typeof UpdateSubscriptionSchema>;
 export type PaginatedSubscription = z.infer<typeof PaginatedSubscriptionSerializer>;
+
+
+export type RichTextEditorImages = z.infer<typeof RichTextEditorImagesSchema>;
+export type CreateRichTextEditorImages = z.infer<typeof CreateRichTextEditorImagesSchema>;
+
 
 // Array types
 export type OrganizationArray = z.infer<typeof OrganizationArraySchema>;

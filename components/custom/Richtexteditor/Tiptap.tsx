@@ -5,6 +5,8 @@ import Toolbar from "./Toolbar";
 import Underline from "@tiptap/extension-underline";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
+import { useUploadRichTextImage, useDeleteRichTextImage } from "@/data/hooks/organization.hooks";
+import { toast } from "sonner";
 import "./Tiptap.css";
 
 interface TiptapProps {
@@ -27,23 +29,92 @@ const Tiptap: React.FC<TiptapProps> = ({
   editable = true
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  
+  // Hook for uploading images to the server
+  const { mutateAsync: uploadRichTextImage } = useUploadRichTextImage();
+  const { mutateAsync: deleteRichTextImage } = useDeleteRichTextImage();
+  
+  // Store mapping of image URLs to their server IDs for deletion
+  const [imageIdMap, setImageIdMap] = useState<Map<string, number>>(new Map());
+  
+  // Helper function to upload image file and get persistent URL
+  const uploadImageFile = useCallback(async (file: File): Promise<string | null> => {
+    try {
+      setIsUploading(true);
+      toast.loading("Uploading image...", { id: "image-upload" });
+      
+      const uploadedImage = await uploadRichTextImage(file);
+      
+      // Store the mapping of URL to ID for future deletion
+      if (uploadedImage.image_url && uploadedImage.id) {
+        const imageId = typeof uploadedImage.id === 'string' ? parseInt(uploadedImage.id) : uploadedImage.id;
+        setImageIdMap(prev => new Map(prev).set(uploadedImage.image_url!, imageId));
+      }
+      
+      toast.dismiss("image-upload");
+      toast.success("Image uploaded successfully!");
+      
+      return uploadedImage.image_url || null;
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast.dismiss("image-upload");
+      toast.error("Failed to upload image. Please try again.");
+      return null;
+    } finally {
+      setIsUploading(false);
+    }
+  }, [uploadRichTextImage]);
+  
+  // Helper function to delete image from server
+  const deleteImageFromServer = useCallback(async (imageUrl: string): Promise<void> => {
+    try {
+      const imageId = imageIdMap.get(imageUrl);
+      if (imageId) {
+        toast.loading("Deleting image...", { id: "image-delete" });
+        
+        await deleteRichTextImage(imageId);
+        
+        // Remove from local mapping
+        setImageIdMap(prev => {
+          const newMap = new Map(prev);
+          newMap.delete(imageUrl);
+          return newMap;
+        });
+        
+        toast.dismiss("image-delete");
+        toast.success("Image deleted successfully!");
+      }
+    } catch (error) {
+      console.error("Error deleting image:", error);
+      toast.dismiss("image-delete");
+      toast.error("Failed to delete image from server.");
+    }
+  }, [imageIdMap, deleteRichTextImage]);
+  
+  // Callback to handle image uploads from toolbar
+  const handleToolbarImageUpload = useCallback((imageUrl: string, imageId: number) => {
+    setImageIdMap(prev => new Map(prev).set(imageUrl, imageId));
+  }, []);
 
   // Handle drag and drop for images
-  const handleDrop = useCallback((event: DragEvent, editor: Editor) => {
+  const handleDrop = useCallback(async (event: DragEvent, editor: Editor) => {
     const files = Array.from(event.dataTransfer?.files || []);
     const imageFiles = files.filter(file => file.type.startsWith('image/'));
     
     if (imageFiles.length > 0) {
       event.preventDefault();
       
-      // For each dropped image file, create a temporary URL and insert it
-      imageFiles.forEach(file => {
-        const url = URL.createObjectURL(file);
-        editor.chain().focus().setImage({ src: url }).run();
-      });
+      // Upload each dropped image file to the server
+      for (const file of imageFiles) {
+        const persistentUrl = await uploadImageFile(file);
+        if (persistentUrl) {
+          editor.chain().focus().setImage({ src: persistentUrl }).run();
+        }
+      }
     }
     setIsDragOver(false);
-  }, []);
+  }, [uploadImageFile]);
 
   const handleDragEnter = useCallback((event: DragEvent) => {
     event.preventDefault();
@@ -74,9 +145,55 @@ const Tiptap: React.FC<TiptapProps> = ({
       Underline,
       Image.configure({
         HTMLAttributes: {
-          class: "custom-image-class",
+          class: "custom-image-class position-relative",
         },
         allowBase64: true,
+      }).extend({
+        addNodeView() {
+          return ({ node, editor, getPos }) => {
+            const container = document.createElement('div');
+            container.className = 'image-container position-relative d-inline-block';
+            
+            const img = document.createElement('img');
+            img.src = node.attrs.src;
+            img.className = 'custom-image-class';
+            img.alt = node.attrs.alt || '';
+            
+            // Add delete button for images that have server IDs
+            const imageUrl = node.attrs.src;
+            const hasServerId = imageIdMap.has(imageUrl);
+            
+            if (hasServerId && editor.isEditable) {
+              const deleteBtn = document.createElement('button');
+              deleteBtn.innerHTML = '×';
+              deleteBtn.className = 'btn btn-danger btn-sm position-absolute image-delete-btn';
+              deleteBtn.style.cssText = 'top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; padding: 0; line-height: 1; z-index: 10; font-size: 18px;';
+              deleteBtn.title = 'Delete image';
+              deleteBtn.type = 'button';
+              
+              deleteBtn.onclick = async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (confirm('Are you sure you want to delete this image? This will also remove it from the server.')) {
+                  // Delete from server
+                  await deleteImageFromServer(imageUrl);
+                  
+                  // Remove from editor
+                  const pos = getPos();
+                  if (pos !== undefined) {
+                    editor.chain().focus().deleteRange({ from: pos, to: pos + node.nodeSize }).run();
+                  }
+                }
+              };
+              
+              container.appendChild(deleteBtn);
+            }
+            
+            container.appendChild(img);
+            return { dom: container };
+          };
+        },
       }),
       Link.configure({
         openOnClick: true,
@@ -105,11 +222,13 @@ const Tiptap: React.FC<TiptapProps> = ({
         if (imageItems.length > 0) {
           event.preventDefault();
           
-          imageItems.forEach(item => {
+          imageItems.forEach(async (item) => {
             const file = item.getAsFile();
-            if (file) {
-              const url = URL.createObjectURL(file);
-              editor?.chain().focus().setImage({ src: url }).run();
+            if (file && editor) {
+              const persistentUrl = await uploadImageFile(file);
+              if (persistentUrl) {
+                editor.chain().focus().setImage({ src: persistentUrl }).run();
+              }
             }
           });
           return true;
@@ -141,7 +260,7 @@ const Tiptap: React.FC<TiptapProps> = ({
 
   return (
     <div className={`w-100 ${className}`} style={style}>
-      <Toolbar editor={editor} content={item || ""} />
+      <Toolbar editor={editor} content={item || ""} onImageUploaded={handleToolbarImageUpload} />
       <div 
         className="position-relative"
         onDragEnter={(e) => {
@@ -178,7 +297,7 @@ const Tiptap: React.FC<TiptapProps> = ({
         {editable && (
           <div 
             className={`position-absolute top-50 start-50 translate-middle text-muted small text-center ${
-              item || isDragOver ? 'd-none' : ''
+              item || isDragOver || isUploading ? 'd-none' : ''
             }`}
             style={{
               pointerEvents: "none",
@@ -189,6 +308,13 @@ const Tiptap: React.FC<TiptapProps> = ({
             {isDragOver ? (
               <div className="text-primary">
                 <strong>Drop images here to insert them</strong>
+              </div>
+            ) : isUploading ? (
+              <div className="text-info">
+                <div className="spinner-border spinner-border-sm me-2" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+                <strong>Uploading image...</strong>
               </div>
             ) : (
               <div>

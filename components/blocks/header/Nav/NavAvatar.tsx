@@ -6,18 +6,21 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import Modal from "@/components/custom/Modal/modal";
 import { logoutUser, useMyProfile } from "@/data/hooks/user.hooks";
+import { QueryClient } from "react-query";
 
 const NavAvatar: React.FC = memo(() => {
   const { data: currentUser } = useMyProfile();
   const [showModal, setShowModal] = useState<boolean>(false);
   const [loggingOut, setLoggingOut] = useState<boolean>(false);
   const router = useRouter();
+  const queryClient = new QueryClient();
 
   const logoutDashboard = useCallback(async () => {
     try {
       setLoggingOut(true);
       setShowModal(false);
       await logoutUser();
+      queryClient.removeQueries(["users", 'personaldetail'])
       toast.success("Logged out successfully");
       router.push("/accounts/signin");
     } catch (error) {

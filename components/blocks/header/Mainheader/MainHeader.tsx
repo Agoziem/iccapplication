@@ -14,6 +14,7 @@ import Cartbutton from "@/components/custom/Cartbutton/cart-button";
 import { logoutUser, useMyProfile } from "@/data/hooks/user.hooks";
 import { useRouter } from "next/navigation";
 import { getToken } from "@/utils/auth";
+import { QueryClient } from "react-query";
 
 const MainHeader = () => {
   const { cart } = useCart();
@@ -22,7 +23,7 @@ const MainHeader = () => {
   const token = getToken();
   const { data: user } = useMyProfile();
   const router = useRouter();
-  // const [toggleDropdown, setToggleDropdown] = useState(false);
+  const queryClient = new QueryClient();
 
   const handleActive = (link: string) => {
     setActiveLink(link);
@@ -59,6 +60,7 @@ const MainHeader = () => {
     e.preventDefault();
     try {
       await logoutUser();
+      queryClient.removeQueries(["users", 'personaldetail'])
       router.push("/");
     } catch (error) {
       console.error("Logout failed:", error);
@@ -99,7 +101,7 @@ const MainHeader = () => {
           <Cartbutton />
         </div>
         <div className="d-flex">
-          <Link href={"/dashboard"}>
+          <Link href={token && user ? "/dashboard" : "/accounts/signin"}>
             <button
               className="btn btn-primary text-white font-bold me-2 text-nowrap"
               style={{
