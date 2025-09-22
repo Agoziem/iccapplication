@@ -12,9 +12,15 @@ import {
   useServiceCategories,
 } from "@/data/hooks/service.hooks";
 import { PulseLoader } from "react-spinners";
-import { Service, ServiceCategory, ServiceSubCategory } from "@/types/items";
+import {
+  CreateService,
+  Service,
+  ServiceCategory,
+  ServiceSubCategory,
+} from "@/types/items";
 import { createServiceSchema, updateServiceSchema } from "@/schemas/items";
 import { ORGANIZATION_ID } from "@/data/constants";
+import { toast } from "sonner";
 
 // Create extended schemas for form validation
 
@@ -34,19 +40,17 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
   // React Hook Form setup
   const [selectedCategory, setSelectedCategory] =
     useState<ServiceCategory | null>(null);
-  const formDataSchema = editMode ? updateServiceSchema : createServiceSchema;
-  type ServiceFormData = z.infer<typeof formDataSchema>;
 
-  const form = useForm<ServiceFormData>({
-    resolver: zodResolver(formDataSchema),
+  const form = useForm<CreateService>({
+    resolver: zodResolver(createServiceSchema),
     defaultValues: {
-      name: service?.name || "",
-      description: service?.description || "",
-      price: service?.price ? parseFloat(service.price) : 0,
-      preview: service?.img_url || "",
-      category: service?.category?.id || 0,
-      subcategory: service?.subcategory?.id || 0,
-      organization: ORGANIZATION_ID || "",
+      name: "",
+      description: "",
+      price: 0,
+      preview: "",
+      category: 0,
+      subcategory: 0,
+      organization: Number(ORGANIZATION_ID) || 0,
     },
   });
 
@@ -66,11 +70,11 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
       form.reset({
         name: service.name || "",
         description: service.description || "",
-        price: service.price ? parseFloat(service.price) : 0,
+        price: service.price || 0,
         preview: service.img_url || "",
         category: service.category?.id || 0,
         subcategory: service.subcategory?.id || 0,
-        organization: ORGANIZATION_ID || "",
+        organization: Number(ORGANIZATION_ID) || 0,
       });
       setSelectedCategory(service.category || null);
     }
@@ -90,12 +94,10 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
   }, [selectedCategoryId, serviceCategories]);
 
   // Form submission handler
-  const handleSubmit = async (data: ServiceFormData) => {
+  const handleSubmit = async (data: CreateService) => {
     try {
       const formData = {
         ...data,
-        price:
-          typeof data.price === "string" ? parseFloat(data.price) : data.price,
       };
 
       if (editMode && service?.id) {
@@ -109,22 +111,15 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
       } else {
         await createService({
           organizationId: parseInt(ORGANIZATION_ID),
-          serviceData: {
-            name: service?.name || "",
-            description: service?.description || "",
-            price: service?.price ? parseFloat(service.price) : 0,
-            preview: service?.img_url || "",
-            category: service?.category?.id || 0,
-            subcategory: service?.subcategory?.id || 0,
-            organization: ORGANIZATION_ID || "",
-          },
+          serviceData: formData,
         });
       }
 
       onSuccess();
+      toast.success(`Service ${editMode ? "updated" : "created"} successfully!`);
     } catch (error) {
       console.error("Service form error:", error);
-      // Error handling is done by the parent component through react-query
+      toast.error("An error occurred while saving the service.");
     }
   };
 
@@ -149,8 +144,10 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
             render={({ field, fieldState }) => (
               <>
                 <ImageUploader
-                  {...field}
-                  placeholder="Upload service preview image"
+                  name={field.name}
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Upload image"
                   error={fieldState.error?.message}
                 />
               </>
@@ -224,17 +221,13 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
               <>
                 <input
                   {...field}
-                  type="number"
-                  step="0.01"
-                  min="0"
+                  type="text"
                   className={`form-control ${
                     fieldState.error ? "is-invalid" : ""
                   }`}
                   id="price"
                   placeholder="Enter service price"
-                  onChange={(e) =>
-                    field.onChange(parseFloat(e.target.value) || 0)
-                  }
+                  onChange={field.onChange}
                 />
                 {fieldState.error && (
                   <div className="invalid-feedback">
@@ -336,6 +329,20 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
           />
         </div>
 
+        {/* show form errors here*/}
+        {Object.keys(form.formState.errors).length > 0 && (
+          <div className="alert alert-danger" role="alert">
+            Please fix the errors above before submitting the form.
+            <ul>
+              {Object.entries(form.formState.errors).map(([field, error]) => (
+                <li key={field}>
+                  <strong>{field}:</strong> {error?.message}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {/* Form Actions */}
         <div className="d-flex justify-content-end gap-2 mt-4">
           <button
@@ -349,7 +356,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={isSubmitting || !form.formState.isValid}
+            disabled={isSubmitting}
           >
             {isSubmitting ? (
               <>

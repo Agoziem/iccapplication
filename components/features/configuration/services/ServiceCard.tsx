@@ -52,7 +52,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
                 alt={item.name}
                 width={80}
                 height={80}
-                className="rounded-circle object-fit-cover"
+                className="rounded object-fit-cover"
                 style={{ maxWidth: "80px", maxHeight: "80px" }}
               />
             ) : (
@@ -102,7 +102,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           {/* Price and Actions */}
           <div className="d-flex justify-content-between align-items-center">
             <span className="fw-bold text-success h6 mb-0">
-              {formatPrice(item.price)}
+              {formatPrice(String(item.price))}
             </span>
 
             {/* Action Buttons */}

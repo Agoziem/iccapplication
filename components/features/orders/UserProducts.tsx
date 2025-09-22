@@ -2,7 +2,11 @@ import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { PiEmptyBold } from "react-icons/pi";
 import ProductPlaceholder from "../../custom/ImagePlaceholders/Productplaceholder";
 import Link from "next/link";
-import { productsAPIendpoint, useProducts } from "@/data/hooks/product.hooks";
+import {
+  productsAPIendpoint,
+  useProducts,
+  useUserBoughtProducts,
+} from "@/data/hooks/product.hooks";
 import { useSearchParams, useRouter } from "next/navigation";
 import Pagination from "@/components/custom/Pagination/Pagination";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
@@ -29,7 +33,6 @@ const UserProducts: React.FC = React.memo(() => {
     parseAsInteger.withDefault(10)
   );
 
-  
   // Safe state management
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
@@ -39,8 +42,8 @@ const UserProducts: React.FC = React.memo(() => {
     data: products,
     isLoading: loadingProducts,
     error: queryError,
-    isError
-  } = useProducts(parseInt(ORGANIZATION_ID) || 0, {
+    isError,
+  } = useUserBoughtProducts(parseInt(ORGANIZATION_ID) || 0, user?.id || 0, {
     page: page,
     page_size: pageSize,
     category: currentCategory !== "All" ? currentCategory : null,
@@ -49,57 +52,55 @@ const UserProducts: React.FC = React.memo(() => {
   // Effect to handle query errors
   useEffect(() => {
     if (isError) {
-      setError(queryError?.message || 'Failed to load products');
+      setError(queryError?.message || "Failed to load products");
     } else {
       setError(null);
     }
   }, [isError, queryError]);
 
   // Safe page change handler
-    const handlePageChange = useCallback(
-      (newPage: string | number) => {
-        const pageNumber =
-          typeof newPage === "string" ? parseInt(newPage, 10) : newPage;
-        if (isNaN(pageNumber) || pageNumber < 1) {
-          console.error("Invalid page number:", newPage);
-          return;
-        }
-        setPage(pageNumber);
-      },
-      [currentCategory, pageSize, router]
-    );
-  
-    // Safe category change handler
-    const handleCategoryChange = useCallback(
-      (category: string) => {
-        setCurrentCategory(category);
-        setPage(1); // Reset to first page on category change
-      },
-      [page, pageSize, router]
-    );
+  const handlePageChange = useCallback(
+    (newPage: string | number) => {
+      const pageNumber =
+        typeof newPage === "string" ? parseInt(newPage, 10) : newPage;
+      if (isNaN(pageNumber) || pageNumber < 1) {
+        console.error("Invalid page number:", newPage);
+        return;
+      }
+      setPage(pageNumber);
+    },
+    [currentCategory, pageSize, router]
+  );
+
+  // Safe category change handler
+  const handleCategoryChange = useCallback(
+    (category: string) => {
+      setCurrentCategory(category);
+      setPage(1); // Reset to first page on category change
+    },
+    [page, pageSize, router]
+  );
 
   // Safe filtered products with validation
   const filteredProducts = useMemo(() => {
     try {
       if (!products?.results || !Array.isArray(products.results)) return [];
-      
-      const validProducts = products.results.filter(product => 
-        product && 
-        typeof product === 'object' && 
-        product.id && 
-        product.name
+
+      const validProducts = products.results.filter(
+        (product) =>
+          product && typeof product === "object" && product.id && product.name
       );
 
-      if (!searchQuery || typeof searchQuery !== 'string') return validProducts;
+      if (!searchQuery || typeof searchQuery !== "string") return validProducts;
 
       const query = searchQuery.toLowerCase().trim();
       if (!query) return validProducts;
 
       return validProducts.filter((product) => {
-        const name = product.name || '';
-        const description = product.description || '';
-        const category = product.category?.category || '';
-        
+        const name = product.name || "";
+        const description = product.description || "";
+        const category = product.category?.category || "";
+
         return (
           name.toLowerCase().includes(query) ||
           description.toLowerCase().includes(query) ||
@@ -107,46 +108,50 @@ const UserProducts: React.FC = React.memo(() => {
         );
       });
     } catch (error) {
-      console.error('Error filtering products:', error);
-      setError('Error processing products data');
+      console.error("Error filtering products:", error);
+      setError("Error processing products data");
       return [];
     }
   }, [products, searchQuery]);
 
   // Safe description truncation
-  const getTruncatedDescription = useCallback((description: string | null, maxLength = 80) => {
-    if (!description || typeof description !== 'string') return 'No description available';
-    
-    if (description.length <= maxLength) return description;
-    
-    return `${description.substring(0, maxLength).trim()}...`;
-  }, []);
+  const getTruncatedDescription = useCallback(
+    (description: string | null, maxLength = 80) => {
+      if (!description || typeof description !== "string")
+        return "No description available";
+
+      if (description.length <= maxLength) return description;
+
+      return `${description.substring(0, maxLength).trim()}...`;
+    },
+    []
+  );
 
   // Safe URL validation
   const getSafeProductUrl = useCallback((product: Product) => {
     const url = product?.product_url;
-    if (!url || typeof url !== 'string') return '#';
-    
+    if (!url || typeof url !== "string") return "#";
+
     try {
       // Basic URL validation
-      if (url.startsWith('http://') || url.startsWith('https://')) {
+      if (url.startsWith("http://") || url.startsWith("https://")) {
         new URL(url); // Will throw if invalid
         return url;
-      } else if (url.startsWith('/')) {
+      } else if (url.startsWith("/")) {
         return url; // Relative URL
       } else {
         return `https://${url}`; // Assume HTTPS if no protocol
       }
     } catch (error) {
-      console.error('Invalid product URL:', url, error);
-      return '#';
+      console.error("Invalid product URL:", url, error);
+      return "#";
     }
   }, []);
 
   // Safe count display
   const getProductCount = useMemo(() => {
     const count = products?.count;
-    if (typeof count !== 'number' || isNaN(count)) return 0;
+    if (typeof count !== "number" || isNaN(count)) return 0;
     return Math.max(0, count);
   }, [products?.count]);
 
@@ -167,12 +172,18 @@ const UserProducts: React.FC = React.memo(() => {
   // Error state
   if (error) {
     return (
-      <div className="alert alert-danger d-flex align-items-center" role="alert">
+      <div
+        className="alert alert-danger d-flex align-items-center"
+        role="alert"
+      >
         <i className="bi bi-exclamation-triangle-fill me-2"></i>
         <div>
           <strong>Error:</strong> {error}
           <br />
-          <small>Please try refreshing the page or contact support if the issue persists.</small>
+          <small>
+            Please try refreshing the page or contact support if the issue
+            persists.
+          </small>
         </div>
       </div>
     );
@@ -181,11 +192,12 @@ const UserProducts: React.FC = React.memo(() => {
   // No session state
   if (!user) {
     return (
-      <div className="alert alert-warning d-flex align-items-center" role="alert">
+      <div
+        className="alert alert-warning d-flex align-items-center"
+        role="alert"
+      >
         <i className="bi bi-person-exclamation me-2"></i>
-        <div>
-          Please sign in to view your purchased products.
-        </div>
+        <div>Please sign in to view your purchased products.</div>
       </div>
     );
   }
@@ -197,7 +209,8 @@ const UserProducts: React.FC = React.memo(() => {
         <div>
           <h4 className="mt-3 mb-2">Products Purchased</h4>
           <p className="text-muted mb-0">
-            {getProductCount} Product{getProductCount !== 1 ? "s" : ""} purchased
+            {getProductCount} Product{getProductCount !== 1 ? "s" : ""}{" "}
+            purchased
           </p>
         </div>
         <div className="mb-4 mb-md-0">
@@ -214,7 +227,9 @@ const UserProducts: React.FC = React.memo(() => {
         <div className="mb-3">
           <h5 className="mb-1">Search Results</h5>
           <p className="text-muted small">
-            Found {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''} matching &ldquo;{searchQuery}&rdquo;
+            Found {filteredProducts.length} product
+            {filteredProducts.length !== 1 ? "s" : ""} matching &ldquo;
+            {searchQuery}&rdquo;
           </p>
         </div>
       )}
@@ -223,9 +238,12 @@ const UserProducts: React.FC = React.memo(() => {
       <div className="row g-3 mt-2">
         {filteredProducts.length > 0 ? (
           filteredProducts.map((product) => {
-            const productName = product.name || 'Unnamed Product';
-            const productCategory = product.category?.category || 'Uncategorized';
-            const productDescription = getTruncatedDescription(product.description);
+            const productName = product.name || "Unnamed Product";
+            const productCategory =
+              product.category?.category || "Uncategorized";
+            const productDescription = getTruncatedDescription(
+              product.description
+            );
             const productUrl = getSafeProductUrl(product);
             const hasPreview = product.preview && product.img_url;
 
@@ -243,30 +261,35 @@ const UserProducts: React.FC = React.memo(() => {
                           height={68}
                           className="rounded-circle object-fit-cover border"
                           style={{ objectPosition: "center" }}
-    
                         />
                       ) : null}
-                      <div style={{ display: hasPreview ? 'none' : 'block' }}>
+                      <div style={{ display: hasPreview ? "none" : "block" }}>
                         <ProductPlaceholder />
                       </div>
                     </div>
 
                     {/* Product Info */}
                     <div className="flex-grow-1" style={{ minWidth: 0 }}>
-                      <h6 className="text-capitalize mb-1 text-truncate" title={productName}>
+                      <h6
+                        className="text-capitalize mb-1 text-truncate"
+                        title={productName}
+                      >
                         {productName}
                       </h6>
-                      <p className="small text-muted mb-2 line-clamp-3" title={product.description}>
+                      <p
+                        className="small text-muted mb-2 line-clamp-3"
+                        title={product.description}
+                      >
                         {productDescription}
                       </p>
-                      
+
                       {/* Footer Section */}
                       <div className="d-flex flex-column gap-2 justify-content-between align-items-start mt-auto">
                         <p className="small text-muted mb-0">
                           {productCategory} Product
                         </p>
-                        
-                        {productUrl !== '#' ? (
+
+                        {productUrl !== "#" ? (
                           <Link
                             href={productUrl}
                             target="_blank"
@@ -298,13 +321,12 @@ const UserProducts: React.FC = React.memo(() => {
               />
               <h4 className="text-muted mb-2">No Products Found</h4>
               <p className="text-muted">
-                {searchQuery 
-                  ? `No products match your search for "${searchQuery}"` 
-                  : "You haven't purchased any products yet"
-                }
+                {searchQuery
+                  ? `No products match your search for "${searchQuery}"`
+                  : "You haven't purchased any products yet"}
               </p>
               {searchQuery && (
-                <button 
+                <button
                   className="btn btn-outline-primary btn-sm"
                   onClick={() => setSearchQuery("")}
                 >
@@ -331,6 +353,6 @@ const UserProducts: React.FC = React.memo(() => {
 });
 
 // Add display name for debugging
-UserProducts.displayName = 'UserProducts';
+UserProducts.displayName = "UserProducts";
 
 export default UserProducts;

@@ -1,6 +1,7 @@
 import { PaymentStatus, PaymentResponse } from "@/types/payments";
 import { User } from "@/types/users";
-import React from "react";
+import Link from "next/link";
+import React, { useCallback } from "react";
 
 type RecentSalesTableProps = {
   loading: boolean;
@@ -28,6 +29,16 @@ function RecentSalesTable({
         return "secondary";
     }
   };
+
+  const canRetry = useCallback(
+    (order: PaymentResponse) => {
+      const isOwnedByUser =
+        currentUser && order.customer && currentUser.id === order.customer.id;
+      if (!isOwnedByUser) return false;
+      return order.status === "Pending" || order.status === "Failed";
+    },
+    [currentUser]
+  );
 
   return (
     <table className="table table-bordered datatable">
@@ -57,23 +68,40 @@ function RecentSalesTable({
                 <a href="#">{item.id}</a>
               </th>
               {currentUser?.is_staff ? (
-                <td>{item.customer.first_name}</td>
+                <td className=" text-nowrap">
+                  {item.customer.first_name ||
+                    item.customer.last_name ||
+                    "Unknown Name"}
+                </td>
               ) : null}
-              <td>{item.reference}</td>
+              <td>
+                <div className="text-truncate" style={{ maxWidth: "150px" }}>
+                  {item.reference}
+                </div>
+              </td>
               <td className="fw-bold">
                 &#8358;
                 {parseFloat(item.amount).toLocaleString()}
               </td>
-              <td>
+              <td className="text-nowrap">
                 <span
                   className={`badge text-${handleStatus(
                     item.status as PaymentStatus
                   )} bg-${handleStatus(
                     item.status as PaymentStatus
-                  )}-light px-2`}
+                  )}-light px-2 py-2`}
                 >
                   {item.status}
                 </span>
+                {canRetry(item) && (
+                  <Link
+                    className={`badge text-primary bg-primary-light px-2 py-2`}
+                    style={{ cursor: "pointer", marginLeft: "8px" }}
+                    href={`/dashboard/orders/${item.reference}`}
+                  >
+                    retry
+                  </Link>
+                )}
               </td>
             </tr>
           ))

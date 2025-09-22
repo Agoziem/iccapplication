@@ -8,7 +8,7 @@ import { useMyProfile } from "@/data/hooks/user.hooks";
 import Offcanvas from "react-bootstrap/Offcanvas";
 
 const OffCanvasComponent: React.FC = () => {
-  const { cart, removeFromCart, resetCart, checkout, isPending, error, showOffCanvas, setShowOffCanvas } =
+  const { cart, removeFromCart, resetCart, checkout, isPending, showOffCanvas, setShowOffCanvas } =
     useCart();
   const { data: session } = useMyProfile();
 
@@ -113,9 +113,6 @@ const OffCanvasComponent: React.FC = () => {
               <h4 className="mb-3">
                 Total: <span className="fw-bold">&#8358;{getTotalPrice()}</span>
               </h4>
-
-              {/* Alert */}
-              <div>{error && <Alert type="danger">{error}</Alert>}</div>
 
               {/* Cart Buttons */}
               <div className="d-flex flex-md-row flex-column flex-md-fill">

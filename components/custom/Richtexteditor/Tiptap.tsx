@@ -73,7 +73,7 @@ const Tiptap: React.FC<TiptapProps> = ({
       if (imageId) {
         toast.loading("Deleting image...", { id: "image-delete" });
         
-        await deleteRichTextImage(imageId);
+        await deleteRichTextImage(imageUrl);
         
         // Remove from local mapping
         setImageIdMap(prev => {

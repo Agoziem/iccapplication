@@ -43,7 +43,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
               <img
                 src={product.img_url}
                 alt={product.name}
-                className="rounded-circle"
+                className="rounded"
                 style={{
                   width: "80px",
                   height: "80px",

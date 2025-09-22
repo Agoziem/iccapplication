@@ -11,13 +11,11 @@ import {
   useUpdateProduct,
 } from "@/data/hooks/product.hooks";
 import { PulseLoader } from "react-spinners";
-import { Product } from "@/types/items";
+import { CreateProduct, Product } from "@/types/items";
 import { ORGANIZATION_ID } from "@/data/constants";
 import { createProductSchema, updateProductSchema } from "@/schemas/items";
+import { toast } from "sonner";
 
-type ProductFormData =
-  | z.infer<typeof createProductSchema>
-  | z.infer<typeof updateProductSchema>;
 
 interface ProductFormProps {
   product?: Product | null;
@@ -43,7 +41,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
   const isSubmitting = isCreating || isUpdating;
 
   // Setup form with appropriate schema based on edit mode
-  const form = useForm<ProductFormData>({
+  const form = useForm<CreateProduct>({
     resolver: zodResolver(createProductSchema),
     defaultValues: {
       name: "",
@@ -51,7 +49,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
       price: 0,
       category: 0,
       subcategory: 0,
-      organization: ORGANIZATION_ID || "",
+      organization: Number(ORGANIZATION_ID) || 0,
       digital: false,
       free: false,
       preview: "",
@@ -65,10 +63,10 @@ const ProductForm: React.FC<ProductFormProps> = ({
       form.reset({
         name: product.name,
         description: product.description,
-        price: parseFloat(product.price || "0"),
+        price: product.price,
         category: product.category?.id || 0,
         subcategory: product.subcategory?.id || 0,
-        organization: ORGANIZATION_ID || "",
+        organization: Number(ORGANIZATION_ID) || 0,
         digital: product.digital || false,
         free: product.free || false,
         preview: product.img_url || "",
@@ -92,7 +90,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
   };
 
   // Submit form
-  const onSubmit = async (formData: ProductFormData) => {
+  const onSubmit = async (formData: CreateProduct) => {
+    console.log("Submitting form data:", formData);
     try {
       if (editMode && product?.id) {
         await updateProduct({
@@ -102,23 +101,14 @@ const ProductForm: React.FC<ProductFormProps> = ({
       } else {
         await createProduct({
           organizationId: parseInt(ORGANIZATION_ID || "0"),
-          productData: {
-            name: formData.name ?? "",
-            description: formData.description ?? "",
-            price: formData.price ?? 0,
-            category: formData.category ?? 0,
-            subcategory: formData.subcategory ?? 0,
-            organization: ORGANIZATION_ID || "",
-            digital: formData.digital || false,
-            free: formData.free || false,
-            preview: formData.preview ?? "",
-            product: formData.product ?? "",
-          },
+          productData: formData,
         });
       }
       onSuccess();
+      toast.success(`Product ${editMode ? "updated" : "created"} successfully!`);
     } catch (error) {
       console.error("Error saving product:", error);
+      toast.error("An error occurred while saving the product.");
     }
   };
 
@@ -222,17 +212,13 @@ const ProductForm: React.FC<ProductFormProps> = ({
               <>
                 <input
                   {...field}
-                  type="number"
-                  step="0.01"
-                  min="0"
+                  type="text"
                   className={`form-control ${
                     fieldState.error ? "is-invalid" : ""
                   }`}
                   id="price"
                   placeholder="Enter product price"
-                  onChange={(e) =>
-                    field.onChange(parseFloat(e.target.value) || 0)
-                  }
+                  onChange={field.onChange}
                 />
                 {fieldState.error && (
                   <div className="invalid-feedback">
@@ -407,6 +393,20 @@ const ProductForm: React.FC<ProductFormProps> = ({
           </div>
         )}
 
+        {/* show form errors here*/}
+        {Object.keys(form.formState.errors).length > 0 && (
+          <div className="alert alert-danger" role="alert">
+            Please fix the errors above before submitting the form.
+            <ul>
+              {Object.entries(form.formState.errors).map(([field, error]) => (
+                <li key={field}>
+                  <strong>{field}:</strong> {error?.message}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {/* Form Actions */}
         <div className="d-flex justify-content-end gap-2 mt-4">
           <button
@@ -420,7 +420,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={isSubmitting || !form.formState.isValid}
+            disabled={isSubmitting}
           >
             {isSubmitting ? (
               <>

@@ -5,12 +5,12 @@ import React from "react";
 const { useState, createContext, useContext, useEffect, useTransition } = React;
 type ReactNode = React.ReactNode;
 import { useRouter } from "next/navigation";
-import { addPayment } from "../../data/hooks/payment.hooks";
-import { useQueryClient } from "react-query";
-import { getUserId } from "@/utils/auth";
+import { useCreatePayment } from "../../data/hooks/payment.hooks";
 import { Product, Service, Video } from "@/types/items";
 import { CreatePayment } from "@/types/payments";
 import { ORGANIZATION_ID } from "@/data/constants";
+import { useMyProfile } from "@/data/hooks/user.hooks";
+import { toast } from "sonner";
 
 export type CartItem = (Video | Service | Product) & {
   cartType?: "service" | "product" | "video";
@@ -19,7 +19,6 @@ export type CartItem = (Video | Service | Product) & {
 interface CartContextValue {
   cart: CartItem[];
   total: number;
-  reference: string;
   showOffCanvas: boolean;
   setShowOffCanvas: React.Dispatch<React.SetStateAction<boolean>>;
   addToCart: (item: CartItem, type: "service" | "product" | "video") => void;
@@ -28,10 +27,8 @@ interface CartContextValue {
     type: "service" | "product" | "video"
   ) => void;
   resetCart: () => void;
-  checkout: () => void;
+  checkout: () => Promise<void>;
   isPending: boolean;
-  error: string | null;
-  clearError: () => void;
   getCartItemCount: () => number;
   isItemInCart: (
     itemId: number,
@@ -54,9 +51,9 @@ const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     cart
   );
   const [total, setTotal] = useState<number>(0);
-  const [reference, setReference] = useState<string>("");
   const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const { data: user } = useMyProfile();
+  const { mutateAsync: addPayment } = useCreatePayment();
 
   // ----------------------------------------------------
   // Set Cart from local storage
@@ -84,13 +81,12 @@ const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     type: "service" | "product" | "video"
   ): void => {
     try {
-      setError(null); // Clear any previous errors
       const existingItem = cart.find(
         (cartItem) => cartItem.id === item.id && cartItem.cartType === type
       );
 
       if (existingItem) {
-        setError("Item is already in cart");
+        toast.error("Item is already in cart");
         return;
       }
 
@@ -99,9 +95,10 @@ const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       setCart(updatedCart);
       setStoredCart(updatedCart);
       setTotal(total + parseFloat(String(item.price)));
+      toast.success("Item added to cart");
     } catch (error: any) {
       console.error("Error adding item to cart:", error);
-      setError("Failed to add item to cart");
+      toast.error("Failed to add item to cart");
     }
   };
 
@@ -113,13 +110,12 @@ const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     type: "service" | "product" | "video"
   ): void => {
     try {
-      setError(null); // Clear any previous errors
       const itemToRemove = cart.find(
         (item) => item.id === itemId && item.cartType === type
       );
 
       if (!itemToRemove) {
-        setError("Item not found in cart");
+        toast.error("Item not found in cart");
         return;
       }
 
@@ -130,9 +126,10 @@ const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       setCart(updatedCart);
       setStoredCart(updatedCart);
       setTotal(total - parseFloat(String(itemToRemove.price)));
+      toast.success("Item removed from cart");
     } catch (error: any) {
       console.error("Error removing item from cart:", error);
-      setError("Failed to remove item from cart");
+      toast.error("Failed to remove item from cart");
     }
   };
 
@@ -141,33 +138,29 @@ const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   // ----------------------------------------------------
   const resetCart = (): void => {
     try {
-      setError(null); // Clear any previous errors
       setCart([]);
       setTotal(0);
       setStoredCart([]);
     } catch (error: any) {
       console.error("Error resetting cart:", error);
-      setError("Failed to reset cart");
+      toast.error("Failed to reset cart");
     }
   };
 
   // ----------------------------------------------------
   // Checkout
   // ----------------------------------------------------
-  const queryClient = useQueryClient();
   const checkout = async (): Promise<void> => {
     if (cart.length === 0) {
-      setError("Cart is empty");
+      toast.error("Cart is empty");
       return;
     }
 
     startTransition(async () => {
-      setError(null); // Clear any previous errors
+      toast.loading("Processing checkout...");
 
       try {
-        // Get user ID from token
-        const userId = getUserId();
-        if (!userId) {
+        if (!user || !user.id) {
           throw new Error("User not authenticated");
         }
 
@@ -175,7 +168,7 @@ const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         const orgId = ORGANIZATION_ID ? parseInt(ORGANIZATION_ID) : 1;
 
         const orderData: CreatePayment = {
-          customer: parseInt(userId),
+          customer: user.id,
           amount: total,
           services: cart
             .filter((item) => item.cartType === "service")
@@ -191,14 +184,18 @@ const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
             .filter((id): id is number => id !== undefined),
         };
 
-        const data = await addPayment(orgId, orderData);
-        queryClient.invalidateQueries("payments");
-        setReference(data.reference || "");
+        const data = await addPayment({
+          organizationId: orgId,
+          paymentData: orderData,
+        });
+        toast.dismiss();
+        toast.success("Checkout successful! Redirecting...");
         resetCart(); // Clear cart after successful payment
-        router.push(`/dashboard/orders`);
+        router.push(`/dashboard/orders/${data.reference}`);
       } catch (error: any) {
+        toast.dismiss();
         console.error("Payment Error:", error?.message || error);
-        setError(
+        toast.error(
           error?.message ||
             "An error occurred while initiating your checkout process"
         );
@@ -209,10 +206,6 @@ const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   // ----------------------------------------------------
   // Utility Functions
   // ----------------------------------------------------
-  const clearError = (): void => {
-    setError(null);
-  };
-
   const getCartItemCount = (): number => {
     return cart.length;
   };
@@ -229,7 +222,6 @@ const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       value={{
         cart,
         total,
-        reference,
         showOffCanvas,
         setShowOffCanvas,
         addToCart,
@@ -237,8 +229,6 @@ const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         resetCart,
         checkout,
         isPending,
-        error,
-        clearError,
         getCartItemCount,
         isItemInCart,
       }}

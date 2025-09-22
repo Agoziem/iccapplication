@@ -113,7 +113,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
           {/* Price and Actions */}
           <div className="d-flex justify-content-between align-items-center">
             <span className={`fw-bold h6 mb-0 ${item.free ? 'text-success' : 'text-primary'}`}>
-              {item.free ? "Free" : formatPrice(item.price)}
+              {item.free ? "Free" : formatPrice(String(item.price))}
             </span>
             
             {/* Action Buttons */}

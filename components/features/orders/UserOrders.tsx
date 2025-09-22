@@ -8,6 +8,7 @@ import OrderTableItems from "./OrderTableItems";
 import { useMyProfile } from "@/data/hooks/user.hooks";
 import { usePaymentsByUser } from "@/data/hooks/payment.hooks";
 import { PaymentArray } from "@/types/payments";
+import { parseAsString, useQueryState } from "nuqs";
 
 /**
  * Enhanced UserOrders component with comprehensive error handling and safety checks
@@ -20,9 +21,12 @@ const UserOrders: React.FC = React.memo(() => {
   // Safe categories configuration
   const categories = useMemo(() => ["services", "products", "videos"] as const, []);
   type CategoryType = typeof categories[number];
+  const [activeTab, setActiveTab] = useQueryState(
+      "activeTab",
+      parseAsString.withDefault("services")
+    );
   
   // Safe state management
-  const [activeTab, setActiveTab] = useState<CategoryType>(categories[0]);
   const [items, setItems] = useState<PaymentArray | null>(null);
   const [error, setError] = useState<string | null>(null);
 

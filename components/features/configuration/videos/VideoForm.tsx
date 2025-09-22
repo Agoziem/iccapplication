@@ -47,8 +47,6 @@ const VideoForm: React.FC<VideoFormProps> = ({
     useVideoSubCategories(selectedCategory?.id || 0);
 
   const isSubmitting = isCreating || isUpdating;
-  const formDataSchema = editMode ? updateVideoSchema : createVideoSchema;
-  type formDataType = z.infer<typeof formDataSchema>;
 
   // Form setup
   const {
@@ -58,29 +56,19 @@ const VideoForm: React.FC<VideoFormProps> = ({
     setValue,
     reset,
     formState: { errors, isValid },
-  } = useForm<formDataType>({
-    resolver: zodResolver(formDataSchema),
+  } = useForm<CreateVideo>({
+    resolver: zodResolver(createVideoSchema),
     mode: "onChange",
-    defaultValues: editMode
-      ? {
-          title: video?.title || "",
-          description: video?.description || "",
-          price: parseFloat(video?.price || "0"),
-          category: video?.category?.id || 0,
-          subcategory: video?.subcategory?.id || 0,
-          thumbnail: video?.img_url || video?.thumbnail,
-          video: video?.video_url || video?.video,
-        }
-      : {
-          title: "",
-          description: "",
-          price: 0,
-          category: 0,
-          subcategory: 0,
-          organization: ORGANIZATION_ID || "",
-          thumbnail: "",
-          video: "",
-        },
+    defaultValues: {
+      title: "",
+      description: "",
+      price: 0,
+      category: 0,
+      subcategory: 0,
+      organization: Number(ORGANIZATION_ID) || 0,
+      thumbnail: "",
+      video: "",
+    },
   });
 
   const watchedCategory = watch("category");
@@ -103,7 +91,7 @@ const VideoForm: React.FC<VideoFormProps> = ({
         const currentSubcategory = videoSubcategories?.find(
           (sub) => sub.id === video?.subcategory?.id
         );
-        setValue("subcategory", currentSubcategory ? currentSubcategory.id : 0);
+        setValue("subcategory", currentSubcategory ? currentSubcategory.id ? currentSubcategory.id : 0 : 0);
       } else {
         setValue("subcategory", 0);
       }
@@ -116,17 +104,18 @@ const VideoForm: React.FC<VideoFormProps> = ({
       reset({
         title: video.title,
         description: video.description,
-        price: parseFloat(video.price || "0"),
+        price: video.price || 0,
         category: video.category?.id || 0,
         subcategory: video.subcategory?.id || 0,
         thumbnail: video.img_url || video.thumbnail,
         video: video.video_url || video.video,
+        organization: Number(ORGANIZATION_ID) || 0,
       });
       setSelectedCategory(video.category || null);
     }
   }, [editMode, video, reset]);
 
-  const onSubmit = async (data: formDataType) => {
+  const onSubmit = async (data: CreateVideo) => {
     try {
       if (editMode && video?.id) {
         await updateVideo({
@@ -139,16 +128,7 @@ const VideoForm: React.FC<VideoFormProps> = ({
       } else {
         await createVideo({
           organizationId: parseInt(ORGANIZATION_ID || "0"),
-          videoData: {
-            title: data.title ?? "",
-            description: data.description ?? "",
-            price: data.price ?? 0,
-            category: data.category ?? 0,
-            subcategory: data.subcategory ?? 0,
-            organization: ORGANIZATION_ID || "",
-            thumbnail: data.thumbnail ?? "",
-            video: data.video ?? "",
-          },
+          videoData: data,
         });
         toast.success("Video created successfully!");
       }
@@ -169,7 +149,7 @@ const VideoForm: React.FC<VideoFormProps> = ({
         {editMode ? "Edit Video" : "Add New Video"}
       </h5>
       <hr />
-
+      
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         {/* Video Thumbnail */}
         <div className="mb-2">
@@ -263,17 +243,13 @@ const VideoForm: React.FC<VideoFormProps> = ({
               <>
                 <input
                   {...field}
-                  type="number"
-                  step="0.01"
-                  min="0"
+                  type="text"
                   className={`form-control ${
                     fieldState.error ? "is-invalid" : ""
                   }`}
                   id="price"
                   placeholder="Enter video price"
-                  onChange={(e) =>
-                    field.onChange(parseFloat(e.target.value) || 0)
-                  }
+                  onChange={field.onChange}
                 />
                 {fieldState.error && (
                   <div className="invalid-feedback">
@@ -400,6 +376,20 @@ const VideoForm: React.FC<VideoFormProps> = ({
             )}
           />
         </div>
+        
+        {/* show form errors here*/}
+        {Object.keys(errors).length > 0 && (
+          <div className="alert alert-danger" role="alert">
+            Please fix the errors above before submitting the form.
+            <ul>
+              {Object.entries(errors).map(([field, error]) => (
+                <li key={field}>
+                  <strong>{field}:</strong> {error?.message}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Form Actions */}
         <div className="d-flex justify-content-end gap-2 mt-4">
@@ -414,7 +404,7 @@ const VideoForm: React.FC<VideoFormProps> = ({
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={isSubmitting || !isValid}
+            disabled={isSubmitting}
           >
             {isSubmitting ? (
               <>

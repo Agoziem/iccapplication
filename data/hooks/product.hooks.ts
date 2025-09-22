@@ -49,7 +49,8 @@ export const addProduct = async (organizationId: number, productData: CreateProd
 };
 
 export const updateProduct = async (productId: number, productData: UpdateProduct): Promise<Product> => {
-  const response = await AxiosInstancemultipartWithToken.put(`${productsAPIendpoint}/update-product/${productId}/`, productData);
+  const formData = converttoformData(productData);
+  const response = await AxiosInstancemultipartWithToken.put(`${productsAPIendpoint}/update-product/${productId}/`, formData);
   return response.data;
 };
 

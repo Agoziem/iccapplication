@@ -43,7 +43,7 @@ const TopSellingService: React.FC<TopSellingServiceProps> = React.memo(({ item }
 
   // Memoized formatted price
   const formattedPrice = useMemo(() => {
-    const price = parseFloat(item?.price || "0");
+    const price = parseFloat(String(item?.price) || "0");
     return new Intl.NumberFormat('en-NG', {
       style: 'currency',
       currency: 'NGN',

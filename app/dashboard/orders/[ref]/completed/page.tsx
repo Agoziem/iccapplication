@@ -1,9 +1,8 @@
 "use client";
-import { useCart } from "@/providers/context/Cartcontext";
+import styles from "./page.module.css";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useAdminContext } from "@/providers/context/Admincontextdata";
 import { BsFillCartCheckFill } from "react-icons/bs";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import useJsxToPdf from "@/hooks/useJSXtoPDF";
 import { FaCheck, FaRegClipboard } from "react-icons/fa6";
 import Link from "next/link";
@@ -16,8 +15,7 @@ import { Service, Product, Video } from "@/types/items";
 
 const OrderCompleted = () => {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const reference = searchParams.get("ref") || "";
+  const { ref } = useParams() as { ref: string };
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [order, setOrder] = useState<PaymentResponse | null>(null);
@@ -38,7 +36,7 @@ const OrderCompleted = () => {
   // Verify payment function
   // -------------------------------
   const verifypayment = useCallback(async () => {
-    if (!reference || !user || !user?.id) {
+    if (!ref || !user || !user?.id) {
       setError("Reference or User id does not exist");
       return;
     }
@@ -48,7 +46,7 @@ const OrderCompleted = () => {
     try {
       // Call the API to verify payment
       const data = await verifyPayment({
-        reference,
+        reference: ref,
         customer_id: user?.id,
       });
       setOrder(data);
@@ -62,16 +60,16 @@ const OrderCompleted = () => {
     } finally {
       setLoading(false); // Reset the loading state
     }
-  }, [reference, user]);
+  }, [ref, user]);
 
   // -----------------------------------------------
   // trigger the Verify Payment on page load
   // -----------------------------------------------
   useEffect(() => {
-    if (user && reference) {
+    if (user && ref) {
       verifypayment();
     }
-  }, [verifypayment, user, reference]);
+  }, [verifypayment, user, ref]);
 
   // -----------------------------------------------
   // Copy to clipboard function
@@ -122,8 +120,8 @@ const OrderCompleted = () => {
                 />
               </div>
 
-              <h5 className="mb-3">Payment Successful</h5>
-              <p className="mb-1">Thank you for your payment</p>
+              <h5 className="mb-1 text-success">Payment Successful</h5>
+              <p className="mb-1 text-muted">Thank you for your payment</p>
               {/* Order Id */}
               <p className="mb-1">
                 <span className="fw-bold">Order ID: </span>
@@ -132,8 +130,8 @@ const OrderCompleted = () => {
               {/* Amount */}
               <p className="mb-1">
                 <span className="fw-bold">Amount: </span>
+                &#8358;{order.amount}
               </p>
-              <h3 className="fw-bold">&#8358;{order.amount}</h3>
 
               {/* Payment ref */}
               <p className="mb-1">
@@ -151,14 +149,6 @@ const OrderCompleted = () => {
                   />
                 )}
               </div>
-              <div
-                className="px-3 small"
-                style={{
-                  color: "var(--bgDarkerColor)",
-                }}
-              >
-                Copy the payment reference to clipboard to track your order
-              </div>
             </div>
 
             {/* Items Ordered */}
@@ -167,7 +157,7 @@ const OrderCompleted = () => {
               {order && order.services.length > 0 && (
                 <div className="px-3">
                   <div className="fw-bold text-primary">Services bought</div>
-                  <table className="table">
+                  <table className={styles.table + " table"}>
                     <thead>
                       <tr>
                         <th scope="col">S/N</th>
@@ -192,7 +182,7 @@ const OrderCompleted = () => {
               {order && order.products.length > 0 && (
                 <div className="px-3">
                   <div className="fw-bold text-primary">Products bought</div>
-                  <table className="table">
+                  <table className={styles.table + " table"}>
                     <thead>
                       <tr>
                         <th scope="col">S/N</th>
@@ -217,7 +207,7 @@ const OrderCompleted = () => {
               {order && order.videos.length > 0 && (
                 <div className="px-3">
                   <div className="fw-bold text-primary">Videos bought</div>
-                  <table className="table">
+                  <table className={styles.table + " table"}>
                     <thead>
                       <tr>
                         <th scope="col">S/N</th>
@@ -251,7 +241,7 @@ const OrderCompleted = () => {
           </div>
 
           {/* Download buttons */}
-          <div className="my-3 mb-5">
+          <div className="my-3 mb-5 d-flex gap-2 justify-content-center">
             <div>
               <Link
                 href={"/dashboard/my-orders"}
@@ -261,7 +251,7 @@ const OrderCompleted = () => {
               </Link>
             </div>
             <button
-              className="btn btn-accent-secondary my-3 mb-3 py-2 px-5 mb-md-0 rounded"
+              className="btn btn-accent-secondary py-2 px-5 rounded"
               style={{
                 fontSize: "15px",
                 borderRadius: "25px",

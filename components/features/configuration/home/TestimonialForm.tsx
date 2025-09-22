@@ -235,7 +235,10 @@ const TestimonialForm: React.FC<TestimonialFormProps> = ({
             control={control}
             render={({ field }) => (
               <ImageUploader
-                {...field}
+                name={field.name}
+                value={field.value}
+                onChange={field.onChange}
+                placeholder="Upload profile image"
                 error={
                   typeof errors.img?.message === "string"
                     ? errors.img.message
@@ -260,7 +263,7 @@ const TestimonialForm: React.FC<TestimonialFormProps> = ({
           )}
           <button
             type="submit"
-            className="btn btn-accent-secondary border-0 text-secondary mt-3 rounded"
+            className="btn btn-accent-secondary border-0 mt-3 rounded"
             disabled={isSubmitting || !isValid}
           >
             {isSubmitting ? (

@@ -101,11 +101,11 @@ const VideoCard: React.FC<VideoCardProps> = React.memo(({ video }) => {
         </div>
 
         <div
-          className="flex-fill d-flex flex-column justify-content-between gap-1"
+          className="flex-fill d-flex flex-column justify-content-between"
           style={{ height: "100%" }}
         >
           <h6 className="flex-grow-1 line-clamp-1">{video?.title || 'Untitled Video'}</h6>
-          <p className="text-primary mb-1">
+          <p className="card-text text-primary small line-clamp-3">
             {safeDescription.length > 80 ? (
               <span>
                 {safeDescription}

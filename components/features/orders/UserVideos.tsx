@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Pagination from "@/components/custom/Pagination/Pagination";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
 import { useMyProfile } from "@/data/hooks/user.hooks";
-import { useVideos } from "@/data/hooks/video.hooks";
+import { useUserBoughtVideos, useVideos } from "@/data/hooks/video.hooks";
 import { ORGANIZATION_ID } from "@/data/constants";
 import { Video } from "@/types/items";
 import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
@@ -29,7 +29,6 @@ const UserVideos: React.FC = React.memo(() => {
     parseAsInteger.withDefault(10)
   );
 
-
   // Safe state management
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +39,7 @@ const UserVideos: React.FC = React.memo(() => {
     isLoading: loadingVideos,
     error: queryError,
     isError,
-  } = useVideos(parseInt(ORGANIZATION_ID) || 0, {
+  } = useUserBoughtVideos(parseInt(ORGANIZATION_ID) || 0, user?.id || 0, {
     page: page,
     page_size: pageSize,
     category: currentCategory !== "All" ? currentCategory : null,

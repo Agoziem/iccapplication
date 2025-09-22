@@ -3,149 +3,180 @@ import "./OrderTableItems.css";
 import moment from "moment";
 import { useMyProfile } from "@/data/hooks/user.hooks";
 import { PaymentResponse, PaymentStatus } from "@/types/payments";
+import Link from "next/link";
 
 type OrderTableItemsProps = {
-  currentItems?: PaymentResponse[]
-}
+  currentItems?: PaymentResponse[];
+};
 
 /**
  * Enhanced OrderTableItems component with comprehensive error handling and safety checks
  * Displays order payment data with proper validation and type safety
  * Optimized with React.memo for performance
  */
-const OrderTableItems: React.FC<OrderTableItemsProps> = React.memo(({ 
-  currentItems = [] 
-}) => {
-  const { data: user } = useMyProfile();
-  
-  // Safe status badge handler
-  const handleStatus = useCallback((status: PaymentStatus | undefined) => {
-    if (!status || typeof status !== 'string') return 'bg-secondary-light text-success';
+const OrderTableItems: React.FC<OrderTableItemsProps> = React.memo(
+  ({ currentItems = [] }) => {
+    const { data: user } = useMyProfile();
 
-    switch (status.toLowerCase()) {
-      case 'completed':
-        return 'bg-success-light text-success';
-      case 'pending':
-        return 'bg-secondary-light text-secondary';
-      case 'failed':
-        return 'bg-danger-light text-danger';
-      default:
-        return 'bg-secondary-light text-secondary';
-    }
-  }, []);
+    // Safe status badge handler
+    const handleStatus = useCallback((status: PaymentStatus | undefined) => {
+      if (!status || typeof status !== "string")
+        return "bg-secondary-light text-success";
 
-  // Safe data processing
-  const ordersData = useMemo(() => {
-    if (!Array.isArray(currentItems)) return [];
-    
-    return currentItems.filter(item => 
-      item && 
-      typeof item === 'object' && 
-      item.id
+      switch (status.toLowerCase()) {
+        case "completed":
+          return "bg-success-light text-success";
+        case "pending":
+          return "bg-secondary-light text-secondary";
+        case "failed":
+          return "bg-danger-light text-danger";
+        default:
+          return "bg-secondary-light text-secondary";
+      }
+    }, []);
+
+    // Safe data processing
+    const ordersData = useMemo(() => {
+      if (!Array.isArray(currentItems)) return [];
+
+      return currentItems.filter(
+        (item) => item && typeof item === "object" && item.id
+      );
+    }, [currentItems]);
+
+    // Safe amount formatting
+    const formatAmount = useCallback(
+      (amount: number | string | null | undefined) => {
+        if (amount === null || amount === undefined) return "0.00";
+
+        let numValue;
+        if (typeof amount === "string") {
+          numValue = parseFloat(amount);
+        } else if (typeof amount === "number") {
+          numValue = amount;
+        } else {
+          return "0.00";
+        }
+
+        if (isNaN(numValue) || !isFinite(numValue)) return "0.00";
+
+        return numValue.toLocaleString("en-NG", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+      },
+      []
     );
-  }, [currentItems]);
 
-  // Safe amount formatting
-  const formatAmount = useCallback((amount: number | string | null | undefined) => {
-    if (amount === null || amount === undefined) return '0.00';
-    
-    let numValue;
-    if (typeof amount === 'string') {
-      numValue = parseFloat(amount);
-    } else if (typeof amount === 'number') {
-      numValue = amount;
-    } else {
-      return '0.00';
-    }
-    
-    if (isNaN(numValue) || !isFinite(numValue)) return '0.00';
-    
-    return numValue.toLocaleString('en-NG', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-  }, []);
+    // Dynamic column span calculation
+    const getColSpan = () => {
+      return user?.is_staff ? 6 : 5;
+    };
 
+    const canRetry = useCallback(
+      (order: PaymentResponse) => {
+        const isOwnedByUser =
+          user && order.customer && user.id === order.customer.id;
+        if (!isOwnedByUser) return false;
+        return order.status === "Pending" || order.status === "Failed";
+      },
+      [user]
+    );
 
-
-  // Dynamic column span calculation
-  const getColSpan = () => {
-    return user?.is_staff ? 6 : 5;
-  };
-
-  return (
-    <div className="card p-3 overflow-auto">
-      <table className="table table-bordered">
-        <thead>
-          <tr>
-            <th scope="col">Order ID</th>
-            {user?.is_staff && <th scope="col">Customer</th>}
-            <th scope="col">Total Amount</th>
-            <th scope="col">Payment Ref</th>
-            <th scope="col">Date</th>
-            <th scope="col">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {ordersData.length > 0 ? (
-            ordersData.map((item) => {
-              const orderId = item.id || 'N/A';
-              const customerName = (item.customer?.first_name || item.customer?.last_name || 'Unknown Customer');
-              const amount = formatAmount(item.amount);
-              const reference = item.reference || 'N/A';
-              const date = moment(item.last_updated_date || item.created_at).format("MMM D, YYYY h:mm A");
-              const status = item.status;
-              const statusClass = handleStatus(status);
-
-              return (
-                <tr key={orderId}>
-                  <td>
-                    <span className="fw-medium">{orderId}</span>
-                  </td>
-                  {user?.is_staff && (
-                    <td>
-                      <span className="text-secondary">{customerName}</span>
-                    </td>
-                  )}
-                  <td className="fw-bold text-success">
-                    &#8358; {amount}
-                  </td>
-                  <td>
-                    <span className="font-monospace text-muted small">
-                      {reference}
-                    </span>
-                  </td>
-                  <td>
-                    <span className="text-muted">{date}</span>
-                  </td>
-                  <td>
-                    <span
-                      className={`badge ${statusClass} bg-opacity-10 px-2 py-1`}
-                    >
-                      {status}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })
-          ) : (
+    return (
+      <div className="card p-3 overflow-auto">
+        <table className="table table-bordered">
+          <thead>
             <tr>
-              <td colSpan={getColSpan()} className="text-center py-4">
-                <div className="text-muted">
-                  <i className="bi bi-receipt mb-2" style={{ fontSize: '2rem' }}></i>
-                  <p className="mb-0">No orders found</p>
-                  <small>Order information will appear here when available.</small>
-                </div>
-              </td>
+              <th scope="col">Order ID</th>
+              {user?.is_staff && <th scope="col">Customer</th>}
+              <th scope="col">Total Amount</th>
+              <th scope="col">Payment Ref</th>
+              <th scope="col">Date</th>
+              <th scope="col">Status</th>
             </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
-});
+          </thead>
+          <tbody>
+            {ordersData.length > 0 ? (
+              ordersData.map((item) => {
+                const orderId = item.id || "N/A";
+                const customerName =
+                  item.customer?.first_name ||
+                  item.customer?.last_name ||
+                  "Unknown Customer";
+                const amount = formatAmount(item.amount);
+                const reference = item.reference || "N/A";
+                const date = moment(
+                  item.last_updated_date || item.created_at
+                ).format("MMM D, YYYY h:mm A");
+                const status = item.status;
+                const statusClass = handleStatus(status);
+
+                return (
+                  <tr key={orderId}>
+                    <td>
+                      <span className="fw-medium">{orderId}</span>
+                    </td>
+                    {user?.is_staff && (
+                      <td>
+                        <span className="text-secondary">{customerName}</span>
+                      </td>
+                    )}
+                    <td className="fw-bold text-success">&#8358; {amount}</td>
+                    <td>
+                      <span
+                        className="font-monospace text-muted small text-truncate d-block"
+                        style={{ maxWidth: "150px" }}
+                      >
+                        {reference}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="text-muted">{date}</span>
+                    </td>
+                    <td className="text-nowrap">
+                      <span
+                        className={`badge ${statusClass} bg-opacity-10 px-2 py-1`}
+                      >
+                        {status}
+                      </span>
+                      {canRetry(item) && (
+                        <Link
+                          className={`badge text-primary bg-primary-light px-2`}
+                          style={{ cursor: "pointer", marginLeft: "8px" }}
+                          href={`/dashboard/orders/${reference}`}
+                        >
+                          retry
+                        </Link>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan={getColSpan()} className="text-center py-4">
+                  <div className="text-muted">
+                    <i
+                      className="bi bi-receipt mb-2"
+                      style={{ fontSize: "2rem" }}
+                    ></i>
+                    <p className="mb-0">No orders found</p>
+                    <small>
+                      Order information will appear here when available.
+                    </small>
+                  </div>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+);
 
 // Add display name for debugging
-OrderTableItems.displayName = 'OrderTableItems';
+OrderTableItems.displayName = "OrderTableItems";
 
 export default OrderTableItems;

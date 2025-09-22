@@ -278,16 +278,20 @@ const ServicesSection: React.FC = () => {
                               ? service.name.slice(0, 30) + "..."
                               : service.name}
                           </h5>
-                          <p className="text-primary mb-1 line-clamp-3">
-                            {service.description && service.description.substring(0, 100)}...{" "}
-                            <span
-                              className="text-secondary fw-bold"
+
+                          <div>
+                            <div
+                              dangerouslySetInnerHTML={{
+                                __html:
+                                  (service.description &&
+                                    service.description.substring(0, 100)) ||
+                                  "No description available",
+                              }}
                               style={{ cursor: "pointer" }}
+                              className="card-text text-primary small line-clamp-3"
                               onClick={() => openModal(service)}
-                            >
-                              view more
-                            </span>
-                          </p>
+                            />
+                          </div>
                         </div>
                       </div>
 
@@ -296,7 +300,7 @@ const ServicesSection: React.FC = () => {
                         <hr />
                         <div className="d-flex justify-content-between align-items-center mt-4">
                           <div className="fw-bold text-primary me-2">
-                            &#8358;{parseFloat(service.price || "0")}
+                            &#8358;{service.price || 0}
                           </div>
 
                           {/* Service purchase status and cart actions */}

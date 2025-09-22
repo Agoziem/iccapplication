@@ -13,10 +13,10 @@ export const EmailSchema = z.object({
 
 
 export const CreateEmailSchema = z.object({
-  name: z.string().min(1).max(100),
-  email: z.string().email().min(1).max(254),
-  subject: z.string().min(1).max(100),
-  message: z.string().min(1),
+  name: z.string().min(1, "Name is required").max(100),
+  email: z.string().email().min(1, "Email is required").max(254),
+  subject: z.string().min(1, "Subject is required").max(100),
+  message: z.string().min(1, "Message is required"),
 });
 
 export const UpdateEmailSchema = z.object({
@@ -38,9 +38,9 @@ export const EmailResponseSchema = z.object({
 
 
 export const CreateEmailResponseSchema = z.object({
-  recipient_email: z.string().email().min(1).max(254),
-  response_subject: z.string().min(1).max(100),
-  response_message: z.string().min(1),
+  recipient_email: z.string().email().min(1, "Recipient email is required").max(254),
+  response_subject: z.string().min(1, "Response subject is required").max(100),
+  response_message: z.string().min(1, "Response message is required"),
   message: z.number().optional(),
 });
 

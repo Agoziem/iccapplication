@@ -120,7 +120,7 @@ const AdminContextProvider: React.FC<AdminContextProviderProps> = ({
               <div className="mb-2">
                 <strong>Price: </strong>
                 <span className="text-primary fw-bold">
-                  {formatPrice(modalItem.price)}
+                  {formatPrice(String(modalItem.price))}
                 </span>
               </div>
             )}

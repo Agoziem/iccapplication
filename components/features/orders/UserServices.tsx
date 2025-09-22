@@ -3,7 +3,11 @@ import { PiEmptyBold } from "react-icons/pi";
 import ServicesPlaceholder from "../../custom/ImagePlaceholders/ServicesPlaceholder";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { servicesAPIendpoint, useServices } from "@/data/hooks/service.hooks";
+import {
+  servicesAPIendpoint,
+  useServices,
+  useUserBoughtServices,
+} from "@/data/hooks/service.hooks";
 import Pagination from "@/components/custom/Pagination/Pagination";
 import SearchInput from "@/components/custom/Inputs/SearchInput";
 import { useMyProfile } from "@/data/hooks/user.hooks";
@@ -39,7 +43,7 @@ const UserServices: React.FC = React.memo(() => {
     isLoading: loadingServices,
     error: queryError,
     isError,
-  } = useServices(parseInt(ORGANIZATION_ID) || 0, {
+  } = useUserBoughtServices(parseInt(ORGANIZATION_ID) || 0, user?.id || 0, {
     page: page,
     page_size: pageSize,
     category: currentCategory !== "All" ? currentCategory : null,
@@ -163,9 +167,7 @@ const UserServices: React.FC = React.memo(() => {
       } catch (error) {
         console.error("Error determining service status:", error);
         return (
-          <div className="badge bg-primary text-white py-2 px-2">
-            Unknown
-          </div>
+          <div className="badge bg-primary text-white py-2 px-2">Unknown</div>
         );
       }
     },
@@ -333,15 +335,20 @@ const UserServices: React.FC = React.memo(() => {
                       >
                         {serviceName}
                       </h6>
-                      <p className="small text-muted mb-2 " title={service.description}>
+                      <p
+                        className="small text-muted mb-2 "
+                        title={service.category?.category || ""}
+                      >
                         {serviceCategory} Service
                       </p>
-                      <p
-                        className="small text-muted mb-3 line-clamp-3"
-                        title={service.description}
-                      >
-                        {serviceDescription}
-                      </p>
+
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html:
+                            service.description || "No description available",
+                        }}
+                        className="small text-muted mb-2 line-clamp-3"
+                      />
 
                       {/* Action Section */}
                       <div className="d-flex justify-content-center gap-2 align-items-start flex-column mt-3">

@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { documentSchema, imageSchema, videoSchema } from "./custom-validation";
+import { AmountSchema, documentSchema, imageSchema, videoSchema } from "./custom-validation";
+import { OrganizationMiniSchema } from "./organizations";
 
 // ------------------------------------
 // Category Schemas (from API)
@@ -68,7 +69,7 @@ export const VideoSubCategorySchema = z.object({
  */
 export const ServiceResponseSchema = z.object({
   id: z.number().optional(),
-  organization: z.string().optional(),
+  organization: OrganizationMiniSchema.optional(),
   preview: z.string().url().optional(),
   img_url: z.string().optional(),
   img_name: z.string().optional(),
@@ -78,7 +79,7 @@ export const ServiceResponseSchema = z.object({
   description: z.string().optional(),
   service_token: z.string().max(100).optional(),
   service_flow: z.string().optional(),
-  price: z.string(),
+  price: AmountSchema,
   number_of_times_bought: z.number().optional(),
   details_form_link: z.string().url().max(500).optional(),
   created_at: z.coerce.date().optional(),
@@ -112,7 +113,7 @@ export const CreateServiceSubCategorySchema = z.object({
  */
 export const ProductResponseSchema = z.object({
   id: z.number(),
-  organization: z.string(),
+  organization: OrganizationMiniSchema.optional(),
   img_url: z.string().optional(),
   img_name: z.string().optional(),
   product_url: z.string().optional(),
@@ -122,7 +123,7 @@ export const ProductResponseSchema = z.object({
   preview: z.string().url().optional(),
   name: z.string().min(1).max(200),
   description: z.string().min(1),
-  price: z.string(),
+  price: AmountSchema,
   rating: z.number().optional(),
   product: z.string().url().optional(),
   product_token: z.string().max(200),
@@ -160,7 +161,7 @@ export const CreateProductSubCategorySchema = z.object({
  */
 export const VideoResponseSchema = z.object({
   id: z.number(),
-  organization: z.string(),
+  organization: OrganizationMiniSchema.optional(),
   thumbnail: z.string().url().optional(),
   video: z.string().url().optional(),
   video_url: z.string().optional(),
@@ -171,7 +172,7 @@ export const VideoResponseSchema = z.object({
   subcategory: VideoSubCategorySchema.optional(),
   title: z.string().min(1).max(100),
   description: z.string().min(1),
-  price: z.string().optional(),
+  price: AmountSchema.optional(),
   video_token: z.string().max(200),
   number_of_times_bought: z.number().optional(),
   created_at: z.coerce.date().optional(),
@@ -274,12 +275,12 @@ export const DeleteResponseSchema = z.object({
 export const createProductSchema = z.object({
   name: z.string().min(1, "Product name is required"),
   description: z.string().min(1, "Description is required"), 
-  price: z.number().min(0, "Price must be positive"),
+  price: AmountSchema,
   preview: imageSchema,
   product: documentSchema,
   category: z.number().min(1, "Category is required"),
   subcategory: z.number().optional(),
-  organization: z.string(),
+  organization: z.number().min(1, "Organization is required"),
   digital: z.boolean().default(false),
   free: z.boolean().default(false),
 });
@@ -287,7 +288,7 @@ export const createProductSchema = z.object({
 export const updateProductSchema = z.object({
   name: z.string().min(1, "Product name is required").optional(),
   description: z.string().min(1, "Description is required").optional(),
-  price: z.number().min(0, "Price must be positive").optional(),
+  price: AmountSchema.optional(),
   preview: imageSchema,
   product: documentSchema,
   category: z.number().min(1, "Category is required").optional(),
@@ -298,19 +299,19 @@ export const updateProductSchema = z.object({
 
 /* ---------- Service ---------- */
 export const createServiceSchema = z.object({
-  name: z.string(),
-  description: z.string(),
-  price: z.number(),
+  name: z.string().min(1, "Service name is required"),
+  description: z.string().min(1, "Description is required"),
+  price: AmountSchema,
   preview: imageSchema, // image
-  category: z.number(),
-  subcategory: z.number(),
-  organization: z.string().uuid(),
+  category: z.number().min(1, "Category is required"),
+  subcategory: z.number().min(1, "Subcategory is required"),
+  organization: z.number(),
 });
 
 export const updateServiceSchema = z.object({
   name: z.string().optional(),
   description: z.string().optional(),
-  price: z.number().optional(),
+  price: AmountSchema.optional(),
   preview: imageSchema,
   category: z.number().optional(),
   subcategory: z.number().optional(),
@@ -318,20 +319,20 @@ export const updateServiceSchema = z.object({
 
 /* ---------- Video ---------- */
 export const createVideoSchema = z.object({
-  title: z.string(),
-  description: z.string(),
-  price: z.number(),
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(1, "Description is required"),
+  price: AmountSchema,
   thumbnail: imageSchema,
   video: videoSchema,
-  category: z.number(),
+  category: z.number().min(1, "Category is required"),
   subcategory: z.number(),
-  organization: z.string().uuid(),
+  organization: z.number(),
 });
 
 export const updateVideoSchema = z.object({
   title: z.string().optional(),
   description: z.string().optional(),
-  price: z.number().optional(),
+  price: AmountSchema.optional(),
   thumbnail: imageSchema,
   video: videoSchema,
   category: z.number().optional(),
