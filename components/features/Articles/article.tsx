@@ -23,6 +23,7 @@ import {
 } from "@/data/hooks/articles.hooks";
 import { useMyProfile } from "@/data/hooks/user.hooks";
 import { ArticleResponse } from "@/types/articles";
+import { SITE_URL } from "@/data/constants";
 
 interface ArticleProps {
   className?: string;
@@ -303,7 +304,7 @@ const Article: React.FC<ArticleProps> = ({
             <div className="share-post my-4">
               <h5 className="mb-3">Share this post</h5>
               <ShareButtons
-                url={`${process.env.NEXT_PUBLIC_URL}/articles/${
+                url={`${SITE_URL}/articles/${
                   article.slug || slug
                 }`}
                 title={article.title || "Untitled Article"}
