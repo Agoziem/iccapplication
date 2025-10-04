@@ -93,14 +93,9 @@ const CustomGoogleLogin: React.FC<CustomGoogleLoginProps> = ({
             message: "Successfully signed in with Google!",
             type: "success",
           });
-
           // Call success callback if provided
           onSuccess?.(googleUser);
-
-          // Redirect after short delay
-          setTimeout(() => {
-            router.push(redirectPath || DEFAULT_LOGIN_REDIRECT);
-          }, 1500);
+          router.push(redirectPath || DEFAULT_LOGIN_REDIRECT);
         } else {
           throw new Error("No access token received from server");
         }
