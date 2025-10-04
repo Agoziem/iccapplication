@@ -20,7 +20,7 @@ const NavAvatar: React.FC = memo(() => {
       setLoggingOut(true);
       setShowModal(false);
       await logoutUser();
-      queryClient.removeQueries(["users", 'personaldetail'])
+      queryClient.clear();
       toast.success("Logged out successfully");
       router.push("/accounts/signin");
     } catch (error) {

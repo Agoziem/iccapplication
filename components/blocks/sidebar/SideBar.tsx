@@ -38,7 +38,7 @@ const SideBar: React.FC<SideBarProps> = memo(({ navList }) => {
     setShowModal(false);
     try {
       await logoutUser();
-      queryClient.removeQueries(["users", 'personaldetail'])
+      queryClient.clear();
       toast.success("Logged out successfully");
       router.push("/accounts/signin");
     } catch (error) {

@@ -60,7 +60,7 @@ const MainHeader = () => {
     e.preventDefault();
     try {
       await logoutUser();
-      queryClient.removeQueries(["users", 'personaldetail'])
+      queryClient.clear();
       router.push("/");
     } catch (error) {
       console.error("Logout failed:", error);

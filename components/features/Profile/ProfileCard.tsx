@@ -9,6 +9,9 @@ import {
 } from "@/data/hooks/user.hooks";
 import { usePaymentsByUser } from "@/data/hooks/payment.hooks";
 import "./Profile.css";
+import { QueryClient } from "react-query/types/core/queryClient";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface AlertState {
   show: boolean;
@@ -43,6 +46,9 @@ const ProfileCard: React.FC<ProfileCardProps> = React.memo(
     const [isDeleting, setIsDeleting] = useState<boolean>(false);
     const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
     const [editMode, setLocalEditMode] = useState<boolean>(false);
+    const queryClient = new QueryClient();
+    const { mutateAsync: deleteUserMutation } = useDeleteUser();
+    const router = useRouter();
 
     // Data fetching
     const {
@@ -53,7 +59,6 @@ const ProfileCard: React.FC<ProfileCardProps> = React.memo(
     const { data: userOrders, isLoading: isOrdersLoading } = usePaymentsByUser(
       user?.id || 0
     );
-    const { mutateAsync: deleteUserMutation } = useDeleteUser();
 
     // Memoized user display data
     const userDisplayData = useMemo(() => {
@@ -111,9 +116,12 @@ const ProfileCard: React.FC<ProfileCardProps> = React.memo(
       setIsLoggingOut(true);
       try {
         await logoutUser();
-        // User will be redirected after successful logout
+        queryClient.clear();
+        toast.success("Logged out successfully");
+        router.push("/accounts/signin");
       } catch (error) {
         console.error("Error logging out:", error);
+        toast.error("Logout failed");
       } finally {
         setIsLoggingOut(false);
       }
