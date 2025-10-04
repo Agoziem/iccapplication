@@ -9,7 +9,7 @@ import {
 } from "@/data/hooks/user.hooks";
 import { usePaymentsByUser } from "@/data/hooks/payment.hooks";
 import "./Profile.css";
-import { QueryClient } from "react-query/types/core/queryClient";
+import { QueryClient } from "react-query";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
