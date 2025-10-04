@@ -80,7 +80,11 @@ const SignupPage = () => {
         const result = await registerUser(registrationData);
 
         if (result.message && result.user) {
-          if (result.user.email && result.user.verificationToken && OrganizationData) {
+          if (
+            result.user.email &&
+            result.user.verificationToken &&
+            OrganizationData
+          ) {
             const expire_time = result.user.expireTime
               ? new Date(result.user.expireTime)
               : new Date(Date.now() + 60 * 60 * 1000); // 1 hour ahead
@@ -107,11 +111,6 @@ const SignupPage = () => {
 
           // Reset form on success
           reset();
-
-          // Optional: redirect to sign in after some time
-          setTimeout(() => {
-            router.push("/accounts/signin");
-          }, 3000);
         } else {
           setAlert({
             show: true,
